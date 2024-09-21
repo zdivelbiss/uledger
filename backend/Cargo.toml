@@ -15,3 +15,10 @@ chrono = { version = "*", features = ["serde"] }
 postgrest = "*"
 figment = { version = "*", features = ["env"] }
 uuid = { version = "*", features = ["serde", "v4", "v7"] }
+sqlx = { version = "*", features = [
+    "migrate",
+    "runtime-tokio",
+    "postgres",
+    "uuid",
+    "chrono",
+] }

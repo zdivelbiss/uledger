@@ -1,5 +1,7 @@
 use std::sync::LazyLock;
 
+use sqlx::postgres::PgPoolOptions;
+
 mod config;
 mod ledger;
 
@@ -10,10 +12,12 @@ static CFG: LazyLock<config::Config> = LazyLock::new(|| {
     use figment::*;
 
     Figment::new()
-        .merge(figment::providers::Env::prefixed("ACCLE_"))
+        .merge(figment::providers::Env::raw())
         .extract()
         .expect("could not parse config")
 });
+
+static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!();
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -32,15 +36,16 @@ async fn main() -> anyhow::Result<()> {
             .init();
     }
 
-    let client = ledger::Ledger::open(
-        &CFG.postgrest_endpoint,
-        &CFG.postgrest_apikey,
-        CFG.postgrest_servicekey.as_deref(),
-    );
+    let pool = PgPoolOptions::new()
+        .max_connections(CFG.database_pool_size)
+        .connect(&CFG.database_url)
+        .await?;
 
-    let accounts = client.get_accounts().await?;
+    MIGRATOR.run(&pool).await?;
 
-    info!("{accounts:?}");
+    let result = sqlx::query!("SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema');").fetch_all(&pool).await?;
+
+    info!("{result:?}");
 
     Ok(())
 }
