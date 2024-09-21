@@ -17,6 +17,7 @@ figment = { version = "*", features = ["env"] }
 uuid = { version = "*", features = ["serde", "v4", "v7"] }
 sqlx = { version = "*", features = [
     "migrate",
+    "macros",
     "runtime-tokio",
     "postgres",
     "uuid",

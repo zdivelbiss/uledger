@@ -8,6 +8,9 @@ mod ledger;
 #[macro_use]
 extern crate tracing;
 
+#[macro_use]
+extern crate sqlx;
+
 static CFG: LazyLock<config::Config> = LazyLock::new(|| {
     use figment::*;
 
@@ -17,7 +20,7 @@ static CFG: LazyLock<config::Config> = LazyLock::new(|| {
         .expect("could not parse config")
 });
 
-static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!();
+static MIGRATOR: sqlx::migrate::Migrator = migrate!();
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -42,8 +45,6 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     MIGRATOR.run(&pool).await?;
-
-    let result = sqlx::query!("SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema');").fetch_all(&pool).await?;
 
     info!("{result:?}");
 
