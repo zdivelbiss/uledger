@@ -1,7 +1,8 @@
-use std::sync::LazyLock;
+use std::{net::ToSocketAddrs, sync::LazyLock};
 
 use sqlx::postgres::PgPoolOptions;
 
+mod api;
 mod config;
 mod ledger;
 
@@ -21,6 +22,10 @@ static CFG: LazyLock<config::Config> = LazyLock::new(|| {
 });
 
 static MIGRATOR: sqlx::migrate::Migrator = migrate!();
+
+fn agent_str() -> &'static str {
+    concat!("uledger-core/", env!("CARGO_PKG_VERSION"))
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -43,10 +48,15 @@ async fn main() -> anyhow::Result<()> {
         .max_connections(CFG.database_pool_size)
         .connect(&CFG.database_url)
         .await?;
-
     MIGRATOR.run(&pool).await?;
 
-    info!("{result:?}");
+    let api_listener = tokio::time::timeout(
+        std::time::Duration::from_secs(5),
+        tokio::net::TcpListener::bind(CFG.bind_address),
+    )
+    .await??;
+
+    api::accept_connections(api_listener).await?;
 
     Ok(())
 }

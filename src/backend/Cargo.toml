@@ -6,14 +6,16 @@ edition = "2021"
 [dependencies]
 dotenvy = "*"
 anyhow = "*"
+
+tokio = { version = "*", features = ["full"] }
 tracing = "*"
 tracing-subscriber = "*"
+
+figment = { version = "*", features = ["env"] }
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
-tokio = { version = "*", features = ["full"] }
+
 chrono = { version = "*", features = ["serde"] }
-postgrest = "*"
-figment = { version = "*", features = ["env"] }
 uuid = { version = "*", features = ["serde", "v4", "v7"] }
 sqlx = { version = "*", features = [
     "migrate",
@@ -22,4 +24,15 @@ sqlx = { version = "*", features = [
     "postgres",
     "uuid",
     "chrono",
+] }
+
+axum = { version = "*", features = ["tracing"] }
+tower-http = { version = "*", features = [
+    "set-header",
+    "compression-br",
+    "compression-gzip",
+    "compression-zstd",
+    "decompression-br",
+    "decompression-gzip",
+    "decompression-zstd",
 ] }
