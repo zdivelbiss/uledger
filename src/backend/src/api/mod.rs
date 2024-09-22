@@ -1,4 +1,3 @@
-use crate::{ledger::Ledger, sessions::Sessions};
 use anyhow::Result;
 use axum::{
     http::{header, HeaderValue},
@@ -9,19 +8,16 @@ use tower_http::{
     compression::CompressionLayer, decompression::DecompressionLayer,
     set_header::SetResponseHeaderLayer,
 };
-use uuid::Uuid;
 
+mod state;
 mod v1;
 
-#[derive(Clone)]
-pub struct State {
-    pub sessions: Sessions<Uuid>,
-    pub users: Users,
-    pub ledger: Ledger
+pub async fn init_state() -> Result<()> {
+    state::init().await
 }
 
-pub async fn accept_connections(listener: TcpListener, sessions: Sessions<Uuid>) -> Result<()> {
-    trace!("Building API router...");
+pub async fn accept_connections() -> Result<()> {
+    let state = state::get();
 
     let decompression_layer = DecompressionLayer::new()
         .zstd(true)
@@ -38,8 +34,6 @@ pub async fn accept_connections(listener: TcpListener, sessions: Sessions<Uuid>)
         HeaderValue::from_static(crate::agent_str()),
     );
 
-    let state = State { sessions };
-
     let app = Router::new()
         .layer(decompression_layer)
         .nest("/api/v1", v1::routes())
@@ -47,10 +41,22 @@ pub async fn accept_connections(listener: TcpListener, sessions: Sessions<Uuid>)
         .layer(compression_layer)
         .with_state(state);
 
+    let listener = bind_listener().await?;
+
     info!("Begin listening for requests.");
     axum::serve(listener, app)
         .await
         .expect("error serving connections");
 
     Ok(())
+}
+
+async fn bind_listener() -> Result<TcpListener> {
+    let api_listener = tokio::time::timeout(
+        std::time::Duration::from_secs(5),
+        tokio::net::TcpListener::bind(crate::cfg().bind()),
+    )
+    .await??;
+
+    Ok(api_listener)
 }

@@ -1,11 +1,11 @@
 use config::cfg;
-use sqlx::postgres::PgPoolOptions;
 
 mod api;
 mod config;
-mod ledger;
-mod sessions;
-mod users;
+// mod ledger;
+
+mod email_address;
+pub use email_address::*;
 
 #[macro_use]
 extern crate tracing;
@@ -13,7 +13,8 @@ extern crate tracing;
 #[macro_use]
 extern crate sqlx;
 
-static MIGRATOR: sqlx::migrate::Migrator = migrate!();
+#[macro_use]
+extern crate anyhow;
 
 fn agent_str() -> &'static str {
     concat!("uledger-core/", env!("CARGO_PKG_VERSION"))
@@ -36,21 +37,8 @@ async fn main() -> anyhow::Result<()> {
             .init();
     }
 
-    let pool = PgPoolOptions::new()
-        .max_connections(cfg().database_pool_size())
-        .connect(cfg().database_url())
-        .await?;
-    MIGRATOR.run(&pool).await?;
-
-    let sessions = sessions::Sessions::<uuid::Uuid>::connect(cfg().sessions_url()).await?;
-
-    let api_listener = tokio::time::timeout(
-        std::time::Duration::from_secs(5),
-        tokio::net::TcpListener::bind(cfg().bind()),
-    )
-    .await??;
-
-    api::accept_connections(api_listener, sessions).await?;
+    api::init_state().await?;
+    api::accept_connections().await?;
 
     Ok(())
 }

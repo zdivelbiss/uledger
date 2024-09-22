@@ -26,6 +26,11 @@ pub struct User {
     password: String,
 }
 
-pub struct Users {
-    db: Pool<Postgres>,
+#[derive(Clone)]
+pub struct UserState(Pool<Postgres>);
+
+impl UserState {
+    pub fn new(db: Pool<Postgres>) -> Self {
+        Self(db)
+    }
 }

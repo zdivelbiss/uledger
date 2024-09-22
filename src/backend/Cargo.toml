@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 dotenvy = "*"
 anyhow = "*"
+thiserror = "*"
 
 tokio = { version = "*", features = ["full"] }
 tracing = "*"
@@ -14,6 +15,7 @@ tracing-subscriber = "*"
 figment = { version = "*", features = ["env"] }
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
+regex = "*"
 
 chrono = { version = "*", features = ["serde"] }
 uuid = { version = "*", features = ["serde", "v4", "v7"] }
@@ -27,6 +29,11 @@ sqlx = { version = "*", features = [
     "chrono",
 ] }
 
+rustls = { version = "*", default-features = false, features = [
+    "ring",
+    "logging",
+] }
+
 axum = { version = "*", features = ["tracing"] }
 tower-http = { version = "*", features = [
     "set-header",
@@ -36,4 +43,12 @@ tower-http = { version = "*", features = [
     "decompression-br",
     "decompression-gzip",
     "decompression-zstd",
+] }
+
+reqwest = { version = "*", default-features = false, features = [
+    "http2",
+    "charset",
+    "gzip",
+    "json",
+    "rustls-tls",
 ] }
