@@ -17,6 +17,7 @@ serde_json = "*"
 
 chrono = { version = "*", features = ["serde"] }
 uuid = { version = "*", features = ["serde", "v4", "v7"] }
+redis = { version = "*", features = ["aio", "ahash", "tokio-comp", "uuid"] }
 sqlx = { version = "*", features = [
     "migrate",
     "macros",

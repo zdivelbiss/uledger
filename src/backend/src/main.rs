@@ -1,25 +1,17 @@
-use std::{net::ToSocketAddrs, sync::LazyLock};
-
+use config::cfg;
 use sqlx::postgres::PgPoolOptions;
 
 mod api;
 mod config;
 mod ledger;
+mod sessions;
+mod users;
 
 #[macro_use]
 extern crate tracing;
 
 #[macro_use]
 extern crate sqlx;
-
-static CFG: LazyLock<config::Config> = LazyLock::new(|| {
-    use figment::*;
-
-    Figment::new()
-        .merge(figment::providers::Env::raw())
-        .extract()
-        .expect("could not parse config")
-});
 
 static MIGRATOR: sqlx::migrate::Migrator = migrate!();
 
@@ -45,18 +37,20 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let pool = PgPoolOptions::new()
-        .max_connections(CFG.database_pool_size)
-        .connect(&CFG.database_url)
+        .max_connections(cfg().database_pool_size())
+        .connect(cfg().database_url())
         .await?;
     MIGRATOR.run(&pool).await?;
 
+    let sessions = sessions::Sessions::<uuid::Uuid>::connect(cfg().sessions_url()).await?;
+
     let api_listener = tokio::time::timeout(
         std::time::Duration::from_secs(5),
-        tokio::net::TcpListener::bind(CFG.bind_address),
+        tokio::net::TcpListener::bind(cfg().bind()),
     )
     .await??;
 
-    api::accept_connections(api_listener).await?;
+    api::accept_connections(api_listener, sessions).await?;
 
     Ok(())
 }
