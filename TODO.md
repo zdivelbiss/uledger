@@ -1,0 +1,3 @@
+- Implement password authentication
+    - Server-side salt generation
+    - Hash & store salted password
