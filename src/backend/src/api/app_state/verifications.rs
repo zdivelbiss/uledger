@@ -1,4 +1,4 @@
-use crate::{api::state::State, config::cfg, util::EmailAddress};
+use crate::{api::app_state::AppState, config::cfg, util::EmailAddress};
 use redis::{aio::MultiplexedConnection, cmd, AsyncCommands, Client};
 use uuid::Uuid;
 
@@ -79,8 +79,8 @@ impl VerificationState {
     }
 }
 
-impl axum::extract::FromRef<super::State> for VerificationState {
-    fn from_ref(state: &State) -> Self {
+impl axum::extract::FromRef<super::AppState> for VerificationState {
+    fn from_ref(state: &AppState) -> Self {
         state.verification_state.clone()
     }
 }

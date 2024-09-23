@@ -3,9 +3,9 @@ use tokio::sync::{OnceCell, SetError};
 use users::UserState;
 use verifications::VerificationState;
 
-mod sessions;
-mod users;
-mod verifications;
+pub mod sessions;
+pub mod users;
+pub mod verifications;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -31,8 +31,8 @@ pub enum Error {
     Unknown(Box<dyn std::error::Error>),
 }
 
-impl From<SetError<State>> for Error {
-    fn from(value: SetError<State>) -> Self {
+impl From<SetError<AppState>> for Error {
+    fn from(value: SetError<AppState>) -> Self {
         match value {
             SetError::AlreadyInitializedError(_) => Self::StateInitialized,
             SetError::InitializingError(_) => Self::StateInitializing,
@@ -42,7 +42,7 @@ impl From<SetError<State>> for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-static STATE: OnceCell<State> = OnceCell::const_new();
+static STATE: OnceCell<AppState> = OnceCell::const_new();
 
 pub async fn init() -> Result<()> {
     use crate::cfg;
@@ -59,7 +59,7 @@ pub async fn init() -> Result<()> {
     let session_state = SessionState::connect().await?;
     let verification_state = VerificationState::connect().await?;
 
-    let state = State {
+    let state = AppState {
         user_state,
         session_state,
         verification_state,
@@ -70,12 +70,12 @@ pub async fn init() -> Result<()> {
     Ok(())
 }
 
-pub fn get() -> State {
+pub fn get() -> AppState {
     STATE.get().expect("state is uninitialized").clone()
 }
 
 #[derive(Clone)]
-pub struct State {
+pub struct AppState {
     user_state: UserState,
     session_state: SessionState,
     verification_state: VerificationState,

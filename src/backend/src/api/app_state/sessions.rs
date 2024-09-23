@@ -1,4 +1,4 @@
-use crate::api::state::State;
+use crate::api::app_state::AppState;
 use redis::{aio::MultiplexedConnection, cmd, AsyncCommands, Client};
 use uuid::Uuid;
 
@@ -72,8 +72,8 @@ impl SessionState {
     }
 }
 
-impl axum::extract::FromRef<super::State> for SessionState {
-    fn from_ref(state: &State) -> Self {
+impl axum::extract::FromRef<super::AppState> for SessionState {
+    fn from_ref(state: &AppState) -> Self {
         state.session_state.clone()
     }
 }

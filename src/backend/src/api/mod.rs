@@ -10,15 +10,15 @@ use tower_http::{
     set_header::SetResponseHeaderLayer,
 };
 
-mod state;
+mod app_state;
 mod v1;
 
 pub async fn init_state() {
-    state::init().await.expect("initializing state failed");
+    app_state::init().await.expect("initializing state failed");
 }
 
 pub async fn accept_connections() {
-    let state = state::get();
+    let state = app_state::get();
 
     let decompression_layer = DecompressionLayer::new()
         .zstd(true)
