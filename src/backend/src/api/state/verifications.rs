@@ -1,4 +1,4 @@
-use crate::{api::state::State, config::cfg, EmailAddress};
+use crate::{api::state::State, config::cfg, util::EmailAddress};
 use redis::{aio::MultiplexedConnection, cmd, AsyncCommands, Client};
 use uuid::Uuid;
 
@@ -14,7 +14,7 @@ pub enum Error {
     Unknown(Box<dyn std::error::Error>),
 }
 
-type Result<T> = core::result::Result<T, Error>;
+type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Clone)]
 pub struct VerificationState(MultiplexedConnection);

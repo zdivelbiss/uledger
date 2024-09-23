@@ -3,9 +3,8 @@ use config::cfg;
 mod api;
 mod config;
 // mod ledger;
-
-mod email_address;
-pub use email_address::*;
+mod email;
+mod util;
 
 #[macro_use]
 extern crate tracing;
@@ -13,15 +12,12 @@ extern crate tracing;
 #[macro_use]
 extern crate sqlx;
 
-#[macro_use]
-extern crate anyhow;
-
-fn agent_str() -> &'static str {
+fn user_agent() -> &'static str {
     concat!("uledger-core/", env!("CARGO_PKG_VERSION"))
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() {
     #[cfg(debug_assertions)]
     {
         dotenvy::dotenv().expect("no `.env` file");
@@ -37,8 +33,8 @@ async fn main() -> anyhow::Result<()> {
             .init();
     }
 
-    api::init_state().await?;
-    api::accept_connections().await?;
+    api::init_state().await;
+    api::accept_connections().await;
 
-    Ok(())
+    info!("Reached safe shutdown point.");
 }

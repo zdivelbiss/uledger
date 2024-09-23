@@ -1,9 +1,10 @@
-use anyhow::Result;
+use std::time::Duration;
+
 use axum::{
     http::{header, HeaderValue},
     Router,
 };
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, time::timeout};
 use tower_http::{
     compression::CompressionLayer, decompression::DecompressionLayer,
     set_header::SetResponseHeaderLayer,
@@ -12,11 +13,11 @@ use tower_http::{
 mod state;
 mod v1;
 
-pub async fn init_state() -> Result<()> {
-    state::init().await
+pub async fn init_state() {
+    state::init().await.expect("initializing state failed");
 }
 
-pub async fn accept_connections() -> Result<()> {
+pub async fn accept_connections() {
     let state = state::get();
 
     let decompression_layer = DecompressionLayer::new()
@@ -31,7 +32,7 @@ pub async fn accept_connections() -> Result<()> {
         .no_deflate();
     let set_server_layer = SetResponseHeaderLayer::if_not_present(
         header::SERVER,
-        HeaderValue::from_static(crate::agent_str()),
+        HeaderValue::from_static(crate::user_agent()),
     );
 
     let app = Router::new()
@@ -41,22 +42,17 @@ pub async fn accept_connections() -> Result<()> {
         .layer(compression_layer)
         .with_state(state);
 
-    let listener = bind_listener().await?;
+    // TODO error handling
+    let listener = timeout(
+        Duration::from_secs(5),
+        TcpListener::bind(crate::cfg().bind()),
+    )
+    .await
+    .unwrap()
+    .unwrap();
 
     info!("Begin listening for requests.");
     axum::serve(listener, app)
         .await
         .expect("error serving connections");
-
-    Ok(())
-}
-
-async fn bind_listener() -> Result<TcpListener> {
-    let api_listener = tokio::time::timeout(
-        std::time::Duration::from_secs(5),
-        tokio::net::TcpListener::bind(crate::cfg().bind()),
-    )
-    .await??;
-
-    Ok(api_listener)
 }

@@ -1,6 +1,10 @@
-use crate::email_address::EmailAddress;
-use serde::{de::Visitor, Deserialize, Deserializer};
+#![allow(unused)]
+
+use crate::util::EmailAddress;
 use std::{net::SocketAddr, sync::LazyLock, time::Duration};
+
+mod duration_visitor;
+use duration_visitor::*;
 
 static CFG: LazyLock<Config> = LazyLock::new(|| {
     use figment::{providers::Env, Figment};
@@ -15,9 +19,12 @@ pub fn cfg() -> &'static Config {
     &CFG
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 pub struct Config {
     bind: std::net::SocketAddr,
+
+    #[serde(deserialize_with = "deserialize_duration_mils")]
+    network_timeout: Duration,
 
     database_url: String,
     database_pool_size: u32,
@@ -39,6 +46,10 @@ pub struct Config {
 impl Config {
     pub fn bind(&self) -> SocketAddr {
         self.bind
+    }
+
+    pub fn network_timeout(&self) -> Duration {
+        self.network_timeout
     }
 
     pub fn database_url(&self) -> &str {
@@ -76,24 +87,8 @@ impl Config {
     pub fn postmark_api_key(&self) -> &str {
         &self.postmark_api_key
     }
-}
 
-struct DurationSecsVisitor;
-
-impl Visitor<'_> for DurationSecsVisitor {
-    type Value = Duration;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "expected a duration (in seconds)")
+    pub fn postmark_from_address(&self) -> &EmailAddress {
+        &self.postmark_from_address
     }
-
-    fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {
-        Ok(Duration::from_secs(v))
-    }
-}
-
-fn deserialize_duration_secs<'de, D: Deserializer<'de>>(
-    deserializer: D,
-) -> core::result::Result<Duration, D::Error> {
-    deserializer.deserialize_u32(DurationSecsVisitor)
 }

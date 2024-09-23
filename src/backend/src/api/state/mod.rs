@@ -1,12 +1,46 @@
-use anyhow::Result;
 use sessions::SessionState;
 use tokio::sync::{OnceCell, SetError};
 use users::UserState;
-use verification::VerificationState;
+use verifications::VerificationState;
 
 mod sessions;
 mod users;
-mod verification;
+mod verifications;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("state already initializing")]
+    StateInitializing,
+
+    #[error("state already initialized")]
+    StateInitialized,
+
+    #[error("session error")]
+    Sessions(#[from] sessions::Error),
+
+    #[error("verifications error")]
+    Verifications(#[from] verifications::Error),
+
+    #[error("sqlx error")]
+    Sqlx(#[from] sqlx::Error),
+
+    #[error("migration error")]
+    Migration(#[from] sqlx::migrate::MigrateError),
+
+    #[error("unknown error")]
+    Unknown(Box<dyn std::error::Error>),
+}
+
+impl From<SetError<State>> for Error {
+    fn from(value: SetError<State>) -> Self {
+        match value {
+            SetError::AlreadyInitializedError(_) => Self::StateInitialized,
+            SetError::InitializingError(_) => Self::StateInitializing,
+        }
+    }
+}
+
+type Result<T> = std::result::Result<T, Error>;
 
 static STATE: OnceCell<State> = OnceCell::const_new();
 
@@ -31,14 +65,9 @@ pub async fn init() -> Result<()> {
         verification_state,
     };
 
-    match STATE.set(state) {
-        Ok(_) => Ok(()),
+    STATE.set(state)?;
 
-        Err(SetError::<State>::InitializingError(_)) => bail!("state is already being initialized"),
-        Err(SetError::<State>::AlreadyInitializedError(_)) => {
-            bail!("state has already been initialized")
-        }
-    }
+    Ok(())
 }
 
 pub fn get() -> State {

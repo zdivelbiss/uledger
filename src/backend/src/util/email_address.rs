@@ -1,44 +1,7 @@
 use redis::ToRedisArgs;
 use regex::Regex;
-use reqwest::header::HeaderMap;
 use serde::{de::Visitor, Deserialize, Serialize};
-use std::sync::LazyLock;
-
-#[derive(Debug, Serialize)]
-enum MessageStream {
-    Verification,
-}
-
-static HEADERS: LazyLock<HeaderMap> = LazyLock::new(|| {
-    let mut header_map = HeaderMap::new();
-
-    header_map.insert("Accept", "application/json".try_into().unwrap());
-    header_map.insert("Content-Type", "application/json".try_into().unwrap());
-    header_map.insert(
-        "X-Postmark-Server-Token",
-        crate::cfg().postmark_api_key().try_into().unwrap(),
-    );
-
-    header_map
-});
-
-#[derive(Debug, Serialize)]
-struct Email {
-    #[serde(rename = "From")]
-    from: String,
-
-    #[serde(rename = "To")]
-    to: String,
-
-    #[serde(rename = "Subject")]
-    subject: String,
-
-    #[serde(rename = "HtmlBody")]
-    html_body: String,
-
-    #[serde(rename = "MessageStream")]
-    message_stream: MessageStream,
-}
+use std::{borrow::Cow, sync::LazyLock};
 
 static EMAIL_ADDRESS_VALIDATOR: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"#).expect("regex invalid")
@@ -48,10 +11,26 @@ static EMAIL_ADDRESS_VALIDATOR: LazyLock<Regex> = LazyLock::new(|| {
 pub struct EmailAddress(String);
 
 impl EmailAddress {
-    pub fn new(email_address: impl AsRef<str>) -> Option<Self> {
+    pub fn new(email_address: Cow<str>) -> Option<Self> {
         EMAIL_ADDRESS_VALIDATOR
             .is_match(email_address.as_ref())
-            .then_some(Self(email_address.as_ref().to_string()))
+            .then_some(Self(email_address.into_owned()))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl core::fmt::Display for EmailAddress {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl From<EmailAddress> for String {
+    fn from(value: EmailAddress) -> Self {
+        value.0
     }
 }
 
@@ -66,7 +45,7 @@ impl Serialize for EmailAddress {
 
 struct DeserializeEmailAddressVisitor;
 
-impl Visitor<'_> for DeserializeEmailAddressVisitor {
+impl<'de> Visitor<'de> for DeserializeEmailAddressVisitor {
     type Value = EmailAddress;
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -77,21 +56,22 @@ impl Visitor<'_> for DeserializeEmailAddressVisitor {
     where
         E: serde::de::Error,
     {
-        Self::visit_string(self, v.to_string())
+        EmailAddress::new(v.into()).ok_or_else(|| {
+            use serde::de::{Error, Unexpected};
+
+            Error::invalid_value(Unexpected::Str("invalid email address format"), &self)
+        })
     }
 
     fn visit_string<E>(self, v: String) -> std::result::Result<Self::Value, E>
     where
         E: serde::de::Error,
     {
-        if EMAIL_ADDRESS_VALIDATOR.is_match(v.as_str()) {
-            Ok(EmailAddress(v))
-        } else {
-            Err(serde::de::Error::invalid_value(
-                serde::de::Unexpected::Str(&v),
-                &self,
-            ))
-        }
+        EmailAddress::new(v.into()).ok_or_else(|| {
+            use serde::de::{Error, Unexpected};
+
+            Error::invalid_value(Unexpected::Str("invalid email address format"), &self)
+        })
     }
 }
 
@@ -109,6 +89,6 @@ impl ToRedisArgs for EmailAddress {
     where
         W: ?Sized + redis::RedisWrite,
     {
-        <String as ToRedisArgs>::write_redis_args(&self.0, out);
+        ToRedisArgs::write_redis_args(&self.0, out);
     }
 }

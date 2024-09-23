@@ -1,7 +1,10 @@
 use crate::api::state::State;
 
-mod accounts;
+mod auth;
+mod ledger;
 
 pub fn routes() -> axum::Router<State> {
-    axum::Router::new().nest("/accounts", accounts::routes())
+    axum::Router::new()
+        .nest("/ledger", ledger::routes())
+        .nest("/auth", auth::routes())
 }
