@@ -37,7 +37,7 @@ rustls = { version = "*", default-features = false, features = [
     "logging",
 ] }
 
-axum = { version = "*", features = ["tracing"] }
+axum = { version = "*", features = ["tracing", "macros"] }
 tower-http = { version = "*", features = [
     "set-header",
     "compression-br",

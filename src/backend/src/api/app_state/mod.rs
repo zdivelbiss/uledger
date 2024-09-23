@@ -75,3 +75,17 @@ pub fn get() -> AppState {
 
 #[derive(Clone)]
 pub struct AppState(UserState, SessionState, VerifyState);
+
+impl AppState {
+    pub fn user_state(&self) -> &UserState {
+        &self.0
+    }
+
+    pub fn session_state(&self) -> &SessionState {
+        &self.1
+    }
+
+    pub fn verify_state(&self) -> &VerifyState {
+        &self.2
+    }
+}

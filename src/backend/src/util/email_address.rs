@@ -1,7 +1,7 @@
 use redis::ToRedisArgs;
 use regex::Regex;
 use serde::{de::Visitor, Deserialize, Serialize};
-use std::{borrow::Cow, sync::LazyLock};
+use std::sync::LazyLock;
 
 static EMAIL_ADDRESS_VALIDATOR: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"#).expect("regex invalid")
@@ -11,9 +11,9 @@ static EMAIL_ADDRESS_VALIDATOR: LazyLock<Regex> = LazyLock::new(|| {
 pub struct EmailAddress(String);
 
 impl EmailAddress {
-    pub fn new(email_address: Cow<str>) -> std::result::Result<Self, Cow<str>> {
+    pub fn new<Str: AsRef<str>>(email_address: Str) -> std::result::Result<Self, Str> {
         if EMAIL_ADDRESS_VALIDATOR.is_match(email_address.as_ref()) {
-            Ok(Self(email_address.into_owned()))
+            Ok(Self(email_address.as_ref().to_string()))
         } else {
             Err(email_address)
         }
@@ -60,7 +60,7 @@ impl<'de> Visitor<'de> for DeserializeEmailAddressVisitor {
     {
         use serde::de::{Error, Unexpected};
 
-        EmailAddress::new(v.into()).map_err(|v| Error::invalid_value(Unexpected::Str(&v), &self))
+        EmailAddress::new(v).map_err(|v| Error::invalid_value(Unexpected::Str(&v), &self))
     }
 
     fn visit_string<E>(self, v: String) -> std::result::Result<Self::Value, E>
@@ -69,7 +69,7 @@ impl<'de> Visitor<'de> for DeserializeEmailAddressVisitor {
     {
         use serde::de::{Error, Unexpected};
 
-        EmailAddress::new(v.into()).map_err(|v| Error::invalid_value(Unexpected::Str(&v), &self))
+        EmailAddress::new(&v).map_err(|v| Error::invalid_value(Unexpected::Str(&v), &self))
     }
 }
 

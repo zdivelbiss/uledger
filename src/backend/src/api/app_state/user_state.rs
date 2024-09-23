@@ -61,7 +61,7 @@ impl UserState {
         let salt_str = salt.as_str();
         let password_hash_str = password_hash.as_str();
 
-        let result = query!(
+        let query_result = query!(
             "INSERT INTO auth.users (role, email, salt, password_hash) VALUES ($1, $2, $3, $4) RETURNING auth.users.id;",
             role_str,
             email_address_str,
@@ -70,7 +70,7 @@ impl UserState {
         ).fetch_one(self.pool())
         .await;
 
-        result.map(|r| r.id).map_err(|err| {
+        query_result.map(|r| r.id).map_err(|err| {
             let Some(err) = err.as_database_error() else {
                 return Error::Unknown;
             };

@@ -41,38 +41,28 @@ impl VerifyState {
         Ok(Self(connection))
     }
 
-    fn connection(&mut self) -> &mut MultiplexedConnection {
-        &mut self.0
-    }
+    pub async fn gen_email_verify(&self, email_address: &EmailAddress) -> Result<Uuid> {
+        let mut conn = self.0.clone();
 
-    pub async fn gen_email_address_verification(
-        &mut self,
-        email_address: EmailAddress,
-    ) -> Result<Uuid> {
-        let token = Uuid::new_v4();
-
-        let result = cmd("SET")
+        let set_result = cmd("SET")
             .arg(email_address)
-            .arg(token)
+            .arg(Uuid::new_v4())
             .arg("EX")
             .arg(cfg().verification.timeout.as_secs())
             .arg("NX")
-            .exec_async(self.connection())
+            .exec_async(&mut conn)
             .await;
 
-        match result {
-            Ok(()) => Ok(token),
+        match set_result {
+            Ok(()) => Ok(Uuid::new_v4()),
             Err(err) => Err(Error::Unknown(Box::new(err))),
         }
     }
 
-    pub async fn get_email_address_verification(
-        &mut self,
-        email_address: EmailAddress,
-    ) -> Result<Option<Uuid>> {
-        let result = self.0.get(email_address).await;
+    pub async fn get_email_verify(&self, email_address: &EmailAddress) -> Result<Option<Uuid>> {
+        let mut conn = self.0.clone();
 
-        match result {
+        match conn.get(email_address).await {
             Ok(token) => Ok(token),
             Err(err) => Err(Error::Unknown(Box::new(err))),
         }
