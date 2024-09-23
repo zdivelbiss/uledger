@@ -1,11 +1,13 @@
-use sessions::SessionState;
-use tokio::sync::{OnceCell, SetError};
-use users::UserState;
-use verifications::VerificationState;
+use std::time::Duration;
 
-pub mod sessions;
-pub mod users;
-pub mod verifications;
+use session_state::SessionState;
+use tokio::sync::{OnceCell, SetError};
+use user_state::UserState;
+use verify_state::VerifyState;
+
+pub mod session_state;
+pub mod user_state;
+pub mod verify_state;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -16,10 +18,10 @@ pub enum Error {
     StateInitialized,
 
     #[error("session error")]
-    Sessions(#[from] sessions::Error),
+    Sessions(#[from] session_state::Error),
 
     #[error("verifications error")]
-    Verifications(#[from] verifications::Error),
+    Verifications(#[from] verify_state::Error),
 
     #[error("sqlx error")]
     Sqlx(#[from] sqlx::Error),
@@ -50,20 +52,17 @@ pub async fn init() -> Result<()> {
     static MIGRATOR: sqlx::migrate::Migrator = migrate!();
 
     let db_pool = sqlx::postgres::PgPoolOptions::new()
-        .max_connections(cfg().database_pool_size())
-        .connect(cfg().database_url())
+        .max_connections(cfg().database.pool.size)
+        .acquire_timeout(Duration::from_secs(3600))
+        .connect(cfg().database.url.as_str())
         .await?;
     MIGRATOR.run(&db_pool).await?;
 
-    let user_state = UserState::new(db_pool.clone());
-    let session_state = SessionState::connect().await?;
-    let verification_state = VerificationState::connect().await?;
-
-    let state = AppState {
-        user_state,
-        session_state,
-        verification_state,
-    };
+    let state = AppState(
+        UserState::new(db_pool.clone()),
+        SessionState::connect().await?,
+        VerifyState::connect().await?,
+    );
 
     STATE.set(state)?;
 
@@ -75,8 +74,4 @@ pub fn get() -> AppState {
 }
 
 #[derive(Clone)]
-pub struct AppState {
-    user_state: UserState,
-    session_state: SessionState,
-    verification_state: VerificationState,
-}
+pub struct AppState(UserState, SessionState, VerifyState);

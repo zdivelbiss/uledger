@@ -7,7 +7,7 @@ CREATE SCHEMA IF NOT EXISTS ledger AUTHORIZATION uledger;
 CREATE TABLE IF NOT EXISTS auth.users (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created             TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    role                TEXT NOT NULL,
+    role                VARCHAR(3) NOT NULL,
     email               TEXT UNIQUE NOT NULL,
     email_confirmed_on  DATE,
     salt                TEXT NOT NULL,

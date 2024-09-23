@@ -48,11 +48,11 @@ static HTTP_CLIENT: LazyLock<reqwest::Client> = LazyLock::new(|| {
     headers.insert("Content-Type", "application/json".try_into().unwrap());
     headers.insert(
         "X-Postmark-Server-Token",
-        crate::cfg().postmark_api_key().try_into().unwrap(),
+        crate::cfg().postmark.apikey.as_str().try_into().unwrap(),
     );
 
     reqwest::Client::builder()
-        .connect_timeout(cfg().network_timeout())
+        .connect_timeout(cfg().network.timeout)
         .gzip(true)
         .https_only(true)
         .user_agent(user_agent())
@@ -90,7 +90,7 @@ TODO
     );
 
     let email = Email {
-        from: cfg().postmark_from_address().as_str().into(),
+        from: cfg().postmark.sender.as_str().into(),
         to: String::from(to).into(),
         subject: "Verify your email for µLedger".into(),
         html_body: html_body.into(),

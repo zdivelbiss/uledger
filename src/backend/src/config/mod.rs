@@ -5,6 +5,8 @@ use std::{net::SocketAddr, sync::LazyLock, time::Duration};
 
 mod duration_visitor;
 use duration_visitor::*;
+use serde::Deserialize;
+use tracing_subscriber::registry::Data;
 
 static CFG: LazyLock<Config> = LazyLock::new(|| {
     use figment::{providers::Env, Figment};
@@ -19,76 +21,45 @@ pub fn cfg() -> &'static Config {
     &CFG
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Config {
-    bind: std::net::SocketAddr,
-
-    #[serde(deserialize_with = "deserialize_duration_mils")]
-    network_timeout: Duration,
-
-    database_url: String,
-    database_pool_size: u32,
-
-    sessions_url: String,
-    sessions_db_num: Option<u32>,
-    #[serde(deserialize_with = "deserialize_duration_secs")]
-    sessions_lifetime: Duration,
-
-    verifications_url: String,
-    verifications_db_num: Option<u32>,
-    #[serde(deserialize_with = "deserialize_duration_secs")]
-    verifications_lifetime: Duration,
-
-    postmark_api_key: String,
-    postmark_from_address: EmailAddress,
+    pub network: Network,
+    pub database: Database,
+    pub session: Storage,
+    pub verification: Storage,
+    pub postmark: Postmark,
 }
 
-impl Config {
-    pub fn bind(&self) -> SocketAddr {
-        self.bind
-    }
+#[derive(Debug, Deserialize)]
+pub struct Network {
+    pub bind: std::net::SocketAddr,
 
-    pub fn network_timeout(&self) -> Duration {
-        self.network_timeout
-    }
+    #[serde(deserialize_with = "deserialize_duration_mils")]
+    pub timeout: Duration,
+}
 
-    pub fn database_url(&self) -> &str {
-        &self.database_url
-    }
+#[derive(Debug, Deserialize)]
+pub struct Database {
+    pub url: String,
+    pub pool: Pool,
+}
 
-    pub fn database_pool_size(&self) -> u32 {
-        self.database_pool_size
-    }
+#[derive(Debug, Deserialize)]
+pub struct Pool {
+    pub size: u32,
+}
 
-    pub fn sessions_url(&self) -> &str {
-        &self.sessions_url
-    }
+#[derive(Debug, Deserialize)]
+pub struct Storage {
+    pub url: String,
+    pub namespace: Option<u32>,
 
-    pub fn sessions_db_num(&self) -> Option<u32> {
-        self.sessions_db_num
-    }
+    #[serde(deserialize_with = "deserialize_duration_secs")]
+    pub timeout: Duration,
+}
 
-    pub fn sessions_lifetime(&self) -> Duration {
-        self.sessions_lifetime
-    }
-
-    pub fn verifications_url(&self) -> &str {
-        &self.verifications_url
-    }
-
-    pub fn verifications_db_num(&self) -> Option<u32> {
-        self.verifications_db_num
-    }
-
-    pub fn verifications_lifetime(&self) -> Duration {
-        self.verifications_lifetime
-    }
-
-    pub fn postmark_api_key(&self) -> &str {
-        &self.postmark_api_key
-    }
-
-    pub fn postmark_from_address(&self) -> &EmailAddress {
-        &self.postmark_from_address
-    }
+#[derive(Debug, Deserialize)]
+pub struct Postmark {
+    pub apikey: String,
+    pub sender: EmailAddress,
 }

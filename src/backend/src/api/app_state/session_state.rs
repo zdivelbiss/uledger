@@ -23,16 +23,16 @@ impl SessionState {
     pub async fn connect() -> Result<Self> {
         use crate::cfg;
 
-        let url = cfg().sessions_url();
+        let url = cfg().session.url.as_str();
         let client = Client::open(url).map_err(|_| Error::InvalidUrl { url })?;
         let mut connection = client
             .get_multiplexed_async_connection()
             .await
             .map_err(|_| Error::ConnectionFailed { url })?;
 
-        if let Some(db_num) = cfg().sessions_db_num() {
+        if let Some(namespace) = cfg().session.namespace {
             cmd("SELECT")
-                .arg(db_num)
+                .arg(namespace)
                 .exec_async(&mut connection)
                 .await
                 .map_err(|err| Error::Unknown(Box::new(err)))?;
@@ -74,6 +74,6 @@ impl SessionState {
 
 impl axum::extract::FromRef<super::AppState> for SessionState {
     fn from_ref(state: &AppState) -> Self {
-        state.session_state.clone()
+        state.1.clone()
     }
 }

@@ -17,22 +17,22 @@ pub enum Error {
 type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Clone)]
-pub struct VerificationState(MultiplexedConnection);
+pub struct VerifyState(MultiplexedConnection);
 
-impl VerificationState {
+impl VerifyState {
     pub async fn connect() -> Result<Self> {
         use crate::cfg;
 
-        let url = cfg().verifications_url();
+        let url = cfg().verification.url.as_str();
         let client = Client::open(url).map_err(|_| Error::InvalidUrl { url })?;
         let mut connection = client
             .get_multiplexed_async_connection()
             .await
             .map_err(|_| Error::ConnectionFailed { url })?;
 
-        if let Some(db_num) = cfg().verifications_db_num() {
+        if let Some(namespace) = cfg().verification.namespace {
             cmd("SELECT")
-                .arg(db_num)
+                .arg(namespace)
                 .exec_async(&mut connection)
                 .await
                 .unwrap();
@@ -55,7 +55,7 @@ impl VerificationState {
             .arg(email_address)
             .arg(token)
             .arg("EX")
-            .arg(cfg().verifications_lifetime().as_secs())
+            .arg(cfg().verification.timeout.as_secs())
             .arg("NX")
             .exec_async(self.connection())
             .await;
@@ -79,8 +79,8 @@ impl VerificationState {
     }
 }
 
-impl axum::extract::FromRef<super::AppState> for VerificationState {
+impl axum::extract::FromRef<super::AppState> for VerifyState {
     fn from_ref(state: &AppState) -> Self {
-        state.verification_state.clone()
+        state.2.clone()
     }
 }

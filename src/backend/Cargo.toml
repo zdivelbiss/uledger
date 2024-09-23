@@ -18,6 +18,7 @@ serde-big-array = "*"
 argon2 = { version = "*", features = ["simple", "rand"] }
 sha2 = "*"
 regex = "*"
+base64 = "*"
 
 chrono = { version = "*", features = ["serde"] }
 uuid = { version = "*", features = ["serde", "v4", "v7"] }

@@ -1,16 +1,10 @@
 use crate::{
-    api::app_state::{users::UserState, verifications::VerificationState, AppState},
+    api::app_state::{user_state::UserState, verify_state::VerifyState, AppState},
     util::EmailAddress,
 };
-use axum::{
-    extract::{Query, State},
-    http::StatusCode,
-    response::IntoResponse,
-    routing::{get, post},
-    Json,
-};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::post, Json};
+use base64::Engine;
 use serde::Deserialize;
-use serde_big_array::BigArray;
 
 pub fn routes() -> axum::Router<AppState> {
     axum::Router::new().route("/register", post(register))
@@ -19,23 +13,33 @@ pub fn routes() -> axum::Router<AppState> {
 #[derive(Debug, Deserialize)]
 struct RegisterUser {
     email: EmailAddress,
-
-    #[serde(with = "BigArray")]
-    password_hash: [u8; 512],
+    password_digest: String,
 }
 
 async fn register(
-    verifications_state: State<VerificationState>,
+    users_state: State<UserState>,
     register_user: Json<RegisterUser>,
 ) -> impl IntoResponse {
-    use argon2::{
-        password_hash::{rand_core::OsRng, SaltString},
-        Argon2, PasswordHasher,
-    };
+    use crate::api::app_state::user_state::Error;
 
-    let argon2 = Argon2::default();
-    let salt = SaltString::generate(&mut OsRng);
-    let final_password_hash = argon2.hash_password(&register_user.password_hash, &salt);
+    // TODO error checking
+    let mut password_digest = [0u8; 512];
+    base64::engine::general_purpose::STANDARD
+        .decode_slice(register_user.password_digest.as_str(), &mut password_digest)
+        .unwrap();
 
-    StatusCode::OK
+    let result = users_state
+        .register_user(&register_user.email, &password_digest)
+        .await;
+
+    match result {
+        Ok(id) => {
+            let id_serialized = serde_json::to_string(&id).unwrap();
+            (StatusCode::OK, id_serialized).into_response()
+        }
+
+        Err(Error::UserExists) => StatusCode::CONFLICT.into_response(),
+
+        Err(Error::Unknown) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    }
 }

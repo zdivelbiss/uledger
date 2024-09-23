@@ -45,7 +45,7 @@ pub async fn accept_connections() {
     // TODO error handling
     let listener = timeout(
         Duration::from_secs(5),
-        TcpListener::bind(crate::cfg().bind()),
+        TcpListener::bind(crate::cfg().network.bind),
     )
     .await
     .unwrap()
