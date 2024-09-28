@@ -1,3 +1,5 @@
+#![allow(clippy::unused_unit)]
+
 use config::cfg;
 
 mod api;
@@ -33,7 +35,6 @@ async fn main() {
             .init();
     }
 
-    api::init_state().await;
     api::accept_connections().await;
 
     info!("Reached safe shutdown point.");

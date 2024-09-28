@@ -30,6 +30,7 @@ sqlx = { version = "*", features = [
     "postgres",
     "uuid",
     "chrono",
+    "derive",
 ] }
 
 rustls = { version = "*", default-features = false, features = [

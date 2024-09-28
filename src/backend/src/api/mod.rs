@@ -13,12 +13,8 @@ use tower_http::{
 mod app_state;
 mod v1;
 
-pub async fn init_state() {
-    app_state::init().await.expect("initializing state failed");
-}
-
 pub async fn accept_connections() {
-    let state = app_state::get();
+    let state = app_state::AppState::create().await;
 
     let decompression_layer = DecompressionLayer::new()
         .zstd(true)
