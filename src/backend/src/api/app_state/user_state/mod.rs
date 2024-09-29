@@ -2,8 +2,9 @@ use crate::util::EmailAddress;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-pub mod create_verify_email;
-pub mod register_user;
+pub mod verify;
+pub mod register;
+pub mod login;
 
 #[derive(Debug)]
 pub enum Role {
@@ -56,6 +57,6 @@ impl UserState {
 
 impl axum::extract::FromRef<super::AppState> for UserState {
     fn from_ref(state: &super::AppState) -> Self {
-        state.0.clone()
+        state.user_state().clone()
     }
 }

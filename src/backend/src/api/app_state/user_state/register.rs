@@ -1,4 +1,8 @@
-use crate::util::EmailAddress;
+use crate::util::{EmailAddress, PasswordDigest};
+use argon2::{
+    password_hash::{rand_core::OsRng, SaltString},
+    Argon2, PasswordHasher,
+};
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -34,24 +38,19 @@ impl From<sqlx::Error> for Error {
 }
 
 impl super::UserState {
-    pub async fn register_user(
+    pub async fn register(
         &self,
         email_address: &EmailAddress,
-        password_digest: &[u8; 512],
+        password_digest: &PasswordDigest,
     ) -> Result<Uuid, Error> {
-        use argon2::{
-            password_hash::{rand_core::OsRng, SaltString},
-            Argon2, PasswordHasher,
-        };
-
         let salt = SaltString::generate(&mut OsRng);
         let password_hash = Argon2::default()
-            .hash_password(password_digest, &salt)?
+            .hash_password(password_digest.as_slice(), &salt)?
             .serialize();
 
         let record = query!(
             "
-            INSERT INTO auth.users (role, email, salt, password_hash)
+            INSERT INTO auth.users (role, email, password_salt, password_hash)
                 VALUES ($1, $2, $3, $4)
                 RETURNING auth.users.id
             ;

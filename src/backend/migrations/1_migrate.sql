@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS auth.users (
     email               TEXT UNIQUE NOT NULL,
     email_verified_on   DATE,
 
-    salt                TEXT NOT NULL,
+    password_salt       TEXT NOT NULL,
     password_hash       TEXT NOT NULL
 
 );

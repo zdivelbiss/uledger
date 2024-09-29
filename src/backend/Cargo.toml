@@ -32,6 +32,7 @@ sqlx = { version = "*", features = [
     "chrono",
     "derive",
 ] }
+deadpool = "*"
 
 rustls = { version = "*", default-features = false, features = [
     "ring",
@@ -39,6 +40,7 @@ rustls = { version = "*", default-features = false, features = [
 ] }
 
 axum = { version = "*", features = ["tracing", "macros"] }
+axum-extra = { version = "*", features = ["cookie", "cookie-private"] }
 tower-http = { version = "*", features = [
     "set-header",
     "compression-br",

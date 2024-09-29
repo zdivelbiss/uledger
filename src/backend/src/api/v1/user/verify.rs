@@ -19,12 +19,13 @@ pub fn routes() -> axum::Router<AppState> {
         .route("/finalize", post(finalize_verify))
 }
 
+#[axum::debug_handler]
 async fn create_verify(
     user_id: Path<Uuid>,
     user_state: State<UserState>,
     email_address: Json<EmailAddress>,
 ) -> impl IntoResponse {
-    use crate::api::app_state::user_state::create_verify_email::Error;
+    use crate::api::app_state::user_state::verify::Error;
 
     user_state
         .create_verify_email(*user_id, &email_address)
@@ -50,6 +51,7 @@ struct VerifyEmailAddress {
     proof_token: Uuid,
 }
 
+#[axum::debug_handler]
 async fn finalize_verify(
     user_state: State<UserState>,
     body: Json<VerifyEmailAddress>,
