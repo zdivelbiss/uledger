@@ -1,9 +1,29 @@
-use crate::api::app_state::AppState;
-use redis::{aio::MultiplexedConnection, cmd, AsyncCommands, Client, RedisResult};
+use crate::api::state::AppState;
+use redis::{aio::MultiplexedConnection, cmd, Client, RedisResult};
 use uuid::Uuid;
 
-mod session;
-pub use session::*;
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct Session {
+    user_id: Uuid,
+    user_agent: Option<String>,
+}
+
+impl Session {
+    pub fn new(user_id: Uuid, user_agent: Option<String>) -> Self {
+        Self {
+            user_id,
+            user_agent,
+        }
+    }
+
+    pub fn user_id(&self) -> Uuid {
+        self.user_id
+    }
+
+    pub fn user_agent(&self) -> Option<&str> {
+        self.user_agent.as_deref()
+    }
+}
 
 #[derive(Clone)]
 pub struct SessionState(MultiplexedConnection);
@@ -29,7 +49,6 @@ impl SessionState {
         self.0.clone()
     }
 
-    #[instrument(skip(self))]
     pub async fn store(&self, session: Session) -> RedisResult<Uuid> {
         let mut conn = self.get_connection();
 

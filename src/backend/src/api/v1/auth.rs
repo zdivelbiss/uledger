@@ -1,6 +1,5 @@
 use crate::{
-    api::app_state::{user_state::UserState, AppState},
-    config::cfg,
+    api::state::{user::UserState, AppState},
     util::{EmailAddress, PasswordDigest},
 };
 use axum::{
@@ -10,12 +9,8 @@ use axum::{
     routing::post,
     Json,
 };
-use axum_extra::extract::{
-    cookie::{Cookie, Expiration, SameSite},
-    PrivateCookieJar,
-};
-use chrono::Utc;
 use serde::Deserialize;
+use tower_sessions::Session;
 
 pub fn routes() -> axum::Router<AppState> {
     axum::Router::new()
@@ -31,7 +26,7 @@ struct AuthInfo {
 
 #[axum::debug_handler]
 async fn register(user_state: State<UserState>, body: Json<AuthInfo>) -> impl IntoResponse {
-    use crate::api::app_state::user_state::register::Error;
+    use crate::api::state::user::register::Error;
 
     match user_state
         .register(&body.email_address, &body.password_digest)
@@ -56,11 +51,11 @@ async fn register(user_state: State<UserState>, body: Json<AuthInfo>) -> impl In
 #[axum::debug_handler]
 async fn login(
     app_state: State<AppState>,
-    private_cookies: PrivateCookieJar,
+    session: Session,
     headers: HeaderMap,
     body: Json<AuthInfo>,
 ) -> impl IntoResponse {
-    use crate::api::app_state::{session_state::Session, user_state::login::Error};
+    use crate::api::state::user::login::Error;
 
     match app_state
         .user_state()
@@ -72,19 +67,11 @@ async fn login(
                 .get("User-Agent")
                 .and_then(|v| v.to_str().ok())
                 .map(str::to_string);
-            let session = Session::new(user_id, user_agent);
 
-            let session_id = app_state.session_state().store(session).await.unwrap();
+            session.insert("user_id", user_id).await.unwrap();
+            session.insert("user_agent", user_agent).await.unwrap();
 
-            let mut session_cookie = Cookie::new("id", session_id.to_string());
-            session_cookie.set_expires(Expiration::Session);
-            session_cookie.set_secure(true);
-            session_cookie.set_http_only(true);
-            session_cookie.set_same_site(SameSite::Strict);
-
-            let private_cookies = private_cookies.add(session_cookie);
-
-            (StatusCode::OK, private_cookies).into_response()
+            StatusCode::OK.into_response()
         }
 
         Err(Error::InvalidEmail | Error::InvalidPassword) => {

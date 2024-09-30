@@ -1,4 +1,4 @@
-use crate::api::app_state::AppState;
+use crate::api::state::AppState;
 use axum::{http::StatusCode, response::IntoResponse, routing::get};
 
 pub fn routes() -> axum::Router<AppState> {

@@ -1,4 +1,4 @@
-use crate::api::app_state::AppState;
+use crate::api::state::AppState;
 
 mod auth;
 mod ledger;

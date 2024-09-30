@@ -1,5 +1,5 @@
 use crate::{
-    api::app_state::{user_state::UserState, AppState},
+    api::state::{user::UserState, AppState},
     util::EmailAddress,
 };
 use axum::{
@@ -25,7 +25,7 @@ async fn create_verify(
     user_state: State<UserState>,
     email_address: Json<EmailAddress>,
 ) -> impl IntoResponse {
-    use crate::api::app_state::user_state::verify::Error;
+    use crate::api::state::user::verify::Error;
 
     user_state
         .create_verify_email(*user_id, &email_address)

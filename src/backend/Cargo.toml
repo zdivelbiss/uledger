@@ -50,6 +50,12 @@ tower-http = { version = "*", features = [
     "decompression-gzip",
     "decompression-zstd",
 ] }
+tower-sessions = { version = "*", default-features = false, features = [
+    "axum-core",
+    "signed",
+    "private",
+] }
+tower-sessions-redis-store = "*"
 
 reqwest = { version = "*", default-features = false, features = [
     "http2",

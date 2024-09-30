@@ -24,9 +24,8 @@ pub fn cfg() -> &'static Config {
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub network: Network,
-    pub apikey: ApiKey,
     pub database: Database,
-    pub session: Storage,
+    pub session: Session,
     pub postmark: Postmark,
 }
 
@@ -36,11 +35,6 @@ pub struct Network {
 
     #[serde(deserialize_with = "deserialize_duration_mils")]
     pub timeout: Duration,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ApiKey {
-    pub cookies: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -55,8 +49,9 @@ pub struct Pool {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Storage {
+pub struct Session {
     pub url: String,
+    pub apikey: String,
     pub namespace: Option<u32>,
 
     #[serde(deserialize_with = "deserialize_duration_secs")]
