@@ -1,12 +1,19 @@
 use crate::api::state::AppState;
-use axum::{http::StatusCode, response::IntoResponse, routing::get};
+use axum::{
+    http::StatusCode,
+    response::IntoResponse,
+    routing::{get, post},
+};
 
+mod auth;
 mod verify;
 
 pub fn routes() -> axum::Router<AppState> {
     axum::Router::new()
-        .nest("/:user_id/verify", verify::routes())
-        .route("/:user_id/test", get(test))
+        .route("/test", get(test))
+        .route("/register", post(auth::register))
+        .route("/login", post(auth::login))
+        .nest("/verify", verify::routes())
 }
 
 #[axum::debug_handler]

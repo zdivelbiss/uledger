@@ -1,6 +1,7 @@
 use crate::{api::state::AppState, cfg};
 use axum::{
-    http::{header, HeaderValue},
+    http::{header, HeaderValue, StatusCode},
+    response::IntoResponse,
     Router,
 };
 use base64::Engine;
@@ -10,11 +11,12 @@ use tower_http::{
     compression::CompressionLayer, decompression::DecompressionLayer,
     set_header::SetResponseHeaderLayer,
 };
-use tower_sessions::{cookie, Expiry, SessionManagerLayer};
+use tower_sessions::{cookie, Expiry, Session, SessionManagerLayer};
 use tower_sessions_redis_store::{
-    fred::{self},
+    fred::{self, prelude::ClientLike},
     RedisStore,
 };
+use uuid::Uuid;
 
 mod services;
 mod state;
@@ -25,10 +27,15 @@ pub async fn accept_connections() {
 
     let url = cfg().session.url.as_str();
 
+    debug!("Creating connection configuration for session storage: {url:?}");
     let config = fred::types::RedisConfig::from_url(url).expect("invalid url");
+    debug!("Building session storage connection...");
     let client = fred::types::Builder::from_config(config)
         .build()
-        .expect("could not connect");
+        .expect("could not crate");
+    debug!("Connecting to session storage...");
+    let _ = client.init().await;
+    debug!("Session storage connection established.");
 
     let key_bytes = base64::engine::general_purpose::STANDARD
         .decode(cfg().session.apikey.as_str())
@@ -42,6 +49,7 @@ pub async fn accept_connections() {
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(true)
         .with_http_only(true)
+        .with_always_save(true)
         .with_expiry(session_expiry)
         .with_private(session_key);
     let decompression_layer = DecompressionLayer::new()
@@ -80,4 +88,34 @@ pub async fn accept_connections() {
     axum::serve(listener, app)
         .await
         .expect("error serving connections");
+}
+
+pub fn internal_error(err: impl std::fmt::Debug) -> impl IntoResponse {
+    error!("{err:?}");
+
+    StatusCode::INTERNAL_SERVER_ERROR.into_response()
+}
+
+pub fn user_forbidden() -> impl IntoResponse {
+    (StatusCode::FORBIDDEN, "You must authenticate.")
+}
+
+pub async fn init_session(
+    user_id: Uuid,
+    user_agent: Option<&str>,
+    session: &Session,
+) -> Result<(), tower_sessions::session::Error> {
+    session.insert("user_id", user_id).await?;
+    session.insert("user_agent", user_agent).await?;
+
+    Ok(())
+}
+
+pub async fn is_matching_session(user_id: Uuid, session: &Session) -> bool {
+    session
+        .get::<Uuid>("user_id")
+        .await
+        .unwrap_or(None)
+        .map(|session_user_id| session_user_id == user_id)
+        .unwrap_or(false)
 }

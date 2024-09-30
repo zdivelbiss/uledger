@@ -49,6 +49,7 @@ tower-http = { version = "*", features = [
     "decompression-br",
     "decompression-gzip",
     "decompression-zstd",
+    "validate-request",
 ] }
 tower-sessions = { version = "*", default-features = false, features = [
     "axum-core",
