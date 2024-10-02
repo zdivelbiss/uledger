@@ -3,8 +3,8 @@ use reqwest::header::HeaderMap;
 use serde::Serialize;
 use std::sync::LazyLock;
 
-mod template;
-pub use template::*;
+mod transaction;
+pub use transaction::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -37,25 +37,26 @@ static HTTP_CLIENT: LazyLock<reqwest::Client> = LazyLock::new(|| {
 
 #[derive(Debug, Serialize)]
 pub enum MessageStream {
-    #[serde(rename = "verification")]
-    Verification,
+    #[serde(rename = "broadcast")]
+    Broadcast,
+
+    #[serde(rename = "inbound")]
+    Inbound,
+
+    #[serde(rename = "outbound")]
+    Outbound,
 }
 
-pub async fn send<M: Model>(template: Template<M>) -> std::result::Result<(), Error> {
-    let Ok(body) = serde_json::to_string(&template) else {
+pub async fn send<K: Kind>(transaction: Transaction<K>) -> std::result::Result<(), Error> {
+    let Ok(body) = serde_json::to_string(&transaction) else {
         return Err(Error::BodySerialization);
     };
 
-    let http_post_result = HTTP_CLIENT
+    HTTP_CLIENT
         .post("https://api.postmarkapp.com/email/withTemplate")
         .body(body)
         .send()
-        .await;
-
-    match http_post_result {
-        Ok(response) => debug!("HTTP response: {response:?}"),
-        Err(err) => debug!("HTTP response: {err:?}"),
-    }
-
-    Ok(())
+        .await
+        .map(|response| debug!("HTTP response: {response:?}"))
+        .map_err(Error::from)
 }

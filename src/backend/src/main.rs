@@ -35,19 +35,6 @@ async fn main() {
             .init();
     }
 
-    let to_email: util::EmailAddress = "test@blackhole.postmarkapp.com".parse().unwrap();
-    postmark::send(postmark::Template::create(
-        &to_email,
-        None,
-        postmark::VerificationModel::new(
-            chrono::Utc::now(),
-            to_email.clone(),
-            uuid::Uuid::now_v7(),
-        ),
-    ))
-    .await
-    .unwrap();
-
     std::process::exit(0);
 
     api::accept_connections().await;
