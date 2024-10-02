@@ -51,7 +51,6 @@ pub struct Pool {
 #[derive(Debug, Deserialize)]
 pub struct Session {
     pub url: String,
-    pub apikey: String,
     pub namespace: Option<u32>,
 
     #[serde(deserialize_with = "deserialize_duration_secs")]

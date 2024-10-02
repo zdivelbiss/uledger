@@ -31,11 +31,13 @@ impl From<sqlx::Error> for Error {
 
 impl super::UserState {
     #[instrument(skip(self))]
-    pub async fn create_verify_email(
+    pub async fn begin_verify_email(
         &self,
         user_id: Uuid,
         email_address: &EmailAddress,
-    ) -> Result<(), Error> {
+    ) -> Result<Uuid, Error> {
+        let token = Uuid::new_v4();
+
         query!(
             "
             INSERT INTO auth.email_verification (user_id, email_address, proof_token)
@@ -49,11 +51,11 @@ impl super::UserState {
             ",
             user_id,
             email_address.as_str(), // TODO figure out why email_address won't coerce
-            Uuid::new_v4()
+            token
         )
         .execute(self.pool())
         .await?;
 
-        Ok(())
+        Ok(token)
     }
 }

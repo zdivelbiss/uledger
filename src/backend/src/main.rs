@@ -5,7 +5,7 @@ use config::cfg;
 mod api;
 mod config;
 // mod ledger;
-mod email;
+mod postmark;
 mod util;
 
 #[macro_use]
@@ -25,7 +25,7 @@ async fn main() {
         dotenvy::dotenv().expect("no `.env` file");
 
         tracing_subscriber::fmt()
-            .with_max_level(tracing::Level::TRACE)
+            .with_max_level(tracing::Level::DEBUG)
             .init();
     }
     #[cfg(not(debug_assertions))]
@@ -34,6 +34,21 @@ async fn main() {
             .with_max_level(tracing::Level::INFO)
             .init();
     }
+
+    let to_email: util::EmailAddress = "test@blackhole.postmarkapp.com".parse().unwrap();
+    postmark::send(postmark::Template::create(
+        &to_email,
+        None,
+        postmark::VerificationModel::new(
+            chrono::Utc::now(),
+            to_email.clone(),
+            uuid::Uuid::now_v7(),
+        ),
+    ))
+    .await
+    .unwrap();
+
+    std::process::exit(0);
 
     api::accept_connections().await;
 

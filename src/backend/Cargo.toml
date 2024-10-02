@@ -19,6 +19,7 @@ argon2 = { version = "*", features = ["simple", "rand"] }
 sha2 = "*"
 regex = "*"
 base64 = "*"
+hex = "*"
 
 chrono = { version = "*", features = ["serde"] }
 uuid = { version = "*", features = ["serde", "v4", "v7"] }

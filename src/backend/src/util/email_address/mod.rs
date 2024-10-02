@@ -32,8 +32,13 @@ impl core::fmt::Display for EmailAddress {
     }
 }
 
-impl From<EmailAddress> for String {
-    fn from(value: EmailAddress) -> Self {
-        value.0
+#[derive(Debug)]
+pub struct InvalidEmailAddressFormatError;
+
+impl std::str::FromStr for EmailAddress {
+    type Err = InvalidEmailAddressFormatError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::new(s).map_err(|_| InvalidEmailAddressFormatError)
     }
 }

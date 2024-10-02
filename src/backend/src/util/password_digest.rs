@@ -1,14 +1,13 @@
-use base64::engine::{general_purpose::STANDARD, Engine};
 use serde::{
     de::{Unexpected, Visitor},
     Deserialize, Deserializer,
 };
 
-pub struct PasswordDigest([u8; 512]);
+pub struct PasswordDigest([u8; 64]);
 
 impl std::fmt::Debug for PasswordDigest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        STANDARD.encode(self.0).fmt(f)
+        hex::encode(self.0).fmt(f)
     }
 }
 
@@ -30,13 +29,12 @@ impl<'de> Visitor<'de> for PasswordDigestVisitor {
     type Value = PasswordDigest;
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "a padded BASE64 string")
+        write!(formatter, "a hex-encoded SHA512 digest")
     }
 
     fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
         let mut buf = [0u8; size_of::<PasswordDigest>()];
-        STANDARD
-            .decode_slice(v, &mut buf)
+        hex::decode_to_slice(v, &mut buf)
             .map_err(|_| E::invalid_value(Unexpected::Str(v), &self))?;
 
         Ok(PasswordDigest(buf))

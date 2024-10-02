@@ -37,21 +37,15 @@ pub async fn accept_connections() {
     let _ = client.init().await;
     debug!("Session storage connection established.");
 
-    let key_bytes = base64::engine::general_purpose::STANDARD
-        .decode(cfg().session.apikey.as_str())
-        .expect("failed to decode BASE64 cookies API key");
-
-    let session_key = cookie::Key::try_from(key_bytes.as_slice()).expect("session key is invalid");
-    let session_lifetime = cfg().session.lifetime;
-    let session_expiry = Expiry::OnInactivity(session_lifetime.try_into().unwrap());
+    let session_expiry = Expiry::OnInactivity(cfg().session.lifetime.try_into().unwrap());
+    debug!("Using session expiry: {session_expiry:?}");
     let session_store = RedisStore::new(client);
 
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(true)
         .with_http_only(true)
         .with_always_save(true)
-        .with_expiry(session_expiry)
-        .with_private(session_key);
+        .with_expiry(session_expiry);
     let decompression_layer = DecompressionLayer::new()
         .zstd(true)
         .br(true)

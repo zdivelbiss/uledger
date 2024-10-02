@@ -9,10 +9,20 @@ use axum::{
     extract::State,
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
+    routing::post,
     Json,
 };
 use serde::Deserialize;
 use tower_sessions::Session;
+
+mod verify;
+
+pub fn routes() -> axum::Router<AppState> {
+    axum::Router::new()
+        .route("/register", post(register))
+        .route("/login", post(login))
+        .nest("/verify", verify::routes())
+}
 
 #[derive(Debug, Deserialize)]
 pub struct AuthInfo {
@@ -62,7 +72,7 @@ pub async fn login(
             let user_agent = headers.get("User-Agent").and_then(|v| v.to_str().ok());
 
             match init_session(user_id, user_agent, &session).await {
-                Ok(_) => StatusCode::OK.into_response(),
+                Ok(_) => (StatusCode::OK, "You have successfully logged in.").into_response(),
 
                 Err(err) => internal_error(err).into_response(),
             }

@@ -11,7 +11,7 @@ impl Visitor<'_> for DurationMilsVisitor {
     }
 
     fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {
-        Ok(Duration::from_secs(v))
+        Ok(Duration::from_millis(v))
     }
 }
 
@@ -31,7 +31,7 @@ impl Visitor<'_> for DurationSecsVisitor {
     }
 
     fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {
-        Ok(Duration::from_millis(v))
+        Ok(Duration::from_secs(v))
     }
 }
 
