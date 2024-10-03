@@ -1,5 +1,5 @@
-use uuid::Uuid;
 use crate::util::{EmailAddress, VerificationToken};
+use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

@@ -1,4 +1,8 @@
-use crate::{config::cfg, postmark::MessageStream, util::EmailAddress};
+use crate::{
+    config::cfg,
+    postmark::MessageStream,
+    util::{EmailAddress, VerificationToken},
+};
 use chrono::{DateTime, Utc};
 use serde::{ser::SerializeStruct, Serialize, Serializer};
 use std::fmt::Debug;
@@ -48,7 +52,11 @@ impl<K: Kind> Serialize for Transaction<K> {
 }
 
 impl Transaction<Verification> {
-    pub fn verification(to: &EmailAddress, creation: DateTime<Utc>, proof_token: [u8; 3]) -> Self {
+    pub fn verification(
+        to: &EmailAddress,
+        creation: DateTime<Utc>,
+        proof_token: VerificationToken,
+    ) -> Self {
         Self::new(
             MessageStream::Verification,
             to,

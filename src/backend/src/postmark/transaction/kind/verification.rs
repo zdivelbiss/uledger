@@ -13,12 +13,12 @@ impl Verification {
     pub fn new(creation: DateTime<Utc>, token: VerificationToken) -> Self {
         let creation_datetime = creation.format("%A, %B %e at %l:%M%p %Z").to_string();
 
-        let mut proof_token = hex::encode(proof_token).to_uppercase();
-        proof_token.insert(3, ' ');
+        let mut proof_token = token.to_string();
+        proof_token.insert(VerificationToken::SIZE, ' ');
 
         Self {
             creation_datetime,
-            proof_token:,
+            proof_token,
         }
     }
 }

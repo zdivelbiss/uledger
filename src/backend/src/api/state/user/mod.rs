@@ -1,10 +1,10 @@
-use crate::util::EmailAddress;
+use crate::util::{EmailAddress, VerificationToken};
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-pub mod verify;
-pub mod register;
 pub mod login;
+pub mod register;
+pub mod verify;
 
 #[derive(Debug)]
 pub enum Role {
@@ -37,7 +37,7 @@ impl UserState {
         &self,
         user_id: Uuid,
         email_address: &EmailAddress,
-        proof_token: Uuid,
+        proof_token: VerificationToken,
     ) -> Result<u64, sqlx::Error> {
         query!(
             "
@@ -47,7 +47,7 @@ impl UserState {
             ",
             user_id,
             email_address.as_str(),
-            proof_token
+            proof_token.to_string()
         )
         .execute(self.pool())
         .await

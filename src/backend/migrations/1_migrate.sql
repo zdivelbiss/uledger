@@ -1,6 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION uledger;
 CREATE SCHEMA IF NOT EXISTS ledger AUTHORIZATION uledger;
 
+
 -- AUTH --
 ----------
 
@@ -25,6 +26,8 @@ CREATE TABLE IF NOT EXISTS auth.email_verification (
 );
 
 ALTER TABLE auth.email_verification     ADD FOREIGN KEY (user_id) REFERENCES auth.users (id);
+
+
 -- LEDGER --
 ------------
 
@@ -76,7 +79,6 @@ CREATE TABLE IF NOT EXISTS ledger.transactions (
     payee           UUID NOT NULL,
     description     TEXT
 );
-
 
 ALTER TABLE ledger.accounts ADD FOREIGN KEY (user_id) REFERENCES auth.users (id);
 
