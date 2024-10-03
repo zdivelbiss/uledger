@@ -4,21 +4,19 @@ use axum::{
     response::IntoResponse,
     Router,
 };
-use base64::Engine;
 use std::time::Duration;
 use tokio::{net::TcpListener, time::timeout};
 use tower_http::{
     compression::CompressionLayer, decompression::DecompressionLayer,
     set_header::SetResponseHeaderLayer,
 };
-use tower_sessions::{cookie, Expiry, Session, SessionManagerLayer};
+use tower_sessions::{Expiry, Session, SessionManagerLayer};
 use tower_sessions_redis_store::{
     fred::{self, prelude::ClientLike},
     RedisStore,
 };
 use uuid::Uuid;
 
-mod services;
 mod state;
 mod v1;
 
@@ -45,7 +43,8 @@ pub async fn accept_connections() {
         .with_secure(true)
         .with_http_only(true)
         .with_always_save(true)
-        .with_expiry(session_expiry);
+        .with_expiry(session_expiry)
+        .with_signed(cfg().session.key.clone());
     let decompression_layer = DecompressionLayer::new()
         .zstd(true)
         .br(true)
@@ -90,10 +89,6 @@ pub fn internal_error(err: impl std::fmt::Debug) -> impl IntoResponse {
     StatusCode::INTERNAL_SERVER_ERROR.into_response()
 }
 
-pub fn user_forbidden() -> impl IntoResponse {
-    (StatusCode::FORBIDDEN, "You must authenticate.")
-}
-
 pub async fn init_session(
     user_id: Uuid,
     user_agent: Option<&str>,
@@ -105,11 +100,10 @@ pub async fn init_session(
     Ok(())
 }
 
-pub async fn is_matching_session(user_id: Uuid, session: &Session) -> bool {
+pub async fn get_user_id(session: &Session) -> Uuid {
     session
-        .get::<Uuid>("user_id")
+        .get("user_id")
         .await
-        .unwrap_or(None)
-        .map(|session_user_id| session_user_id == user_id)
-        .unwrap_or(false)
+        .expect("session error")
+        .expect("`user_id` not set in session")
 }

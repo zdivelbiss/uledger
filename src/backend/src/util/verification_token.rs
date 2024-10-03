@@ -1,3 +1,7 @@
+use serde::de::{Error, Unexpected, Visitor};
+use std::fmt;
+
+#[derive(Debug)]
 pub struct VerificationToken([u8; Self::SIZE]);
 
 impl VerificationToken {
@@ -7,9 +11,9 @@ impl VerificationToken {
         Self(rand::random())
     }
 
-    pub fn from_str(value: impl AsRef<str>) -> Result<Self, hex::FromHexError> {
+    pub fn from_str(v: impl AsRef<str>) -> Result<Self, hex::FromHexError> {
         let mut data = [0u8; Self::SIZE];
-        hex::decode_to_slice(value.as_ref(), &mut data)?;
+        hex::decode_to_slice(v.as_ref(), &mut data)?;
 
         Ok(Self(data))
     }
@@ -17,12 +21,32 @@ impl VerificationToken {
 
 impl std::fmt::Display for VerificationToken {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        hex::encode(self.0).fmt(f)
+        hex::encode_upper(self.0).fmt(f)
     }
 }
 
 impl serde::Serialize for VerificationToken {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for VerificationToken {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        deserializer.deserialize_str(VerificationTokenVisitor)
+    }
+}
+
+struct VerificationTokenVisitor;
+
+impl<'de> Visitor<'de> for VerificationTokenVisitor {
+    type Value = VerificationToken;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter, "a 3-byte hex string")
+    }
+
+    fn visit_str<E: Error>(self, v: &str) -> Result<Self::Value, E> {
+        VerificationToken::from_str(v).map_err(|_| Error::invalid_value(Unexpected::Str(v), &self))
     }
 }

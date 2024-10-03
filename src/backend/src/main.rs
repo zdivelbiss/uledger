@@ -1,5 +1,6 @@
 #![allow(clippy::unused_unit)]
 
+use base64::Engine;
 use config::cfg;
 
 mod api;

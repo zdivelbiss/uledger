@@ -9,7 +9,7 @@ pub use transaction::*;
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("could not serialize email body")]
-    BodySerialization,
+    BodySerialization(#[from] serde_json::Error),
 
     #[error("http request error")]
     Http(#[from] reqwest::Error),
@@ -50,14 +50,10 @@ pub enum MessageStream {
     Verification,
 }
 
-pub async fn send<K: Kind>(transaction: Transaction<K>) -> std::result::Result<(), Error> {
-    let Ok(body) = serde_json::to_string(&transaction) else {
-        return Err(Error::BodySerialization);
-    };
-
+pub async fn send_email<K: Kind>(transaction: Transaction<K>) -> std::result::Result<(), Error> {
     HTTP_CLIENT
         .post("https://api.postmarkapp.com/email/withTemplate")
-        .body(body)
+        .body(serde_json::to_string(&transaction)?)
         .send()
         .await
         .map(|response| debug!("HTTP response: {response:?}"))

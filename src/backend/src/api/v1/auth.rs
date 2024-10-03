@@ -15,13 +15,10 @@ use axum::{
 use serde::Deserialize;
 use tower_sessions::Session;
 
-mod verify;
-
 pub fn routes() -> axum::Router<AppState> {
     axum::Router::new()
         .route("/register", post(register))
         .route("/login", post(login))
-        .nest("/verify", verify::routes())
 }
 
 #[derive(Debug, Deserialize)]
