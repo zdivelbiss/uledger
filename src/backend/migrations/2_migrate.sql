@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS auth.users (
     email               TEXT UNIQUE NOT NULL,
     email_verified_on   DATE,
 
-    salt                TEXT NOT NULL,
+    password_salt       TEXT NOT NULL,
     password_hash       TEXT NOT NULL
 
 );
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS auth.email_verification (
     user_id         UUID PRIMARY KEY,
     created         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     email_address   TEXT UNIQUE NOT NULL,
-    proof_token     UUID NOT NULL
+    proof_token     TEXT NOT NULL
 );
 
 ALTER TABLE auth.email_verification     ADD FOREIGN KEY (user_id) REFERENCES auth.users (id);

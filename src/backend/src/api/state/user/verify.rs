@@ -1,6 +1,5 @@
 use uuid::Uuid;
-
-use crate::util::EmailAddress;
+use crate::util::{EmailAddress, VerificationToken};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -35,8 +34,8 @@ impl super::UserState {
         &self,
         user_id: Uuid,
         email_address: &EmailAddress,
-    ) -> Result<Uuid, Error> {
-        let token = Uuid::new_v4();
+    ) -> Result<VerificationToken, Error> {
+        let token = VerificationToken::gen();
 
         query!(
             "
@@ -51,7 +50,7 @@ impl super::UserState {
             ",
             user_id,
             email_address.as_str(), // TODO figure out why email_address won't coerce
-            token
+            token.to_string()
         )
         .execute(self.pool())
         .await?;

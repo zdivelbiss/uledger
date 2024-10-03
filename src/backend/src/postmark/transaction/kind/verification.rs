@@ -1,22 +1,24 @@
-use crate::util::EmailAddress;
+use crate::util::VerificationToken;
 use chrono::{DateTime, Utc};
 use serde::{ser::SerializeStruct, Serialize};
 use std::fmt::Debug;
-use uuid::Uuid;
 
 #[derive(Debug, Serialize)]
 pub struct Verification {
     creation_datetime: String,
-    origin_email: EmailAddress,
-    proof_token: Uuid,
+    proof_token: String,
 }
 
 impl Verification {
-    pub fn new(creation: DateTime<Utc>, origin_email: EmailAddress, proof_token: Uuid) -> Self {
+    pub fn new(creation: DateTime<Utc>, token: VerificationToken) -> Self {
+        let creation_datetime = creation.format("%A, %B %e at %l:%M%p %Z").to_string();
+
+        let mut proof_token = hex::encode(proof_token).to_uppercase();
+        proof_token.insert(3, ' ');
+
         Self {
-            creation_datetime: creation.format("%A, %B %e at %l:%M%p %Z").to_string(),
-            origin_email,
-            proof_token,
+            creation_datetime,
+            proof_token:,
         }
     }
 }

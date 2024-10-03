@@ -45,6 +45,9 @@ pub enum MessageStream {
 
     #[serde(rename = "outbound")]
     Outbound,
+
+    #[serde(rename = "verification")]
+    Verification,
 }
 
 pub async fn send<K: Kind>(transaction: Transaction<K>) -> std::result::Result<(), Error> {

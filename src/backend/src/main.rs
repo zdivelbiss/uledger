@@ -35,8 +35,6 @@ async fn main() {
             .init();
     }
 
-    std::process::exit(0);
-
     api::accept_connections().await;
 
     info!("Reached safe shutdown point.");

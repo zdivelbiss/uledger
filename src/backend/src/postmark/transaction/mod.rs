@@ -1,4 +1,5 @@
 use crate::{config::cfg, postmark::MessageStream, util::EmailAddress};
+use chrono::{DateTime, Utc};
 use serde::{ser::SerializeStruct, Serialize, Serializer};
 use std::fmt::Debug;
 
@@ -10,24 +11,17 @@ pub struct Transaction<K: Kind> {
     message_stream: MessageStream,
     from: EmailAddress,
     to: EmailAddress,
-    reply_to: Option<EmailAddress>,
     track_opens: bool,
 
     kind: K,
 }
 
 impl<K: Kind> Transaction<K> {
-    pub fn new(
-        message_stream: MessageStream,
-        to: &EmailAddress,
-        reply_to: Option<&EmailAddress>,
-        kind: K,
-    ) -> Self {
+    pub fn new(message_stream: MessageStream, to: &EmailAddress, kind: K) -> Self {
         Self {
             message_stream,
             from: cfg().postmark.sender.clone(),
             to: to.clone(),
-            reply_to: reply_to.cloned(),
             track_opens: true,
             kind,
         }
@@ -45,14 +39,20 @@ impl<K: Kind> Serialize for Transaction<K> {
         serializer.serialize_field("From", &self.from)?;
         serializer.serialize_field("To", &self.to)?;
 
-        if let Some(reply_to) = self.reply_to.as_ref() {
-            serializer.serialize_field("ReplyTo", &reply_to)?;
-        }
-
         serializer.serialize_field("TrackOpens", &self.track_opens)?;
 
         self.kind.serialize_into(&mut serializer)?;
 
         serializer.end()
+    }
+}
+
+impl Transaction<Verification> {
+    pub fn verification(to: &EmailAddress, creation: DateTime<Utc>, proof_token: [u8; 3]) -> Self {
+        Self::new(
+            MessageStream::Verification,
+            to,
+            Verification::new(creation, proof_token),
+        )
     }
 }

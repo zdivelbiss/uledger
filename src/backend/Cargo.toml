@@ -15,7 +15,8 @@ figment = { version = "*", features = ["env"] }
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 serde-big-array = "*"
-argon2 = { version = "*", features = ["simple", "rand"] }
+argon2 = { version = "*", features = ["simple"] }
+rand = { version = "*", features = ["getrandom"] }
 sha2 = "*"
 regex = "*"
 base64 = "*"
