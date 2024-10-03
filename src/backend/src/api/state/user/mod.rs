@@ -33,13 +33,13 @@ impl UserState {
         Self(db)
     }
 
-    pub async fn try_verify_email(
+    pub async fn finalize_email_verification(
         &self,
         user_id: Uuid,
         email_address: &EmailAddress,
-        proof_token: VerificationToken,
-    ) -> Result<u64, sqlx::Error> {
-        query!(
+        proof_token: &VerificationToken,
+    ) -> Result<bool, sqlx::Error> {
+        let rows_affected = query!(
             "
             DELETE FROM auth.email_verification
                 WHERE (user_id, email_address, proof_token) = ($1, $2, $3)
@@ -50,8 +50,34 @@ impl UserState {
             proof_token.to_string()
         )
         .execute(self.pool())
-        .await
-        .map(|r| r.rows_affected())
+        .await?
+        .rows_affected();
+
+        if rows_affected == 0 {
+            return Ok(false);
+        } else if rows_affected > 1 {
+            warn!("Dropped {rows_affected} during email validation!");
+
+            return Ok(false);
+        }
+
+        query!(
+            "
+            UPDATE auth.users
+                SET
+                    email = $2,
+                    email_verified_on = $3
+                WHERE id = $1
+            ;
+            ",
+            user_id,
+            email_address.as_str(),
+            chrono::Utc::now().date_naive()
+        )
+        .execute(self.pool())
+        .await?;
+
+        Ok(true)
     }
 }
 

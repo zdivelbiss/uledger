@@ -32,7 +32,7 @@ async fn begin_verify(
     let user_id = get_user_id(&session).await;
 
     match user_state
-        .begin_verify_email(user_id, &body.email_address)
+        .create_email_verification(user_id, &body.email_address)
         .await
     {
         Ok(token) => {
@@ -64,4 +64,14 @@ async fn finalize_verify(
     body: Json<FinalizeVerify>,
 ) -> impl IntoResponse {
     let user_id = get_user_id(&session).await;
+
+    match user_state
+        .finalize_email_verification(user_id, &body.email_address, &body.proof_token)
+        .await
+    {
+        Ok(success) => {
+            
+        }
+        Err(err) => todo!(),
+    }
 }

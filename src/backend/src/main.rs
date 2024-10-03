@@ -1,13 +1,11 @@
 #![allow(clippy::unused_unit)]
 
-use base64::Engine;
-use config::cfg;
-
 mod api;
-mod config;
-// mod ledger;
 mod postmark;
 mod util;
+
+mod config;
+use config::cfg;
 
 #[macro_use]
 extern crate tracing;

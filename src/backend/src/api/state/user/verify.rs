@@ -30,7 +30,7 @@ impl From<sqlx::Error> for Error {
 
 impl super::UserState {
     #[instrument(skip(self))]
-    pub async fn begin_verify_email(
+    pub async fn create_email_verification(
         &self,
         user_id: Uuid,
         email_address: &EmailAddress,
