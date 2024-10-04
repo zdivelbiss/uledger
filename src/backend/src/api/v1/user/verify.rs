@@ -24,10 +24,9 @@ async fn begin_verify(
     body: Json<BeginVerify>,
 ) -> impl IntoResponse {
     use crate::{
-        api::state::user::verify::Error,
+        api::state::user::verify::create::Error,
         postmark::{send_email, Transaction},
     };
-    use chrono::Utc;
 
     let user_id = get_user_id(&session).await;
 
@@ -36,7 +35,8 @@ async fn begin_verify(
         .await
     {
         Ok(token) => {
-            let transaction = Transaction::verification(&body.email_address, Utc::now(), token);
+            let transaction =
+                Transaction::verification(&body.email_address, chrono::Utc::now(), token);
 
             match send_email(transaction).await {
                 Ok(_) => StatusCode::CREATED.into_response(),
@@ -69,9 +69,9 @@ async fn finalize_verify(
         .finalize_email_verification(user_id, &body.email_address, &body.proof_token)
         .await
     {
-        Ok(success) => {
-            
-        }
-        Err(err) => todo!(),
+        Ok(true) => StatusCode::CREATED.into_response(),
+
+        Ok(false) => StatusCode::NOT_FOUND.into_response(),
+        Err(err) => internal_error(err).into_response(),
     }
 }

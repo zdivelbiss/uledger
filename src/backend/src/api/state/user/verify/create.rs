@@ -28,26 +28,26 @@ impl From<sqlx::Error> for Error {
     }
 }
 
-impl super::UserState {
+impl super::super::UserState {
     #[instrument(skip(self))]
     pub async fn create_email_verification(
         &self,
         user_id: Uuid,
         email_address: &EmailAddress,
     ) -> Result<VerificationToken, Error> {
-        let token = VerificationToken::gen();
+        let token: VerificationToken = VerificationToken::gen();
 
         query!(
             "
-            INSERT INTO auth.email_verification (user_id, email_address, proof_token)
-                VALUES ($1, $2, $3)
-                ON CONFLICT (user_id) DO UPDATE SET
-                    user_id = $1,
-                    created = NOW(),
-                    email_address = $2,
-                    proof_token = $3
-            ;
-            ",
+        INSERT INTO auth.email_verification (user_id, email_address, proof_token)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (user_id) DO UPDATE SET
+                user_id = $1,
+                created = NOW(),
+                email_address = $2,
+                proof_token = $3
+        ;
+        ",
             user_id,
             email_address.as_str(), // TODO figure out why email_address won't coerce
             token.to_string()
