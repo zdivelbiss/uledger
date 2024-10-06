@@ -1,13 +1,9 @@
-use crate::api::{
-    internal_error,
-    state::user::{Role, UserState},
-};
+use crate::api::{internal_error, state::AppState};
 use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
     Argon2, PasswordHasher,
 };
 use axum::{
-    body::Body,
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -22,7 +18,7 @@ pub enum Error {
     #[error("failed to hash password")]
     PasswordHashing(argon2::password_hash::Error),
 
-    #[error("internal database error")]
+    #[error(transparent)]
     Database(sqlx::Error),
 }
 
@@ -54,14 +50,14 @@ impl IntoResponse for Error {
                 Error::PasswordHashing(error) => internal_error(error),
                 Error::Database(error) => internal_error(error),
             })
-            .body(Body::empty())
+            .body(axum::body::Body::empty())
             .unwrap()
     }
 }
 
 #[axum::debug_handler]
 pub async fn register(
-    user_state: State<UserState>,
+    state: State<AppState>,
     body: Json<super::AuthInfo>,
 ) -> Result<StatusCode, Error> {
     let email_address = &body.email_address;
@@ -79,12 +75,12 @@ pub async fn register(
             RETURNING auth.users.id
         ;
         ",
-        <&str>::from(Role::Regular),
+        <&str>::from(crate::util::Role::Regular),
         email_address.as_str(),
         salt.as_str(),
         password_hash.as_str()
     )
-    .fetch_one(user_state.pgpool())
+    .fetch_one(state.db())
     .await?;
 
     Ok(StatusCode::OK)

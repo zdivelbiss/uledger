@@ -1,5 +1,4 @@
 use axum::{
-    body::Body,
     http::StatusCode,
     response::{IntoResponse, Response},
 };
@@ -9,17 +8,17 @@ use crate::api::internal_error;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("unknown logout failure")]
-    FlushFail(#[from] tower_sessions::session::Error),
+    #[error(transparent)]
+    Session(#[from] tower_sessions::session::Error),
 }
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         Response::builder()
             .status(match self {
-                Error::FlushFail(error) => internal_error(error),
+                Error::Session(error) => internal_error(error),
             })
-            .body(Body::empty())
+            .body(axum::body::Body::empty())
             .unwrap()
     }
 }

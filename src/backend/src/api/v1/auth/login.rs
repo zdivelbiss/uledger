@@ -1,7 +1,6 @@
-use crate::api::{internal_error, state::user::UserState};
+use crate::api::{internal_error, state::AppState};
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
 use axum::{
-    body::Body,
     extract::State,
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
@@ -17,13 +16,13 @@ pub enum Error {
     #[error("invalid email & password combination")]
     InvalidLogin,
 
-    #[error("internal database error")]
+    #[error(transparent)]
     Database(sqlx::Error),
 
     #[error("failed to hash password")]
     PasswordHashing(argon2::password_hash::Error),
 
-    #[error("manipulating user session")]
+    #[error(transparent)]
     Session(#[from] tower_sessions::session::Error),
 }
 
@@ -52,14 +51,14 @@ impl IntoResponse for Error {
                 Error::Database(error) => internal_error(error),
                 Error::Session(error) => internal_error(error),
             })
-            .body(Body::empty())
+            .body(axum::body::Body::empty())
             .unwrap()
     }
 }
 
 #[axum::debug_handler]
 pub async fn login(
-    user_state: State<UserState>,
+    state: State<AppState>,
     session: Session,
     headers: HeaderMap,
     body: Json<super::AuthInfo>,
@@ -79,7 +78,7 @@ pub async fn login(
         ",
         email_address.as_str()
     )
-    .fetch_one(user_state.pgpool())
+    .fetch_one(state.db())
     .await?;
 
     let password_salt = SaltString::from_b64(&user.password_salt)?;

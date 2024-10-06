@@ -1,12 +1,9 @@
-use sqlx::postgres::PgPoolOptions;
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::time::Duration;
-use user::UserState;
-
-pub mod user;
 
 #[derive(Clone)]
 pub struct AppState {
-    user_state: UserState,
+    db: Pool<Postgres>,
 }
 
 impl AppState {
@@ -20,12 +17,10 @@ impl AppState {
             .await
             .expect("could not initialize DB connection pool");
 
-        Self {
-            user_state: UserState::new(db_pool.clone()),
-        }
+        Self { db: db_pool }
     }
 
-    pub fn user_state(&self) -> &UserState {
-        &self.user_state
+    pub fn db(&self) -> &Pool<Postgres> {
+        &self.db
     }
 }

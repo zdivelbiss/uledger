@@ -6,3 +6,6 @@ pub use password_digest::*;
 
 mod verification_token;
 pub use verification_token::*;
+
+mod role;
+pub use role::*;

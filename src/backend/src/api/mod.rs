@@ -1,7 +1,6 @@
 use crate::{api::state::AppState, cfg};
 use axum::{
     http::{header, HeaderValue, StatusCode},
-    response::IntoResponse,
     Router,
 };
 use std::time::Duration;
@@ -91,6 +90,14 @@ pub fn internal_error(error: impl std::fmt::Debug) -> StatusCode {
 
 #[derive(Debug)]
 struct NoUserIdError;
+
+impl std::fmt::Display for NoUserIdError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "user is not authenticated")
+    }
+}
+
+impl std::error::Error for NoUserIdError {}
 
 pub async fn get_user_id(session: &Session) -> Result<Uuid, NoUserIdError> {
     match session.get("user_id").await {
