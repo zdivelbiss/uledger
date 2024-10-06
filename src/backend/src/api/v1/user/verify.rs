@@ -8,7 +8,7 @@ use crate::{
 use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::post, Json};
 use tower_sessions::Session;
 
-pub fn routes() -> axum::Router<AppState> {
+pub fn router() -> axum::Router<AppState> {
     axum::Router::new().route("/", post(begin_verify).patch(finalize_verify))
 }
 
@@ -28,7 +28,7 @@ async fn begin_verify(
         postmark::{send_email, Transaction},
     };
 
-    let user_id = get_user_id(&session).await;
+    let user_id = get_user_id(&session).await.unwrap();
 
     match user_state
         .create_email_verification(user_id, &body.email_address)
@@ -63,7 +63,7 @@ async fn finalize_verify(
     user_state: State<UserState>,
     body: Json<FinalizeVerify>,
 ) -> impl IntoResponse {
-    let user_id = get_user_id(&session).await;
+    let user_id = get_user_id(&session).await.unwrap();
 
     match user_state
         .finalize_email_verification(user_id, &body.email_address, &body.proof_token)

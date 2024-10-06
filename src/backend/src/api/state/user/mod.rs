@@ -1,7 +1,5 @@
 use sqlx::{Pool, Postgres};
 
-pub mod login;
-pub mod register;
 pub mod verify;
 
 #[derive(Debug)]
@@ -27,7 +25,7 @@ impl UserState {
         Self(db)
     }
 
-    fn pool(&self) -> &Pool<Postgres> {
+    pub fn pgpool(&self) -> &Pool<Postgres> {
         &self.0
     }
 }

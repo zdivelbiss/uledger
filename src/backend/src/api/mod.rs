@@ -20,7 +20,7 @@ use uuid::Uuid;
 mod state;
 mod v1;
 
-pub async fn accept_connections() {
+pub async fn run_server() {
     let state = AppState::create().await;
 
     let url = cfg().session.url.as_str();
@@ -62,7 +62,7 @@ pub async fn accept_connections() {
 
     let app = Router::new()
         .layer(decompression_layer)
-        .nest("/api/v1", v1::routes())
+        .nest("/api/v1", v1::router())
         .layer(set_server_layer)
         .layer(compression_layer)
         .layer(session_layer)
@@ -83,27 +83,18 @@ pub async fn accept_connections() {
         .expect("error serving connections");
 }
 
-pub fn internal_error(err: impl std::fmt::Debug) -> impl IntoResponse {
-    error!("{err:?}");
+pub fn internal_error(error: impl std::fmt::Debug) -> StatusCode {
+    error!("{error:?}");
 
-    StatusCode::INTERNAL_SERVER_ERROR.into_response()
+    StatusCode::INTERNAL_SERVER_ERROR
 }
 
-pub async fn init_session(
-    user_id: Uuid,
-    user_agent: Option<&str>,
-    session: &Session,
-) -> Result<(), tower_sessions::session::Error> {
-    session.insert("user_id", user_id).await?;
-    session.insert("user_agent", user_agent).await?;
+#[derive(Debug)]
+struct NoUserIdError;
 
-    Ok(())
-}
-
-pub async fn get_user_id(session: &Session) -> Uuid {
-    session
-        .get("user_id")
-        .await
-        .expect("session error")
-        .expect("`user_id` not set in session")
+pub async fn get_user_id(session: &Session) -> Result<Uuid, NoUserIdError> {
+    match session.get("user_id").await {
+        Ok(Some(user_id)) => Ok(user_id),
+        _ => Err(NoUserIdError),
+    }
 }

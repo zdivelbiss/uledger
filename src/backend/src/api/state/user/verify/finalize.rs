@@ -36,7 +36,7 @@ impl super::super::UserState {
             email_address.as_str(),
             proof_token.to_string()
         )
-        .execute(self.pool())
+        .execute(self.pgpool())
         .await?
         .rows_affected();
 
@@ -61,7 +61,7 @@ impl super::super::UserState {
             email_address.as_str(),
             chrono::Utc::now().date_naive()
         )
-        .execute(self.pool())
+        .execute(self.pgpool())
         .await?;
 
         Ok(true)

@@ -4,9 +4,9 @@ mod auth;
 mod ledger;
 mod user;
 
-pub fn routes() -> axum::Router<AppState> {
+pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
-        .nest("/ledger", ledger::routes())
-        .nest("/auth", auth::routes())
-        .nest("/user", user::routes())
+        .nest("/ledger", ledger::router())
+        .nest("/auth", auth::router())
+        .nest("/user", user::router())
 }

@@ -52,7 +52,7 @@ impl super::super::UserState {
             email_address.as_str(), // TODO figure out why email_address won't coerce
             token.to_string()
         )
-        .execute(self.pool())
+        .execute(self.pgpool())
         .await?;
 
         Ok(token)

@@ -10,13 +10,13 @@ use uuid::Uuid;
 
 mod verify;
 
-pub fn routes() -> axum::Router<AppState> {
+pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
-        .nest("/verify", verify::routes())
-        .layer(from_fn(validate_user))
+        .nest("/verify", verify::router())
+        .layer(from_fn(check_user_session))
 }
 
-async fn validate_user(session: Session, request: Request, next: Next) -> Response {
+async fn check_user_session(session: Session, request: Request, next: Next) -> Response {
     match session.get::<Uuid>("user_id").await {
         Ok(Some(_)) => next.run(request).await,
 

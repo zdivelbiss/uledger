@@ -1,8 +1,8 @@
 #![allow(clippy::unused_unit)]
 
-mod api;
 mod postmark;
 mod util;
+mod api;
 
 mod config;
 use config::cfg;
@@ -34,7 +34,7 @@ async fn main() {
             .init();
     }
 
-    api::accept_connections().await;
+    api::run_server().await;
 
     info!("Reached safe shutdown point.");
 }
