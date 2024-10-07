@@ -1,4 +1,6 @@
-use crate::server::state::AppState;
+use axum::middleware::from_fn;
+
+use crate::server::{authentication_layer, state::AppState};
 
 mod auth;
 mod ledger;
@@ -7,6 +9,7 @@ mod user;
 pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
         .nest("/ledger", ledger::router())
-        .nest("/auth", auth::router())
         .nest("/user", user::router())
+        .layer(from_fn(authentication_layer))
+        .nest("/auth", auth::router())
 }

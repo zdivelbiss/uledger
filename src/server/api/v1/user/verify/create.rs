@@ -1,7 +1,7 @@
 use crate::{
     server::{
         get_user_id,
-        responses::{email_in_use, internal_error, not_authenticated, user_not_exists},
+        responses::{email_in_use, internal_error, user_not_exists},
         state::AppState,
     },
     util::{EmailAddress, VerificationToken},
@@ -21,9 +21,6 @@ pub fn router() -> axum::Router<AppState> {
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("user must be authenticated")]
-    NotAuthenticated,
-
     #[error("user does not exist")]
     UserNotExists,
 
@@ -55,7 +52,6 @@ impl From<sqlx::Error> for Error {
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         match self {
-            Error::NotAuthenticated => not_authenticated().into_response(),
             Error::UserNotExists => user_not_exists().into_response(),
             Error::EmailInUse => email_in_use().into_response(),
 
@@ -80,7 +76,7 @@ async fn create(
 
     let token: VerificationToken = VerificationToken::gen();
     let email_address = &body.email_address;
-    let user_id = get_user_id(&session).await.ok_or(Error::NotAuthenticated)?;
+    let user_id = get_user_id(&session).await;
 
     query!(
         "

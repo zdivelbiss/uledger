@@ -26,6 +26,22 @@ mod web;
 struct FallbackTemplate {}
 
 pub async fn run() {
+    let socket_bind = &crate::cfg().network.bind;
+    info!("Binding listener: http://{socket_bind}/");
+
+    let app = build_router().await;
+    let listener = timeout(Duration::from_secs(5), TcpListener::bind(socket_bind))
+        .await
+        .expect("timed out attempting to bind socket")
+        .expect("error binding socket");
+
+    info!("Begin listening for requests.");
+    axum::serve(listener, app)
+        .await
+        .expect("error serving connections");
+}
+
+async fn build_router() -> Router {
     let state = state::AppState::create().await;
 
     let url = cfg().session.url.as_str();
@@ -65,43 +81,56 @@ pub async fn run() {
         HeaderValue::from_static(crate::user_agent()),
     );
 
-    let app = Router::new()
-        .layer(set_server_layer)
-        .layer(compression_layer)
-        .nest("/api", api::router())
+    Router::new()
         .nest("/", web::router())
+        .nest("/api", api::router())
         .fallback(|| async {
             static FALLBACK_RENDER: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
                 askama::Template::render(&FallbackTemplate {}).unwrap()
             });
 
-            axum::response::Html::from(FALLBACK_RENDER.as_str())
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                axum::response::Html::from(FALLBACK_RENDER.as_str()),
+            )
         })
+        .layer(set_server_layer)
+        .layer(compression_layer)
         .layer(decompression_layer)
         .layer(session_layer)
-        .with_state(state);
-
-    let socket_bind = &crate::cfg().network.bind;
-    info!("Binding listener: http://{socket_bind}/");
-
-    let listener = timeout(Duration::from_secs(5), TcpListener::bind(socket_bind))
-        .await
-        .expect("timed out attempting to bind socket")
-        .expect("error binding socket");
-
-    info!("Begin listening for requests.");
-    axum::serve(listener, app)
-        .await
-        .expect("error serving connections");
+        .with_state(state)
 }
 
 pub async fn is_authenticated(session: &Session) -> bool {
-    get_user_id(session).await.is_some()
+    session
+        .get::<Uuid>("user_id")
+        .await
+        .ok()
+        .flatten()
+        .is_some()
 }
 
-pub async fn get_user_id(session: &Session) -> Option<Uuid> {
-    session
-        .get("user_id")
-        .await
-        .expect("error with session storage")
+pub async fn authentication_layer(
+    session: Session,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    use axum::response::IntoResponse;
+
+    if is_authenticated(&session).await {
+        next.run(request).await
+    } else {
+        (
+            axum::http::StatusCode::UNAUTHORIZED,
+            "You must authenticate.",
+        )
+            .into_response()
+    }
+}
+
+pub async fn get_user_id(session: &Session) -> Uuid {
+    match session.get("user_id").await {
+        Ok(Some(user_id)) => user_id,
+        _ => panic!("user is not authenticated"),
+    }
 }

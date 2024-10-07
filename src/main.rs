@@ -17,6 +17,16 @@ fn user_agent() -> &'static str {
     concat!("uledger-core/", env!("CARGO_PKG_VERSION"))
 }
 
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
+enum Kind {
+    Equity,
+    Asset,
+    Liability,
+    Income,
+    Expense,
+}
+
 #[tokio::main]
 async fn main() {
     #[cfg(debug_assertions)]

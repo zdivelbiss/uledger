@@ -1,9 +1,5 @@
 use crate::{
-    server::{
-        get_user_id,
-        responses::{internal_error, not_authenticated},
-        state::AppState,
-    },
+    server::{get_user_id, responses::internal_error, state::AppState},
     util::{EmailAddress, VerificationToken},
 };
 use axum::{
@@ -21,9 +17,6 @@ pub fn router() -> axum::Router<AppState> {
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("user must be authenticated")]
-    NotAuthenticated,
-
     #[error("could not validate verification")]
     NoVerificationMatch,
 
@@ -49,7 +42,6 @@ impl From<sqlx::Error> for Error {
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         match self {
-            Error::NotAuthenticated => not_authenticated().into_response(),
             Error::NoVerificationMatch => {
                 (StatusCode::NOT_FOUND, "No matching verification found.").into_response()
             }
@@ -76,7 +68,7 @@ async fn finalize(
 ) -> impl IntoResponse {
     let email_address = &body.email_address;
     let proof_token = &body.proof_token;
-    let user_id = get_user_id(&session).await.ok_or(Error::NotAuthenticated)?;
+    let user_id = get_user_id(&session).await;
 
     let rows_affected = query!(
         "

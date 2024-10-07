@@ -1,7 +1,7 @@
 use crate::server::state::AppState;
 
-mod accounts;
+mod account;
 
 pub fn router() -> axum::Router<AppState> {
-    axum::Router::new().nest("/accounts", accounts::router())
+    axum::Router::new().nest("/account", account::router())
 }

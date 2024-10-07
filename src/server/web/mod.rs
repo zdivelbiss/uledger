@@ -17,8 +17,9 @@ async fn redirect_unauthorized(
     request: axum::extract::Request,
     next: axum::middleware::Next,
 ) -> axum::response::Response {
-    match crate::server::get_user_id(&session).await {
-        Some(_) => next.run(request).await,
-        None => axum::response::Redirect::temporary("/login").into_response(),
+    if crate::server::is_authenticated(&session).await {
+        next.run(request).await
+    } else {
+        axum::response::Redirect::temporary("/login").into_response()
     }
 }
