@@ -6,16 +6,16 @@ use std::{net::SocketAddr, sync::LazyLock, time::Duration};
 use tower_sessions::cookie::Key;
 use tracing_subscriber::registry::Data;
 
-static CFG: LazyLock<Config> = LazyLock::new(|| {
-    use figment::{providers::Env, Figment};
-
-    Figment::new()
-        .merge(Env::raw().split('_'))
-        .extract()
-        .expect("could not parse config")
-});
-
 pub fn cfg() -> &'static Config {
+    static CFG: LazyLock<Config> = LazyLock::new(|| {
+        use figment::{providers::Env, Figment};
+
+        Figment::new()
+            .merge(Env::raw().split('_'))
+            .extract()
+            .expect("could not parse config")
+    });
+
     &CFG
 }
 

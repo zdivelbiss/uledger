@@ -1,4 +1,4 @@
-use crate::api::{internal_error, state::AppState};
+use crate::server::{internal_error, state::AppState};
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
 use axum::{
     extract::State,

@@ -1,8 +1,8 @@
 #![allow(clippy::unused_unit)]
 
 mod postmark;
+mod server;
 mod util;
-mod api;
 
 mod config;
 use config::cfg;
@@ -34,7 +34,7 @@ async fn main() {
             .init();
     }
 
-    api::run_server().await;
+    server::run().await;
 
     info!("Reached safe shutdown point.");
 }

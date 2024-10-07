@@ -1,4 +1,4 @@
-use crate::{api::state::AppState, cfg};
+use crate::cfg;
 use axum::{
     http::{header, HeaderValue, StatusCode},
     Router,
@@ -16,11 +16,11 @@ use tower_sessions_redis_store::{
 };
 use uuid::Uuid;
 
+mod api;
 mod state;
-mod v1;
 
-pub async fn run_server() {
-    let state = AppState::create().await;
+pub async fn run() {
+    let state = state::AppState::create().await;
 
     let url = cfg().session.url.as_str();
 
@@ -61,7 +61,7 @@ pub async fn run_server() {
 
     let app = Router::new()
         .layer(decompression_layer)
-        .nest("/api/v1", v1::router())
+        .nest("/api", api::router())
         .layer(set_server_layer)
         .layer(compression_layer)
         .layer(session_layer)

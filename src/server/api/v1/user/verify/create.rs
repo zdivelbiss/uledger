@@ -1,5 +1,5 @@
 use crate::{
-    api::{get_user_id, internal_error, state::AppState},
+    server::{get_user_id, internal_error, state::AppState, NoUserIdError},
     util::{EmailAddress, VerificationToken},
 };
 use axum::{
@@ -18,7 +18,7 @@ pub fn router() -> axum::Router<AppState> {
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
-    NotAuthenticated(#[from] crate::api::NoUserIdError),
+    NotAuthenticated(#[from] NoUserIdError),
 
     #[error("user does not exist")]
     UserNotExists,

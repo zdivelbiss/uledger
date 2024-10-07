@@ -4,7 +4,7 @@ use axum::{
 };
 use tower_sessions::Session;
 
-use crate::api::internal_error;
+use crate::server::internal_error;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

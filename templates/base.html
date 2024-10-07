@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <script
+            src="https://unpkg.com/htmx.org@2.0.3"
+            integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq"
+            crossorigin="anonymous">
+        </script>
+
+        <link rel="stylesheet" href="style.css" />
+
+        <title>{{ page_title }}</title>
+
+        {% block head %}
+        {% endblock %}
+    </head>
+
+    <body style="margin: 0; padding: 0;">
+        {% block content %}
+        <p>PLACEHOLDER CONTENT</p>
+        {% endblock %}
+    </body>
+</html>

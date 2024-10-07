@@ -1,5 +1,5 @@
 use crate::{
-    api::state::AppState,
+    server::state::AppState,
     util::{EmailAddress, PasswordDigest},
 };
 use axum::routing::post;

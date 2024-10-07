@@ -1,5 +1,5 @@
 [package]
-name = "backend"
+name = "µLedger"
 version = "0.1.0"
 edition = "2021"
 
@@ -41,6 +41,7 @@ rustls = { version = "*", default-features = false, features = [
     "logging",
 ] }
 
+askama = "0.12.1"
 axum = { version = "*", features = ["tracing", "macros"] }
 axum-extra = { version = "*", features = ["cookie", "cookie-private"] }
 tower-http = { version = "*", features = [
