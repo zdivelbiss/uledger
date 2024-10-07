@@ -1,3 +1,69 @@
-[workspace]
-resolver = "2"
-members = ["src/backend",  "xtask"]
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dotenvy = "*"
+thiserror = "*"
+
+tokio = { version = "*", features = ["full"] }
+tracing = "*"
+tracing-subscriber = "*"
+
+figment = { version = "*", features = ["env"] }
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+serde-big-array = "*"
+argon2 = { version = "*", features = ["simple"] }
+rand = { version = "*", features = ["getrandom"] }
+sha2 = "*"
+regex = "*"
+base64 = "*"
+hex = "*"
+
+chrono = { version = "*", features = ["serde"] }
+uuid = { version = "*", features = ["serde", "v4", "v7"] }
+redis = { version = "*", features = ["aio", "ahash", "tokio-comp", "uuid"] }
+sqlx = { version = "*", features = [
+    "migrate",
+    "macros",
+    "runtime-tokio",
+    "postgres",
+    "uuid",
+    "chrono",
+    "derive",
+] }
+deadpool = "*"
+
+rustls = { version = "*", default-features = false, features = [
+    "ring",
+    "logging",
+] }
+
+axum = { version = "*", features = ["tracing", "macros"] }
+axum-extra = { version = "*", features = ["cookie", "cookie-private"] }
+tower-http = { version = "*", features = [
+    "set-header",
+    "compression-br",
+    "compression-gzip",
+    "compression-zstd",
+    "decompression-br",
+    "decompression-gzip",
+    "decompression-zstd",
+    "validate-request",
+] }
+tower-sessions = { version = "*", default-features = false, features = [
+    "axum-core",
+    "signed",
+    "private",
+] }
+tower-sessions-redis-store = "*"
+
+reqwest = { version = "*", default-features = false, features = [
+    "http2",
+    "charset",
+    "gzip",
+    "json",
+    "rustls-tls",
+] }
