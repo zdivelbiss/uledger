@@ -1,10 +1,9 @@
+use crate::server::responses::internal_error;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
 use tower_sessions::Session;
-
-use crate::server::internal_error;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -14,12 +13,9 @@ pub enum Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        Response::builder()
-            .status(match self {
-                Error::Session(error) => internal_error(error),
-            })
-            .body(axum::body::Body::empty())
-            .unwrap()
+        match self {
+            Error::Session(error) => internal_error(error).into_response(),
+        }
     }
 }
 

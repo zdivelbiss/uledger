@@ -1,6 +1,6 @@
 use crate::cfg;
 use axum::{
-    http::{header, HeaderValue, StatusCode},
+    http::{header, HeaderValue},
     Router,
 };
 use std::time::Duration;
@@ -17,7 +17,9 @@ use tower_sessions_redis_store::{
 use uuid::Uuid;
 
 mod api;
+mod responses;
 mod state;
+mod web;
 
 pub async fn run() {
     let state = state::AppState::create().await;
@@ -62,19 +64,19 @@ pub async fn run() {
     let app = Router::new()
         .layer(decompression_layer)
         .nest("/api", api::router())
+        .nest("/", web::router())
         .layer(set_server_layer)
         .layer(compression_layer)
         .layer(session_layer)
         .with_state(state);
 
-    // TODO error handling
-    let listener = timeout(
-        Duration::from_secs(5),
-        TcpListener::bind(crate::cfg().network.bind),
-    )
-    .await
-    .unwrap()
-    .unwrap();
+    let socket_bind = &crate::cfg().network.bind;
+    info!("Binding listener: http://{socket_bind}/");
+
+    let listener = timeout(Duration::from_secs(5), TcpListener::bind(socket_bind))
+        .await
+        .expect("timed out attempting to bind socket")
+        .expect("error binding socket");
 
     info!("Begin listening for requests.");
     axum::serve(listener, app)
@@ -82,26 +84,9 @@ pub async fn run() {
         .expect("error serving connections");
 }
 
-pub fn internal_error(error: impl std::fmt::Debug) -> StatusCode {
-    error!("{error:?}");
-
-    StatusCode::INTERNAL_SERVER_ERROR
-}
-
-#[derive(Debug)]
-struct NoUserIdError;
-
-impl std::fmt::Display for NoUserIdError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "user is not authenticated")
-    }
-}
-
-impl std::error::Error for NoUserIdError {}
-
-pub async fn get_user_id(session: &Session) -> Result<Uuid, NoUserIdError> {
-    match session.get("user_id").await {
-        Ok(Some(user_id)) => Ok(user_id),
-        _ => Err(NoUserIdError),
-    }
+pub async fn get_user_id(session: &Session) -> Option<Uuid> {
+    session
+        .get("user_id")
+        .await
+        .expect("error with session storage")
 }

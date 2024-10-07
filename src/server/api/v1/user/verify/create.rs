@@ -1,5 +1,9 @@
 use crate::{
-    server::{get_user_id, internal_error, state::AppState, NoUserIdError},
+    server::{
+        get_user_id,
+        responses::{email_in_use, internal_error, not_authenticated, user_not_exists},
+        state::AppState,
+    },
     util::{EmailAddress, VerificationToken},
 };
 use axum::{
@@ -17,8 +21,8 @@ pub fn router() -> axum::Router<AppState> {
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error(transparent)]
-    NotAuthenticated(#[from] NoUserIdError),
+    #[error("user must be authenticated")]
+    NotAuthenticated,
 
     #[error("user does not exist")]
     UserNotExists,
@@ -50,16 +54,14 @@ impl From<sqlx::Error> for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        Response::builder()
-            .status(match self {
-                Error::NotAuthenticated(_) => StatusCode::UNAUTHORIZED,
-                Error::UserNotExists => StatusCode::NOT_FOUND,
-                Error::EmailInUse => StatusCode::CONFLICT,
-                Error::Database(error) => internal_error(error),
-                Error::Postmark(error) => internal_error(error),
-            })
-            .body(axum::body::Body::empty())
-            .unwrap()
+        match self {
+            Error::NotAuthenticated => not_authenticated().into_response(),
+            Error::UserNotExists => user_not_exists().into_response(),
+            Error::EmailInUse => email_in_use().into_response(),
+
+            Error::Database(error) => internal_error(error).into_response(),
+            Error::Postmark(error) => internal_error(error).into_response(),
+        }
     }
 }
 
@@ -78,7 +80,7 @@ async fn create(
 
     let token: VerificationToken = VerificationToken::gen();
     let email_address = &body.email_address;
-    let user_id = get_user_id(&session).await?;
+    let user_id = get_user_id(&session).await.ok_or(Error::NotAuthenticated)?;
 
     query!(
         "

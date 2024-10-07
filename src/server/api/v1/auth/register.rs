@@ -1,4 +1,7 @@
-use crate::server::{internal_error, state::AppState};
+use crate::server::{
+    responses::{email_in_use, internal_error},
+    state::AppState,
+};
 use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
     Argon2, PasswordHasher,
@@ -13,7 +16,7 @@ use axum::{
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("user already exists")]
-    UserExists,
+    EmailInUse,
 
     #[error("failed to hash password")]
     PasswordHashing(argon2::password_hash::Error),
@@ -35,7 +38,7 @@ impl From<sqlx::Error> for Error {
         };
 
         match (db_err.code().as_deref(), db_err.constraint()) {
-            (Some("23505"), Some("users_email_key")) => Error::UserExists,
+            (Some("23505"), Some("users_email_key")) => Error::EmailInUse,
 
             _ => Self::Database(err),
         }
@@ -44,14 +47,12 @@ impl From<sqlx::Error> for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        Response::builder()
-            .status(match &self {
-                Error::UserExists => StatusCode::CONFLICT,
-                Error::PasswordHashing(error) => internal_error(error),
-                Error::Database(error) => internal_error(error),
-            })
-            .body(axum::body::Body::empty())
-            .unwrap()
+        match self {
+            Error::EmailInUse => email_in_use().into_response(),
+
+            Error::PasswordHashing(error) => internal_error(error).into_response(),
+            Error::Database(error) => internal_error(error).into_response(),
+        }
     }
 }
 

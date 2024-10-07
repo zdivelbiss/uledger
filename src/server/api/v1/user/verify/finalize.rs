@@ -1,5 +1,9 @@
 use crate::{
-    server::{get_user_id, internal_error, state::AppState, NoUserIdError},
+    server::{
+        get_user_id,
+        responses::{internal_error, not_authenticated},
+        state::AppState,
+    },
     util::{EmailAddress, VerificationToken},
 };
 use axum::{
@@ -17,8 +21,8 @@ pub fn router() -> axum::Router<AppState> {
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error(transparent)]
-    NotAuthenticated(#[from] NoUserIdError),
+    #[error("user must be authenticated")]
+    NotAuthenticated,
 
     #[error("could not validate verification")]
     NoVerificationMatch,
@@ -44,15 +48,17 @@ impl From<sqlx::Error> for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        Response::builder()
-            .status(match self {
-                Error::NotAuthenticated(_) => StatusCode::UNAUTHORIZED,
-                Error::NoVerificationMatch => StatusCode::NOT_FOUND,
-                Error::MultiVerificationDrop => StatusCode::INTERNAL_SERVER_ERROR,
-                Error::Database(error) => internal_error(error),
-            })
-            .body(axum::body::Body::empty())
-            .unwrap()
+        match self {
+            Error::NotAuthenticated => not_authenticated().into_response(),
+            Error::NoVerificationMatch => {
+                (StatusCode::NOT_FOUND, "No matching verification found.").into_response()
+            }
+
+            Error::MultiVerificationDrop => {
+                internal_error("Dropped multiple verifications!").into_response()
+            }
+            Error::Database(error) => internal_error(error).into_response(),
+        }
     }
 }
 
@@ -70,7 +76,7 @@ async fn finalize(
 ) -> impl IntoResponse {
     let email_address = &body.email_address;
     let proof_token = &body.proof_token;
-    let user_id = get_user_id(&session).await?;
+    let user_id = get_user_id(&session).await.ok_or(Error::NotAuthenticated)?;
 
     let rows_affected = query!(
         "

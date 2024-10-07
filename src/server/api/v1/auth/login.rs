@@ -1,10 +1,16 @@
-use crate::server::{internal_error, state::AppState};
+use std::borrow::Cow;
+
+use crate::{
+    server::{responses::internal_error, state::AppState},
+    util::EmailAddress,
+};
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
+use askama::Template;
 use axum::{
     extract::State,
-    http::{HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
-    Json,
+    http::{HeaderMap, HeaderName, HeaderValue, StatusCode},
+    response::{Html, IntoResponse, Redirect, Response},
+    Form,
 };
 use tower_sessions::Session;
 
@@ -43,17 +49,33 @@ impl From<sqlx::Error> for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        Response::builder()
-            .status(match &self {
-                Error::AlreadyLoggedIn => StatusCode::CONFLICT,
-                Error::InvalidLogin => StatusCode::UNAUTHORIZED,
-                Error::PasswordHashing(error) => internal_error(error),
-                Error::Database(error) => internal_error(error),
-                Error::Session(error) => internal_error(error),
-            })
-            .body(axum::body::Body::empty())
-            .unwrap()
+        match self {
+            Error::AlreadyLoggedIn => {
+                (StatusCode::CONFLICT, "You are already logged in.").into_response()
+            }
+            Error::InvalidLogin => (
+                StatusCode::OK,
+                Html::from("<p>Invalid login credentials.</p>"),
+            )
+                .into_response(),
+
+            Error::PasswordHashing(error) => internal_error(error).into_response(),
+            Error::Database(error) => internal_error(error).into_response(),
+            Error::Session(error) => internal_error(error).into_response(),
+        }
     }
+}
+
+#[derive(askama::Template)]
+#[template(path = "partials/login/error.html")]
+struct LoginErrorTemplate {
+    message: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct Login {
+    email_address: String,
+    password: String,
 }
 
 #[axum::debug_handler]
@@ -61,14 +83,11 @@ pub async fn login(
     state: State<AppState>,
     session: Session,
     headers: HeaderMap,
-    body: Json<super::AuthInfo>,
-) -> Result<StatusCode, Error> {
+    form: Form<Login>,
+) -> impl IntoResponse {
     if !session.is_empty().await {
         return Err(Error::AlreadyLoggedIn);
     }
-
-    let email_address = &body.email_address;
-    let password_digest = &body.password_digest;
 
     let user = query!(
         "
@@ -76,14 +95,14 @@ pub async fn login(
             WHERE email = $1
         ;
         ",
-        email_address.as_str()
+        form.email_address.as_str()
     )
     .fetch_one(state.db())
     .await?;
 
     let password_salt = SaltString::from_b64(&user.password_salt)?;
     let calculated_hash = Argon2::default()
-        .hash_password(password_digest.as_slice(), &password_salt)?
+        .hash_password(form.password.as_bytes(), &password_salt)?
         .serialize();
 
     // check password ...
@@ -96,5 +115,5 @@ pub async fn login(
     let user_agent = headers.get("User-Agent").and_then(|v| v.to_str().ok());
     session.insert("user_agent", user_agent).await?;
 
-    Ok(StatusCode::OK)
+    Ok(Redirect::temporary("/"))
 }
