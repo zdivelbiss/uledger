@@ -1,14 +1,11 @@
-use std::borrow::Cow;
-
 use crate::{
     server::{responses::internal_error, state::AppState},
     util::EmailAddress,
 };
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
-use askama::Template;
 use axum::{
     extract::State,
-    http::{HeaderMap, HeaderName, HeaderValue, StatusCode},
+    http::{HeaderMap, StatusCode},
     response::{Html, IntoResponse, Redirect, Response},
     Form,
 };
@@ -53,11 +50,8 @@ impl IntoResponse for Error {
             Error::AlreadyLoggedIn => {
                 (StatusCode::CONFLICT, "You are already logged in.").into_response()
             }
-            Error::InvalidLogin => (
-                StatusCode::OK,
-                Html::from("<p>Invalid login credentials.</p>"),
-            )
-                .into_response(),
+
+            Error::InvalidLogin => (StatusCode::OK, "Invalid login credentials.").into_response(),
 
             Error::PasswordHashing(error) => internal_error(error).into_response(),
             Error::Database(error) => internal_error(error).into_response(),
@@ -66,15 +60,9 @@ impl IntoResponse for Error {
     }
 }
 
-#[derive(askama::Template)]
-#[template(path = "partials/login/error.html")]
-struct LoginErrorTemplate {
-    message: String,
-}
-
 #[derive(Debug, serde::Deserialize)]
-pub struct Login {
-    email_address: String,
+pub struct LoginForm {
+    email_address: EmailAddress,
     password: String,
 }
 
@@ -83,7 +71,7 @@ pub async fn login(
     state: State<AppState>,
     session: Session,
     headers: HeaderMap,
-    form: Form<Login>,
+    form: Form<LoginForm>,
 ) -> impl IntoResponse {
     if !session.is_empty().await {
         return Err(Error::AlreadyLoggedIn);

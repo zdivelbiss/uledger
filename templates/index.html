@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{%- block content -%}
+{% block head %}
+<title>µLedger</title>
+{% endblock %}
+
+{% block content %}
 <p>
     This is the index page!
     <br />
-
-    {%- if !is_authenticated %}
-        {% include "partials/login/form.html" %}
-    {% endif -%}
 </p>
-{%- endblock -%}
+{% endblock %}

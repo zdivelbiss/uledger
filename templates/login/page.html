@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>µLedger: Login</title>
+{% endblock %}
+
+{%- block content -%}
+<p>
+    This is the login page!
+    <br />
+
+    {%- if !is_authenticated %}
+        {% include "login/form.html" %}
+    {% else %}
+        <p>
+            You are already logged in.
+            You will be redirected to the app shortly.
+        </p>
+    {% endif %}
+</p>
+{%- endblock -%}

@@ -1,27 +1,24 @@
 use crate::server::state::AppState;
-use axum::{http::StatusCode, response::Html, routing::get};
+use axum::{response::IntoResponse, routing::get};
 use tower_sessions::Session;
 
-use super::get_user_id;
+mod index;
+mod login;
 
 pub fn router() -> axum::Router<AppState> {
-    axum::Router::new().route("/", get(serve_index))
+    axum::Router::new()
+        .route("/", get(index::serve))
+        .layer(axum::middleware::from_fn(redirect_unauthorized))
+        .route("/login", get(login::serve))
 }
 
-#[derive(askama::Template)]
-#[template(path = "index.html")]
-struct IndexTemplate {
-    is_authenticated: bool,
-}
-
-#[axum::debug_handler]
-async fn serve_index(session: Session) -> impl axum::response::IntoResponse {
-    use askama::Template;
-
-    let index_template = IndexTemplate {
-        is_authenticated: get_user_id(&session).await.is_some(),
-    };
-    let index_html = Html::from(index_template.render().unwrap());
-
-    (StatusCode::OK, index_html)
+async fn redirect_unauthorized(
+    session: Session,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    match crate::server::get_user_id(&session).await {
+        Some(_) => next.run(request).await,
+        None => axum::response::Redirect::temporary("/login").into_response(),
+    }
 }

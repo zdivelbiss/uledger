@@ -21,6 +21,10 @@ mod responses;
 mod state;
 mod web;
 
+#[derive(askama::Template)]
+#[template(path = "404.html")]
+struct FallbackTemplate {}
+
 pub async fn run() {
     let state = state::AppState::create().await;
 
@@ -62,11 +66,18 @@ pub async fn run() {
     );
 
     let app = Router::new()
-        .layer(decompression_layer)
-        .nest("/api", api::router())
-        .nest("/", web::router())
         .layer(set_server_layer)
         .layer(compression_layer)
+        .nest("/api", api::router())
+        .nest("/", web::router())
+        .fallback(|| async {
+            static FALLBACK_RENDER: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+                askama::Template::render(&FallbackTemplate {}).unwrap()
+            });
+
+            axum::response::Html::from(FALLBACK_RENDER.as_str())
+        })
+        .layer(decompression_layer)
         .layer(session_layer)
         .with_state(state);
 
@@ -82,6 +93,10 @@ pub async fn run() {
     axum::serve(listener, app)
         .await
         .expect("error serving connections");
+}
+
+pub async fn is_authenticated(session: &Session) -> bool {
+    get_user_id(session).await.is_some()
 }
 
 pub async fn get_user_id(session: &Session) -> Option<Uuid> {
