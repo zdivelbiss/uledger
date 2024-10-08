@@ -1,6 +1,5 @@
 use crate::{
     server::{
-        get_user_id,
         responses::{email_in_use, internal_error, user_not_exists},
         state::AppState,
     },
@@ -76,7 +75,7 @@ async fn create(
 
     let token: VerificationToken = VerificationToken::gen();
     let email_address = &body.email_address;
-    let user_id = get_user_id(&session).await;
+    let user_id = crate::server::state::get_user_id(&session).await;
 
     query!(
         "

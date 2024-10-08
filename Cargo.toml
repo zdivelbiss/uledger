@@ -7,7 +7,7 @@ edition = "2021"
 dotenvy = "*"
 thiserror = "*"
 
-tokio = { version = "*", features = ["full"] }
+tokio = { version = "*", features = [] }
 tracing = "*"
 tracing-subscriber = "*"
 
@@ -17,7 +17,7 @@ serde_json = "*"
 serde-big-array = "*"
 argon2 = { version = "*", features = ["simple"] }
 rand = { version = "*", features = ["getrandom"] }
-sha2 = "*"
+num_enum = "*"
 regex = "*"
 base64 = "*"
 hex = "*"
@@ -34,7 +34,6 @@ sqlx = { version = "*", features = [
     "chrono",
     "derive",
 ] }
-deadpool = "*"
 
 rustls = { version = "*", default-features = false, features = [
     "ring",

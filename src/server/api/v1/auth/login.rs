@@ -1,12 +1,9 @@
-use crate::{
-    server::{responses::internal_error, state::AppState},
-    util::EmailAddress,
-};
+use crate::server::{responses::internal_error, state::AppState};
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
 use axum::{
     extract::State,
     http::{HeaderMap, StatusCode},
-    response::{Html, IntoResponse, Redirect, Response},
+    response::{IntoResponse, Response},
     Form,
 };
 use tower_sessions::Session;
@@ -51,7 +48,9 @@ impl IntoResponse for Error {
                 (StatusCode::CONFLICT, "You are already logged in.").into_response()
             }
 
-            Error::InvalidLogin => (StatusCode::OK, "Invalid login credentials.").into_response(),
+            Error::InvalidLogin => {
+                (StatusCode::UNAUTHORIZED, "Invalid login credentials.").into_response()
+            }
 
             Error::PasswordHashing(error) => internal_error(error).into_response(),
             Error::Database(error) => internal_error(error).into_response(),
@@ -60,19 +59,13 @@ impl IntoResponse for Error {
     }
 }
 
-#[derive(Debug, serde::Deserialize)]
-pub struct LoginForm {
-    email_address: EmailAddress,
-    password: String,
-}
-
 #[axum::debug_handler]
 pub async fn login(
     state: State<AppState>,
     session: Session,
     headers: HeaderMap,
-    form: Form<LoginForm>,
-) -> impl IntoResponse {
+    form: Form<super::AuthInfo>,
+) -> Result<(), Error> {
     if !session.is_empty().await {
         return Err(Error::AlreadyLoggedIn);
     }
@@ -103,5 +96,5 @@ pub async fn login(
     let user_agent = headers.get("User-Agent").and_then(|v| v.to_str().ok());
     session.insert("user_agent", user_agent).await?;
 
-    Ok(Redirect::temporary("/"))
+    Ok(())
 }

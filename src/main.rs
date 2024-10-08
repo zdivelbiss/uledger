@@ -2,7 +2,9 @@
 
 mod postmark;
 mod server;
+
 mod util;
+use util::*;
 
 mod config;
 use config::cfg;
@@ -12,6 +14,12 @@ extern crate tracing;
 
 #[macro_use]
 extern crate sqlx;
+
+#[macro_use]
+extern crate num_enum;
+
+#[macro_use]
+extern crate serde;
 
 fn user_agent() -> &'static str {
     concat!("uledger-core/", env!("CARGO_PKG_VERSION"))

@@ -1,0 +1,69 @@
+use crate::server::{responses::internal_error, state::AppState};
+use axum::{
+    extract::{Form, State},
+    http::StatusCode,
+};
+use tower_sessions::Session;
+
+#[derive(Debug)]
+pub enum Error {
+    DuplicateName,
+    Database(sqlx::Error),
+}
+
+impl From<sqlx::Error> for Error {
+    fn from(err: sqlx::Error) -> Self {
+        let Some(db_err) = err.as_database_error() else {
+            return Self::Database(err);
+        };
+
+        match (db_err.code().as_deref(), db_err.constraint()) {
+            (Some("23505"), Some("accounts_user_id_kind_name_key")) => Error::DuplicateName,
+
+            _ => Self::Database(err),
+        }
+    }
+}
+
+impl axum::response::IntoResponse for Error {
+    fn into_response(self) -> axum::response::Response {
+        match self {
+            Error::DuplicateName => {
+                (StatusCode::CONFLICT, "account already exists").into_response()
+            }
+
+            Error::Database(error) => internal_error(error).into_response(),
+        }
+    }
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct CreateAccount {
+    kind: super::Kind,
+    name: String,
+    description: Option<String>,
+}
+
+pub async fn create(
+    session: Session,
+    state: State<AppState>,
+    form: Form<CreateAccount>,
+) -> Result<(), Error> {
+    let user_id = crate::server::state::get_user_id(&session).await;
+
+    query!(
+        "
+        INSERT INTO ledger.accounts (user_id, kind, name, description)
+            VALUES ($1, $2, $3, $4)
+        ;
+        ",
+        user_id,
+        i16::from(form.kind),
+        form.name.as_str(),
+        form.description.as_deref()
+    )
+    .execute(state.db())
+    .await?;
+
+    Ok(())
+}

@@ -24,3 +24,10 @@ impl AppState {
         &self.db
     }
 }
+
+pub async fn get_user_id(session: &tower_sessions::Session) -> uuid::Uuid {
+    match session.get("user_id").await {
+        Ok(Some(user_id)) => user_id,
+        _ => panic!("user is not authenticated"),
+    }
+}

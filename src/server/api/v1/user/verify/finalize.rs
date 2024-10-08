@@ -1,5 +1,5 @@
 use crate::{
-    server::{get_user_id, responses::internal_error, state::AppState},
+    server::{responses::internal_error, state::AppState},
     util::{EmailAddress, VerificationToken},
 };
 use axum::{
@@ -68,7 +68,7 @@ async fn finalize(
 ) -> impl IntoResponse {
     let email_address = &body.email_address;
     let proof_token = &body.proof_token;
-    let user_id = get_user_id(&session).await;
+    let user_id = crate::server::state::get_user_id(&session).await;
 
     let rows_affected = query!(
         "
@@ -97,7 +97,7 @@ async fn finalize(
                 ",
                 user_id,
                 email_address.as_str(),
-                chrono::Utc::now().date_naive()
+                chrono::Utc::now()
             )
             .execute(state.db())
             .await?;

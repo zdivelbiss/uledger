@@ -127,10 +127,3 @@ pub async fn authentication_layer(
             .into_response()
     }
 }
-
-pub async fn get_user_id(session: &Session) -> Uuid {
-    match session.get("user_id").await {
-        Ok(Some(user_id)) => user_id,
-        _ => panic!("user is not authenticated"),
-    }
-}
