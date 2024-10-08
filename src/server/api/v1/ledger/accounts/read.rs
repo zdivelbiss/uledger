@@ -1,8 +1,10 @@
-use crate::server::{internal_error, state::AppState};
-use axum::extract::{Query, State};
+use crate::server::{
+    internal_error,
+    state::{get_user_id, AppState},
+};
+use axum::extract::{Path, State};
 use tower_sessions::Session;
-
-use super::{Account, Kind};
+use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -33,35 +35,24 @@ impl axum::response::IntoResponse for Error {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ReadAccount {
-    kind: Kind,
-    name: String,
-}
-
 pub async fn read(
     session: Session,
     state: State<AppState>,
-    params: Query<ReadAccount>,
-) -> Result<Account, Error> {
-    let user_id = crate::server::state::get_user_id(&session).await;
-
+    id: Path<Uuid>,
+) -> Result<super::Account, Error> {
     query_as!(
-        Account,
+        super::Account,
         "
         SELECT id, created, kind, name, description
             FROM ledger.accounts
-                WHERE
-                    user_id = $1
-                        AND
-                    kind = $2
-                        AND
-                    name = $3
+            WHERE
+                id = $1
+                    AND
+                user_id = $2
         ;
         ",
-        user_id,
-        i16::from(params.kind),
-        params.name
+        *id,
+        get_user_id(&session).await
     )
     .fetch_one(state.db())
     .await

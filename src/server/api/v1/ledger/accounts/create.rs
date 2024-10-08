@@ -40,17 +40,10 @@ impl axum::response::IntoResponse for Error {
     }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub struct CreateAccount {
-    kind: super::Kind,
-    name: String,
-    description: Option<String>,
-}
-
 pub async fn create(
     session: Session,
     state: State<AppState>,
-    form: Form<CreateAccount>,
+    form: Form<super::AccountInfo>,
 ) -> Result<(), Error> {
     let user_id = crate::server::state::get_user_id(&session).await;
 

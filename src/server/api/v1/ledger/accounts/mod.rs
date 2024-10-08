@@ -1,6 +1,14 @@
-use crate::server::state::AppState;
-use axum::routing::{delete, get, patch, post};
+use crate::server::{
+    internal_error,
+    state::{get_user_id, AppState},
+};
+use axum::{
+    extract::State,
+    routing::{delete, get, post, put},
+    Json,
+};
 use chrono::{DateTime, Utc};
+use tower_sessions::Session;
 use uuid::Uuid;
 
 mod create;
@@ -10,10 +18,11 @@ mod update;
 
 pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
+        .route("/", get(get_all))
         .route("/", post(create::create))
-        .route("/", get(read::read))
-    // .route("/", patch(update::update))
-    // .route("/", delete(delete::delete))
+        .route("/:id", get(read::read))
+        .route("/:id", put(update::update))
+        .route("/:id", delete(delete::delete))
 }
 
 #[derive(
@@ -43,4 +52,46 @@ impl axum::response::IntoResponse for Account {
     fn into_response(self) -> axum::response::Response {
         (axum::http::StatusCode::OK, axum::Json::from(self)).into_response()
     }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AccountInfo {
+    kind: Kind,
+    name: String,
+    description: Option<String>,
+}
+
+#[derive(Debug, thiserror::Error)]
+enum Error {
+    #[error("internal server error")]
+    Database(#[from] sqlx::Error),
+}
+
+impl axum::response::IntoResponse for Error {
+    fn into_response(self) -> axum::response::Response {
+        axum::response::Response::builder()
+            .status(match &self {
+                Error::Database(error) => internal_error(error),
+            })
+            .body(self.to_string().into())
+            .unwrap()
+    }
+}
+
+async fn get_all(session: Session, state: State<AppState>) -> Result<Json<Vec<Account>>, Error> {
+    query_as!(
+        Account,
+        "
+        SELECT id, created, kind, name, description
+            FROM ledger.accounts
+            WHERE
+                user_id = $1
+        ;
+        ",
+        get_user_id(&session).await
+    )
+    .fetch_all(state.db())
+    .await
+    .map_err(Error::from)
+    .map(Json::from)
 }
