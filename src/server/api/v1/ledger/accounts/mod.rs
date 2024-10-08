@@ -1,6 +1,7 @@
 use crate::server::state::AppState;
 use axum::routing::{delete, get, patch, post};
 use chrono::{DateTime, Utc};
+use uuid::Uuid;
 
 mod create;
 mod delete;
@@ -8,8 +9,9 @@ mod read;
 mod update;
 
 pub fn router() -> axum::Router<AppState> {
-    axum::Router::new().route("/", post(create::create))
-    // .route("/", get(read::read))
+    axum::Router::new()
+        .route("/", post(create::create))
+        .route("/", get(read::read))
     // .route("/", patch(update::update))
     // .route("/", delete(delete::delete))
 }
@@ -30,8 +32,15 @@ enum Kind {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 struct Account {
+    id: Uuid,
     created: DateTime<Utc>,
     kind: Kind,
     name: String,
     description: Option<String>,
+}
+
+impl axum::response::IntoResponse for Account {
+    fn into_response(self) -> axum::response::Response {
+        (axum::http::StatusCode::OK, axum::Json::from(self)).into_response()
+    }
 }

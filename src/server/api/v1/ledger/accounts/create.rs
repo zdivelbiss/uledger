@@ -8,7 +8,7 @@ use tower_sessions::Session;
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("account already exists")]
-    DuplicateName,
+    Duplicate,
 
     #[error("internal server error")]
     Database(sqlx::Error),
@@ -21,7 +21,7 @@ impl From<sqlx::Error> for Error {
         };
 
         match (db_err.code().as_deref(), db_err.constraint()) {
-            (Some("23505"), Some("accounts_user_id_kind_name_key")) => Error::DuplicateName,
+            (Some("23505"), Some("accounts_user_id_kind_name_key")) => Error::Duplicate,
 
             _ => Self::Database(err),
         }
@@ -32,7 +32,7 @@ impl axum::response::IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         axum::response::Response::builder()
             .status(match &self {
-                Error::DuplicateName => StatusCode::CONFLICT,
+                Error::Duplicate => StatusCode::CONFLICT,
                 Error::Database(error) => internal_error(error),
             })
             .body(self.to_string().into())
