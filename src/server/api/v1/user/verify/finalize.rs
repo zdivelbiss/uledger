@@ -1,14 +1,8 @@
 use crate::{
-    server::{responses::internal_error, state::AppState},
+    server::{internal_error, state::AppState},
     util::{EmailAddress, VerificationToken},
 };
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::post,
-    Json,
-};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::post, Json};
 use tower_sessions::Session;
 
 pub fn router() -> axum::Router<AppState> {
@@ -17,13 +11,10 @@ pub fn router() -> axum::Router<AppState> {
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("could not validate verification")]
+    #[error("no verification match")]
     NoVerificationMatch,
 
-    #[error("unexpectedly dropped multiple verifications")]
-    MultiVerificationDrop,
-
-    #[error(transparent)]
+    #[error("internal server error")]
     Database(sqlx::Error),
 }
 
@@ -40,17 +31,14 @@ impl From<sqlx::Error> for Error {
 }
 
 impl IntoResponse for Error {
-    fn into_response(self) -> Response {
-        match self {
-            Error::NoVerificationMatch => {
-                (StatusCode::NOT_FOUND, "No matching verification found.").into_response()
-            }
-
-            Error::MultiVerificationDrop => {
-                internal_error("Dropped multiple verifications!").into_response()
-            }
-            Error::Database(error) => internal_error(error).into_response(),
-        }
+    fn into_response(self) -> axum::response::Response {
+        axum::response::Response::builder()
+            .status(match &self {
+                Error::NoVerificationMatch => StatusCode::NOT_FOUND,
+                Error::Database(error) => internal_error(error),
+            })
+            .body(self.to_string().into())
+            .unwrap()
     }
 }
 
@@ -65,7 +53,7 @@ async fn finalize(
     session: Session,
     state: State<AppState>,
     body: Json<RequestBody>,
-) -> impl IntoResponse {
+) -> Result<(), Error> {
     let email_address = &body.email_address;
     let proof_token = &body.proof_token;
     let user_id = crate::server::state::get_user_id(&session).await;
@@ -73,7 +61,12 @@ async fn finalize(
     let rows_affected = query!(
         "
         DELETE FROM auth.email_verification
-            WHERE (user_id, email_address, proof_token) = ($1, $2, $3)
+            WHERE
+                user_id = $1
+                    AND
+                email_address = $2
+                    AND
+                proof_token = $3
         ;
         ",
         user_id,
@@ -102,14 +95,15 @@ async fn finalize(
             .execute(state.db())
             .await?;
 
-            Ok(StatusCode::OK)
+            Ok(())
         }
 
         0 => Err(Error::NoVerificationMatch),
-        rows_affected => {
-            warn!("Dropped {rows_affected} during email validation!");
 
-            Err(Error::MultiVerificationDrop)
+        rows_affected => {
+            error!("Dropped {rows_affected} during email validation!");
+
+            Ok(())
         }
     }
 }

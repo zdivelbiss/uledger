@@ -1,21 +1,22 @@
-use crate::server::responses::internal_error;
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Response},
-};
+use axum::{http::StatusCode, response::IntoResponse};
 use tower_sessions::Session;
+
+use crate::server::internal_error;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error(transparent)]
+    #[error("internal server error")]
     Session(#[from] tower_sessions::session::Error),
 }
 
 impl IntoResponse for Error {
-    fn into_response(self) -> Response {
-        match self {
-            Error::Session(error) => internal_error(error).into_response(),
-        }
+    fn into_response(self) -> axum::response::Response {
+        axum::response::Response::builder()
+            .status(match &self {
+                Error::Session(error) => internal_error(error),
+            })
+            .body(self.to_string().into())
+            .unwrap()
     }
 }
 

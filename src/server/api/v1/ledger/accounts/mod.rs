@@ -1,12 +1,6 @@
-use crate::server::{responses::internal_error, state::AppState};
-use axum::{
-    extract::State,
-    response::{IntoResponse, Response},
-    routing::{delete, get, patch, post},
-    Json,
-};
+use crate::server::state::AppState;
+use axum::routing::{delete, get, patch, post};
 use chrono::{DateTime, Utc};
-use tower_sessions::Session;
 
 mod create;
 mod delete;
@@ -18,20 +12,6 @@ pub fn router() -> axum::Router<AppState> {
     // .route("/", get(read::read))
     // .route("/", patch(update::update))
     // .route("/", delete(delete::delete))
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error(transparent)]
-    Database(#[from] sqlx::Error),
-}
-
-impl IntoResponse for Error {
-    fn into_response(self) -> Response {
-        match self {
-            Error::Database(error) => internal_error(error).into_response(),
-        }
-    }
 }
 
 #[derive(
@@ -54,28 +34,4 @@ struct Account {
     kind: Kind,
     name: String,
     description: Option<String>,
-}
-
-async fn get_accounts(
-    session: Session,
-    state: State<AppState>,
-) -> Result<Json<Vec<Account>>, Error> {
-    // let user_id = crate::get_user_id(&session).await;
-
-    // let accounts = query_as!(
-    //     Account,
-    //     "
-    //     SELECT created, kind, name, description
-    //         FROM ledger.accounts
-    //         WHERE user_id = $1
-    //     ;
-    //     ",
-    //     user_id
-    // )
-    // .fetch_all(state.db())
-    // .await?;
-
-    // Ok(accounts.into())
-
-    todo!()
 }

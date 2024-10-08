@@ -1,17 +1,8 @@
 use crate::{
-    server::{
-        responses::{email_in_use, internal_error, user_not_exists},
-        state::AppState,
-    },
+    server::{internal_error, state::AppState},
     util::{EmailAddress, VerificationToken},
 };
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::post,
-    Json,
-};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::post, Json};
 use tower_sessions::Session;
 
 pub fn router() -> axum::Router<AppState> {
@@ -26,10 +17,10 @@ pub enum Error {
     #[error("email already in use")]
     EmailInUse,
 
-    #[error(transparent)]
+    #[error("internal server error")]
     Database(sqlx::Error),
 
-    #[error(transparent)]
+    #[error("internal server error")]
     Postmark(#[from] crate::postmark::Error),
 }
 
@@ -49,14 +40,16 @@ impl From<sqlx::Error> for Error {
 }
 
 impl IntoResponse for Error {
-    fn into_response(self) -> Response {
-        match self {
-            Error::UserNotExists => user_not_exists().into_response(),
-            Error::EmailInUse => email_in_use().into_response(),
-
-            Error::Database(error) => internal_error(error).into_response(),
-            Error::Postmark(error) => internal_error(error).into_response(),
-        }
+    fn into_response(self) -> axum::response::Response {
+        axum::response::Response::builder()
+            .status(match &self {
+                Error::UserNotExists => StatusCode::NOT_FOUND,
+                Error::EmailInUse => StatusCode::CONFLICT,
+                Error::Database(error) => internal_error(error),
+                Error::Postmark(error) => internal_error(error),
+            })
+            .body(self.to_string().into())
+            .unwrap()
     }
 }
 

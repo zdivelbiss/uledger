@@ -1,13 +1,16 @@
-use crate::server::{responses::internal_error, state::AppState};
+use crate::server::{internal_error, state::AppState};
 use axum::{
     extract::{Form, State},
     http::StatusCode,
 };
 use tower_sessions::Session;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("account already exists")]
     DuplicateName,
+
+    #[error("internal server error")]
     Database(sqlx::Error),
 }
 
@@ -27,13 +30,13 @@ impl From<sqlx::Error> for Error {
 
 impl axum::response::IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        match self {
-            Error::DuplicateName => {
-                (StatusCode::CONFLICT, "account already exists").into_response()
-            }
-
-            Error::Database(error) => internal_error(error).into_response(),
-        }
+        axum::response::Response::builder()
+            .status(match &self {
+                Error::DuplicateName => StatusCode::CONFLICT,
+                Error::Database(error) => internal_error(error),
+            })
+            .body(self.to_string().into())
+            .unwrap()
     }
 }
 

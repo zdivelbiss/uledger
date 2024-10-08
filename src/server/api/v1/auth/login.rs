@@ -1,9 +1,9 @@
-use crate::server::{responses::internal_error, state::AppState};
+use crate::server::{internal_error, state::AppState};
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
 use axum::{
     extract::State,
     http::{HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
+    response::IntoResponse,
     Form,
 };
 use tower_sessions::Session;
@@ -42,20 +42,17 @@ impl From<sqlx::Error> for Error {
 }
 
 impl IntoResponse for Error {
-    fn into_response(self) -> Response {
-        match self {
-            Error::AlreadyLoggedIn => {
-                (StatusCode::CONFLICT, "You are already logged in.").into_response()
-            }
-
-            Error::InvalidLogin => {
-                (StatusCode::UNAUTHORIZED, "Invalid login credentials.").into_response()
-            }
-
-            Error::PasswordHashing(error) => internal_error(error).into_response(),
-            Error::Database(error) => internal_error(error).into_response(),
-            Error::Session(error) => internal_error(error).into_response(),
-        }
+    fn into_response(self) -> axum::response::Response {
+        axum::response::Response::builder()
+            .status(match &self {
+                Error::AlreadyLoggedIn => StatusCode::CONFLICT,
+                Error::InvalidLogin => StatusCode::UNAUTHORIZED,
+                Error::Database(error) => internal_error(error),
+                Error::PasswordHashing(error) => internal_error(error),
+                Error::Session(error) => internal_error(error),
+            })
+            .body(self.to_string().into())
+            .unwrap()
     }
 }
 

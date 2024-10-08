@@ -1,6 +1,6 @@
 use crate::cfg;
 use axum::{
-    http::{header, HeaderValue},
+    http::{header, HeaderValue, StatusCode},
     Router,
 };
 use std::time::Duration;
@@ -126,4 +126,10 @@ pub async fn authentication_layer(
         )
             .into_response()
     }
+}
+
+pub fn internal_error(error: impl std::fmt::Debug) -> StatusCode {
+    error!("{error:?}");
+
+    StatusCode::INTERNAL_SERVER_ERROR
 }

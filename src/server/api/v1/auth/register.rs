@@ -1,7 +1,4 @@
-use crate::server::{
-    responses::{email_in_use, internal_error},
-    state::AppState,
-};
+use crate::server::{internal_error, state::AppState};
 use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
     Argon2, PasswordHasher,
@@ -9,7 +6,7 @@ use argon2::{
 use axum::{
     extract::State,
     http::StatusCode,
-    response::{IntoResponse, Response},
+    response::IntoResponse,
     Form,
 };
 
@@ -46,13 +43,15 @@ impl From<sqlx::Error> for Error {
 }
 
 impl IntoResponse for Error {
-    fn into_response(self) -> Response {
-        match self {
-            Error::DuplicateEmail => email_in_use().into_response(),
-
-            Error::PasswordHashing(error) => internal_error(error).into_response(),
-            Error::Database(error) => internal_error(error).into_response(),
-        }
+    fn into_response(self) -> axum::response::Response {
+        axum::response::Response::builder()
+            .status(match &self {
+                Error::DuplicateEmail => StatusCode::CONFLICT,
+                Error::PasswordHashing(error) => internal_error(error),
+                Error::Database(error) => internal_error(error),
+            })
+            .body(self.to_string().into())
+            .unwrap()
     }
 }
 
