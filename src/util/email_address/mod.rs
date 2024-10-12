@@ -1,7 +1,6 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
-mod redis;
 mod serde;
 mod sqlx;
 

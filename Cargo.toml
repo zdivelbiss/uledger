@@ -24,7 +24,6 @@ hex = "*"
 
 chrono = { version = "*", features = ["serde"] }
 uuid = { version = "*", features = ["serde", "v4", "v7"] }
-redis = { version = "*", features = ["aio", "ahash", "tokio-comp", "uuid"] }
 sqlx = { version = "*", features = [
     "migrate",
     "macros",
@@ -40,7 +39,8 @@ rustls = { version = "*", default-features = false, features = [
     "logging",
 ] }
 
-askama = "0.12.1"
+askama = { version = "*", features = ["with-axum"] }
+askama_axum = "*"
 axum = { version = "*", features = ["tracing", "macros"] }
 axum-extra = { version = "*", features = ["cookie", "cookie-private"] }
 tower-http = { version = "*", features = [
@@ -56,7 +56,6 @@ tower-http = { version = "*", features = [
 tower-sessions = { version = "*", default-features = false, features = [
     "axum-core",
     "signed",
-    "private",
 ] }
 tower-sessions-redis-store = "*"
 

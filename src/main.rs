@@ -1,7 +1,13 @@
 #![allow(clippy::unused_unit)]
+#![deny(
+    clippy::disallowed_types,
+    clippy::disallowed_macros,
+    clippy::disallowed_methods,
+    clippy::disallowed_names
+)]
 
 mod postmark;
-mod web;
+mod server;
 mod util;
 
 mod config;
@@ -40,7 +46,7 @@ async fn main() {
             .init();
     }
 
-    web::run().await;
+    server::run().await;
 
     info!("Reached safe shutdown point.");
 }

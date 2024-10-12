@@ -94,7 +94,7 @@ mod deserialize {
                     .decode_slice(v, &mut slice)
                     .map_err(|_| Error::invalid_value(Unexpected::Str(v), &self))?;
 
-                Ok(Key::derive_from(&slice))
+                Ok(Key::from(&slice))
             }
         }
     }

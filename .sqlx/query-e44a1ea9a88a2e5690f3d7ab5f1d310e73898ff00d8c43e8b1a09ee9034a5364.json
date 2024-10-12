@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE ledger.commodities\n            SET\n                name = $3,\n                format = $4\n            WHERE\n                id = $1\n                    AND\n                user_id = $2\n        ;\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e44a1ea9a88a2e5690f3d7ab5f1d310e73898ff00d8c43e8b1a09ee9034a5364"
+}
