@@ -8,7 +8,7 @@
 <div id="login-form" hx-ext="response-targets">
     <div id="login-form-status"></div>
 
-    <form class="form" hx-post="/api/v1/auth/register" hx-target-error="#login-form-status" hx-swap="innerHTML">
+    <form class="form" hx-post="/api/v1/user/register" hx-target-error="#login-form-status" hx-swap="innerHTML">
         <label for="display_name">What should we call you?</label>
         <input type="text" name="display_name" placeholder="your name..." />
 
@@ -18,7 +18,7 @@
         <label for="password">Your Password</label>
         <input type="password" name="password" placeholder="password..." />
 
-        <input type="submit" value="Login" />
+        <input type="submit" value="Register" />
     </form>
 </div>
 {{ endblock }}

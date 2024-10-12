@@ -39,10 +39,10 @@ impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         axum::response::Response::builder()
             .status(match &self {
-                Error::UserNotExists => StatusCode::NOT_FOUND,
-                Error::EmailInUse => StatusCode::CONFLICT,
-                Error::Database(error) => internal_error(error),
-                Error::Postmark(error) => internal_error(error),
+                Self::UserNotExists => StatusCode::NOT_FOUND,
+                Self::EmailInUse => StatusCode::CONFLICT,
+                Self::Database(error) => internal_error(error),
+                Self::Postmark(error) => internal_error(error),
             })
             .body(self.to_string().into())
             .unwrap()

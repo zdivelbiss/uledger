@@ -1,10 +1,10 @@
-
 use crate::server::state::AppState;
 use axum::routing::get;
 use tower_sessions::Session;
 
 mod index;
 mod login;
+mod register;
 
 pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
@@ -12,6 +12,7 @@ pub fn router() -> axum::Router<AppState> {
         .route("/", get(index::serve))
         .layer(axum::middleware::from_fn(redirect_unauthorized))
         // Unauthenticated
+        .route("/register", get(register::serve))
         .route("/login", get(login::serve))
 }
 

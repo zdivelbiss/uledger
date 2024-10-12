@@ -28,7 +28,7 @@ impl axum::response::IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         axum::response::Response::builder()
             .status(match &self {
-                Error::Database(error) => internal_error(error),
+                Self::Database(error) => internal_error(error),
             })
             .body(self.to_string().into())
             .unwrap()

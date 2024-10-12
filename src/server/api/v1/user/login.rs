@@ -1,13 +1,16 @@
-use crate::server::{
-    htmx::{hx_redirect, is_htmx},
-    internal_error,
-    state::AppState,
+use crate::{
+    server::{
+        htmx::{hx_redirect, is_htmx},
+        internal_error,
+        state::AppState,
+    },
+    util::EmailAddress,
 };
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
 use axum::{
     extract::State,
     http::{HeaderMap, StatusCode},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     Form,
 };
 use tower_sessions::Session;
@@ -49,15 +52,21 @@ impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         axum::response::Response::builder()
             .status(match &self {
-                Error::AlreadyLoggedIn => StatusCode::CONFLICT,
-                Error::InvalidLogin => StatusCode::UNAUTHORIZED,
-                Error::Database(error) => internal_error(error),
-                Error::PasswordHashing(error) => internal_error(error),
-                Error::Session(error) => internal_error(error),
+                Self::AlreadyLoggedIn => StatusCode::CONFLICT,
+                Self::InvalidLogin => StatusCode::UNAUTHORIZED,
+                Self::Database(error) => internal_error(error),
+                Self::PasswordHashing(error) => internal_error(error),
+                Self::Session(error) => internal_error(error),
             })
             .body(self.to_string().into())
             .unwrap()
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Info {
+    email_address: EmailAddress,
+    password: String,
 }
 
 #[axum::debug_handler]
@@ -65,26 +74,29 @@ pub async fn handler(
     state: State<AppState>,
     session: Session,
     headers: HeaderMap,
-    form: Form<super::AuthInfo>,
-) -> Result<impl IntoResponse, Error> {
+    form: Form<Info>,
+) -> Result<Response, Error> {
     if !session.is_empty().await {
         return Err(Error::AlreadyLoggedIn);
     }
 
+    let email_address = form.email_address.as_str();
+    let password = form.password.as_str();
+
     let user = query!(
         "
-        SELECT id, password_salt, password_hash FROM auth.users
+        SELECT id, password_salt, password_hash, display_name FROM auth.users
             WHERE email = $1
         ;
         ",
-        form.email_address.as_str()
+        email_address
     )
     .fetch_one(state.db())
     .await?;
 
     let password_salt = SaltString::from_b64(&user.password_salt)?;
     let calculated_hash = Argon2::default()
-        .hash_password(form.password.as_bytes(), &password_salt)?
+        .hash_password(password.as_bytes(), &password_salt)?
         .serialize();
 
     // check password ...
@@ -96,6 +108,7 @@ pub async fn handler(
     session.insert("user_id", user.id).await?;
     let user_agent = headers.get("User-Agent").and_then(|v| v.to_str().ok());
     session.insert("user_agent", user_agent).await?;
+    session.insert("display_name", user.display_name);
 
     Ok(if is_htmx(&headers) {
         [hx_redirect("/")].into_response()
