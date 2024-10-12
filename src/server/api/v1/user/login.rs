@@ -104,15 +104,17 @@ pub async fn handler(
         return Err(Error::InvalidLogin);
     }
 
+    // clear session ...
+    session.flush().await?;
     // update session ...
     session.insert("user_id", user.id).await?;
     let user_agent = headers.get("User-Agent").and_then(|v| v.to_str().ok());
     session.insert("user_agent", user_agent).await?;
-    session.insert("display_name", user.display_name);
+    session.insert("display_name", user.display_name).await?;
 
-    Ok(if is_htmx(&headers) {
-        [hx_redirect("/")].into_response()
+    if is_htmx(&headers) {
+        Ok([hx_redirect("/")].into_response())
     } else {
-        ().into_response()
-    })
+        Ok(().into_response())
+    }
 }
