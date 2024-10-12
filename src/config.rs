@@ -1,7 +1,6 @@
 #![allow(unused)]
 
 use crate::util::EmailAddress;
-use serde::Deserialize;
 use std::{net::SocketAddr, sync::LazyLock, time::Duration};
 use tower_sessions::cookie::Key;
 use tracing_subscriber::registry::Data;

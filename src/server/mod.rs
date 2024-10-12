@@ -125,3 +125,7 @@ pub fn internal_error(error: impl std::fmt::Debug) -> StatusCode {
 
     StatusCode::INTERNAL_SERVER_ERROR
 }
+
+pub fn redirect_root() -> axum::response::Redirect {
+    axum::response::Redirect::temporary("/")
+}

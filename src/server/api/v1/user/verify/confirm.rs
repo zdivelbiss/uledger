@@ -39,8 +39,8 @@ impl IntoResponse for Error {
     }
 }
 
-#[derive(Debug, serde::Deserialize)]
-pub struct RequestBody {
+#[derive(Debug, Deserialize)]
+pub struct Info {
     email_address: EmailAddress,
     proof_token: VerificationToken,
 }
@@ -49,7 +49,7 @@ pub struct RequestBody {
 pub async fn handler(
     session: Session,
     state: State<AppState>,
-    body: Json<RequestBody>,
+    body: Json<Info>,
 ) -> Result<(), Error> {
     let email_address = &body.email_address;
     let proof_token = &body.proof_token;

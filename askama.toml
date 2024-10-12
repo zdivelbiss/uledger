@@ -1,0 +1,16 @@
+[general]
+dirs = ["src/~templates"]
+whitespace = "suppress"
+default_syntax = "custom"
+
+[[syntax]]
+name = "custom"
+
+block_start = "{{"
+block_end = "}}"
+
+comment_start = "`"
+comment_end = "`"
+
+expr_start = "{:"
+expr_end = ":}"

@@ -1,7 +1,7 @@
 use crate::{config::cfg, user_agent};
 use reqwest::header::HeaderMap;
-use serde::Serialize;
 use std::sync::LazyLock;
+use Serialize;
 
 mod transaction;
 pub use transaction::*;

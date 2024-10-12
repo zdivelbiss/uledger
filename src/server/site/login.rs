@@ -1,23 +1,14 @@
-use axum::{
-    http::StatusCode,
-    response::{Html, IntoResponse},
-};
-use tower_sessions::Session;
+use axum::response::IntoResponse;
 
-use crate::server::{internal_error, is_authenticated};
-
-#[derive(askama::Template)]
+#[derive(Template)]
 #[template(path = "login.html")]
-struct LoginTemplate {
-    is_authenticated: bool,
-}
+pub struct LoginTemplate {}
 
 #[axum::debug_handler]
-pub async fn serve(session: Session) -> impl axum::response::IntoResponse {
-    let is_authenticated = is_authenticated(&session).await;
-
-    match askama::Template::render(&LoginTemplate { is_authenticated }) {
-        Ok(render) => (StatusCode::OK, Html::from(render)).into_response(),
-        Err(error) => (internal_error(error), "internal server error").into_response(),
+pub async fn serve(session: tower_sessions::Session) -> impl IntoResponse {
+    if crate::server::is_authenticated(&session).await {
+        crate::server::redirect_root().into_response()
+    } else {
+        (LoginTemplate {}).into_response()
     }
 }

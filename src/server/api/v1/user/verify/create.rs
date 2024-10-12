@@ -1,6 +1,6 @@
 use crate::{
-    util::{EmailAddress, VerificationToken},
     server::{internal_error, state::AppState},
+    util::{EmailAddress, VerificationToken},
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use tower_sessions::Session;
@@ -49,8 +49,8 @@ impl IntoResponse for Error {
     }
 }
 
-#[derive(Debug, serde::Deserialize)]
-pub struct RequestBody {
+#[derive(Debug, Deserialize)]
+pub struct Info {
     email_address: EmailAddress,
 }
 
@@ -58,7 +58,7 @@ pub struct RequestBody {
 pub async fn handler(
     session: Session,
     state: State<AppState>,
-    body: Json<RequestBody>,
+    body: Json<Info>,
 ) -> Result<StatusCode, Error> {
     use crate::postmark::{send_email, Transaction};
 

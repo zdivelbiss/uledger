@@ -25,8 +25,11 @@ extern crate num_enum;
 #[macro_use]
 extern crate serde;
 
-fn user_agent() -> &'static str {
-    concat!("uledger-core/", env!("CARGO_PKG_VERSION"))
+#[macro_use]
+extern crate askama;
+
+const fn user_agent() -> &'static str {
+    concat!("uledger-srv/", env!("CARGO_PKG_VERSION"))
 }
 
 #[tokio::main]

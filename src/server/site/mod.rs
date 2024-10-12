@@ -8,8 +8,10 @@ mod login;
 
 pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
+        // Authenticated
         .route("/", get(index::serve))
         .layer(axum::middleware::from_fn(redirect_unauthorized))
+        // Unauthenticated
         .route("/login", get(login::serve))
 }
 
