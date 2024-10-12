@@ -105,7 +105,7 @@ pub async fn handler(
     }
 
     // clear session ...
-    session.clear().await?;
+    session.clear().await;
     // update session ...
     session.insert("user_id", user.id).await?;
     let user_agent = headers.get("User-Agent").and_then(|v| v.to_str().ok());
