@@ -1,4 +1,7 @@
-use crate::web::{internal_error, state::AppState};
+use crate::web::{
+    internal_error,
+    state::{get_user_id, AppState},
+};
 use axum::{
     extract::{Form, State},
     http::StatusCode,
@@ -43,23 +46,19 @@ impl axum::response::IntoResponse for Error {
 pub async fn create(
     session: Session,
     state: State<AppState>,
-    info: Form<super::AccountInfo>,
+    info: Form<super::CommodityInfo>,
 ) -> Result<(), Error> {
-    let user_id = crate::web::state::get_user_id(&session).await;
-
     query!(
         "
-        INSERT INTO ledger.accounts (user_id, kind, name, description)
-            VALUES ($1, $2, $3, $4)
+        INSERT INTO ledger.commodities (user_id, name, format)
+            VALUES ($1, $2, $3)
         ;
         ",
-        user_id,
-        i16::from(info.kind),
+        get_user_id(&session).await,
         info.name.as_str(),
-        info.description.as_deref()
+        info.format.as_str()
     )
     .execute(state.db())
-    .await?;
-
-    Ok(())
+    .await
+    .map_err(Error::from)
 }

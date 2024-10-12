@@ -2,10 +2,7 @@ use crate::web::{
     htmx::{hx_redirect, is_htmx},
     internal_error,
 };
-use axum::{
-    http::{HeaderMap, StatusCode},
-    response::IntoResponse,
-};
+use axum::{http::HeaderMap, response::IntoResponse};
 use tower_sessions::Session;
 
 #[derive(Debug, thiserror::Error)]

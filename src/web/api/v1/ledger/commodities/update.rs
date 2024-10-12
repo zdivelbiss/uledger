@@ -1,15 +1,16 @@
-use crate::web::{internal_error, state::AppState};
+use crate::web::{
+    internal_error,
+    state::{get_user_id, AppState},
+};
 use axum::{
-    extract::{Form, State},
-    http::StatusCode,
+    extract::{Path, State},
+    Json,
 };
 use tower_sessions::Session;
+use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("account already exists")]
-    Duplicate,
-
     #[error("internal server error")]
     Database(sqlx::Error),
 }
@@ -21,8 +22,6 @@ impl From<sqlx::Error> for Error {
         };
 
         match (db_err.code().as_deref(), db_err.constraint()) {
-            (Some("23505"), Some("accounts_user_id_kind_name_key")) => Error::Duplicate,
-
             _ => Self::Database(err),
         }
     }
@@ -32,7 +31,6 @@ impl axum::response::IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         axum::response::Response::builder()
             .status(match &self {
-                Error::Duplicate => StatusCode::CONFLICT,
                 Error::Database(error) => internal_error(error),
             })
             .body(self.to_string().into())
@@ -40,23 +38,29 @@ impl axum::response::IntoResponse for Error {
     }
 }
 
-pub async fn create(
+pub async fn update(
     session: Session,
     state: State<AppState>,
-    info: Form<super::AccountInfo>,
+    id: Path<Uuid>,
+    info: Json<super::CommodityInfo>,
 ) -> Result<(), Error> {
-    let user_id = crate::web::state::get_user_id(&session).await;
-
     query!(
         "
-        INSERT INTO ledger.accounts (user_id, kind, name, description)
-            VALUES ($1, $2, $3, $4)
+        UPDATE ledger.accounts
+            SET
+                kind = $3,
+                name = $4,
+                description = $5
+            WHERE
+                id = $1
+                    AND
+                user_id = $2
         ;
         ",
-        user_id,
-        i16::from(info.kind),
-        info.name.as_str(),
-        info.description.as_deref()
+        *id,
+        get_user_id(&session).await,
+        account.name,
+        account.format
     )
     .execute(state.db())
     .await?;

@@ -2,9 +2,7 @@
 
 mod postmark;
 mod web;
-
 mod util;
-use util::*;
 
 mod config;
 use config::cfg;
