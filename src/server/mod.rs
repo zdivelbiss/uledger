@@ -9,18 +9,17 @@ use tower_http::{
     compression::CompressionLayer, decompression::DecompressionLayer,
     set_header::SetResponseHeaderLayer,
 };
-use tower_sessions::{Expiry, Session, SessionManagerLayer};
+use tower_sessions::{Expiry,  SessionManagerLayer};
 use tower_sessions_redis_store::{
     fred::{self, prelude::ClientLike},
     RedisStore,
 };
-use uuid::Uuid;
 
 mod api;
 mod htmx;
-mod responses;
 mod site;
 mod state;
+mod user_session;
 
 #[derive(askama::Template)]
 #[template(path = "404.html")]
@@ -93,39 +92,8 @@ async fn build_router() -> Router {
         .with_state(state)
 }
 
-pub async fn is_authenticated(session: &Session) -> bool {
-    session
-        .get::<Uuid>("user_id")
-        .await
-        .ok()
-        .flatten()
-        .is_some()
-}
-
-pub async fn authentication_layer(
-    session: Session,
-    request: axum::extract::Request,
-    next: axum::middleware::Next,
-) -> axum::response::Response {
-    use axum::response::IntoResponse;
-
-    if is_authenticated(&session).await {
-        next.run(request).await
-    } else {
-        (
-            axum::http::StatusCode::UNAUTHORIZED,
-            "You must authenticate.",
-        )
-            .into_response()
-    }
-}
-
 pub fn internal_error(error: impl std::fmt::Debug) -> StatusCode {
     error!("{error:?}");
 
     StatusCode::INTERNAL_SERVER_ERROR
-}
-
-pub fn redirect_root() -> axum::response::Redirect {
-    axum::response::Redirect::temporary("/")
 }

@@ -9,9 +9,6 @@ mod verify;
 pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
         .nest("/verify", verify::router())
-        .layer(axum::middleware::from_fn(
-            crate::server::authentication_layer,
-        ))
         .route("/register", post(register::handler))
         .route("/login", post(login::handler))
         .route("/logout", post(logout::handler))

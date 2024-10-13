@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_types)]
+
 use crate::{
     server::{
         htmx::{hx_redirect, is_htmx},
@@ -99,11 +101,9 @@ pub async fn handler(
     .execute(state.db())
     .await?;
 
-    // TODO potentially log user in as well?
-
-    Ok(if is_htmx(&headers) {
-        [hx_redirect("/login")].into_response()
+    if is_htmx(&headers) {
+        Ok([hx_redirect("/login")].into_response())
     } else {
-        ().into_response()
-    })
+        Ok(().into_response())
+    }
 }

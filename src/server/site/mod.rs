@@ -1,10 +1,23 @@
+#![allow(clippy::disallowed_types)]
+
 use crate::server::state::AppState;
-use axum::routing::get;
+use axum::{
+    extract::Request,
+    middleware::Next,
+    response::{IntoResponse, Redirect, Response},
+    routing::get,
+};
 use tower_sessions::Session;
 
 mod index;
-mod login;
-mod register;
+
+#[derive(Template)]
+#[template(path = "register.html")]
+pub struct RegisterTemplate {}
+
+#[derive(Template)]
+#[template(path = "login.html")]
+pub struct LoginTemplate {}
 
 pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
@@ -12,20 +25,16 @@ pub fn router() -> axum::Router<AppState> {
         .route("/", get(index::serve))
         .layer(axum::middleware::from_fn(redirect_unauthorized))
         // Unauthenticated
-        .route("/register", get(register::serve))
-        .route("/login", get(login::serve))
+        .route("/register", get(|| async { RegisterTemplate {} }))
+        .route("/login", get(|| async { LoginTemplate {} }))
 }
 
-async fn redirect_unauthorized(
-    session: Session,
-    request: axum::extract::Request,
-    next: axum::middleware::Next,
-) -> axum::response::Response {
-    use axum::response::IntoResponse;
+async fn redirect_unauthorized(session: Session, request: Request, next: Next) -> Response {
+    let is_authenticated = session.get_value("user_id").await.ok().flatten().is_some();
 
-    if crate::server::is_authenticated(&session).await {
+    if is_authenticated {
         next.run(request).await
     } else {
-        axum::response::Redirect::temporary("/login").into_response()
+        Redirect::temporary("/login").into_response()
     }
 }

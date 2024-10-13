@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_types)]
+
 use crate::{
     server::{
         htmx::{hx_redirect, is_htmx},

@@ -4,3 +4,5 @@ disallowed-methods = [
     "std::cmp::Ord::min",
     "std::cmp::Ord::max",
 ]
+
+disallowed-types = ["tower_sessions::Session"]
