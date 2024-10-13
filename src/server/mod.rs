@@ -9,7 +9,7 @@ use tower_http::{
     compression::CompressionLayer, decompression::DecompressionLayer,
     set_header::SetResponseHeaderLayer,
 };
-use tower_sessions::{Expiry,  SessionManagerLayer};
+use tower_sessions::{Expiry, SessionManagerLayer};
 use tower_sessions_redis_store::{
     fred::{self, prelude::ClientLike},
     RedisStore,
@@ -19,6 +19,7 @@ mod api;
 mod htmx;
 mod site;
 mod state;
+mod styles;
 mod user_session;
 
 #[derive(askama::Template)]
@@ -84,6 +85,7 @@ async fn build_router() -> Router {
     Router::new()
         .nest("/", site::router())
         .nest("/api", api::router())
+        .nest("/styles", styles::router())
         .fallback(|| async { FallbackTemplate {} })
         .layer(set_server_layer)
         .layer(compression_layer)

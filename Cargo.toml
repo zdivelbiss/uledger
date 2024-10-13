@@ -58,6 +58,7 @@ tower-sessions = { version = "*", default-features = false, features = [
     "signed",
 ] }
 tower-sessions-redis-store = "*"
+grass = "*"
 
 reqwest = { version = "*", default-features = false, features = [
     "http2",

@@ -1,6 +1,6 @@
 [general]
 dirs = ["src/~templates"]
-whitespace = "suppress"
+whitespace = "preserve"
 default_syntax = "custom"
 
 [[syntax]]

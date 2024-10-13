@@ -1,7 +1,7 @@
 #![allow(unused)]
 
 use crate::util::EmailAddress;
-use std::{net::SocketAddr, sync::LazyLock, time::Duration};
+use std::{net::SocketAddr, path::PathBuf, sync::LazyLock, time::Duration};
 use tower_sessions::cookie::Key;
 use tracing_subscriber::registry::Data;
 
@@ -24,6 +24,7 @@ pub struct Config {
     pub database: Database,
     pub session: Session,
     pub postmark: Postmark,
+    pub styles: PathBuf,
 }
 
 #[derive(Debug, Deserialize)]
