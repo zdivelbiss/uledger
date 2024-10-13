@@ -7,7 +7,7 @@
         </script>
     <script src="https://unpkg.com/htmx-ext-response-targets@2.0.0/response-targets.js"></script>
 
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="/styles/base.scss" />
 
     {{ block HEAD }}
     {{ endblock }}
@@ -18,9 +18,15 @@
     </title>
 </head>
 
-<body style="margin: 0; padding: 0;">
-    {{ block BODY }}
-    {{ endblock }}
+<body>
+    <main>
+        {{ block BODY }}
+        {{ endblock }}
+    </main>
+
+    <footer>
+        <p>Copyright © 2024, Noname Software Technologies</p>
+    </footer>
 </body>
 
 </html>
