@@ -20,7 +20,7 @@ impl AppState {
         Self { db: db_pool }
     }
 
-    pub fn db(&self) -> Pool<Postgres> {
-        self.db.clone()
+    pub fn db(&self) -> &Pool<Postgres> {
+        &self.db
     }
 }
