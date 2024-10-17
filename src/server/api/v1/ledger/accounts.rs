@@ -1,12 +1,18 @@
 //! TODO use `rows_affected` to ensure IDs are actually affected
 
-use crate::server::{internal_error, state::AppState, user_session::UserSession};
+use crate::server::{
+    api::{Account, AccountInfo},
+    htmx::is_htmx,
+    internal_error,
+    state::AppState,
+    user_session::UserSession,
+};
 use axum::{
     extract::{Form, Json, Path, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
+    response::IntoResponse,
     routing, Router,
 };
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 pub fn router() -> Router<AppState> {
@@ -18,44 +24,10 @@ pub fn router() -> Router<AppState> {
         .route("/:id", routing::delete(delete))
 }
 
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, IntoPrimitive, FromPrimitive, Serialize, Deserialize,
-)]
-#[serde(rename_all = "UPPERCASE")]
-#[repr(i16)]
-enum Kind {
-    #[default]
-    Equity = 0,
-    Asset = 1,
-    Liability = 2,
-    Income = 3,
-    Expense = 4,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AccountInfo {
-    kind: Kind,
-    name: String,
-    description: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, FromRow)]
-struct Account {
-    id: Uuid,
-    created: DateTime<Utc>,
-    kind: Kind,
-    name: String,
-    description: Option<String>,
-}
-
-impl From<Account> for AccountInfo {
-    fn from(value: Account) -> Self {
-        Self {
-            kind: value.kind,
-            name: value.name,
-            description: value.description,
-        }
-    }
+#[derive(askama::Template)]
+#[template(path = "partials/accounts.html")]
+pub struct AccountsTemplate {
+    accounts: Box<[AccountInfo]>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -97,25 +69,45 @@ type Result<T> = std::result::Result<T, Error>;
 
 async fn get_all(
     user_session: UserSession,
+    headers: HeaderMap,
     app_state: State<AppState>,
-) -> Result<Json<Vec<Account>>> {
+) -> Result<impl IntoResponse> {
     let user_id = user_session.get_user_id().await;
 
-    let accounts = query_as!(
-        Account,
-        "
-        SELECT id, created, kind, name, description
-            FROM ledger.accounts
-            WHERE
-                user_id = $1
-        ;
-        ",
-        user_id
-    )
-    .fetch_all(app_state.db())
-    .await?;
+    if is_htmx(&headers) {
+        let accounts = query_as!(
+            AccountInfo,
+            "
+            SELECT kind, name, description
+                FROM ledger.accounts
+                WHERE
+                    user_id = $1
+            ;
+            ",
+            user_id
+        )
+        .fetch_all(app_state.db())
+        .await?
+        .into_boxed_slice();
 
-    Ok(Json::from(accounts))
+        Ok(AccountsTemplate { accounts }.into_response())
+    } else {
+        let accounts = query_as!(
+            Account,
+            "
+            SELECT id, created, kind, name, description
+                FROM ledger.accounts
+                WHERE
+                    user_id = $1
+            ;
+            ",
+            user_id
+        )
+        .fetch_all(app_state.db())
+        .await?;
+
+        Ok(Json::from(accounts).into_response())
+    }
 }
 
 async fn create(

@@ -4,7 +4,6 @@ use crate::server::user_session::UserSession;
 #[template(path = "index.html")]
 pub struct IndexTemplate {
     display_name: String,
-    // accounts: Box<[()]>,
 }
 
 #[axum::debug_handler]

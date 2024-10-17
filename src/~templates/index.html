@@ -11,22 +11,8 @@
 
 <h3>Your Accounts</h3>
 
-<!--
-<ul>
-    {{ for account in accounts }}
-    <li>
-        <p>{: account.name :} | {: account.kind :}</p>
-        <p>
-            {{ if let Some(description) = account.description }}
-            {: description :}
-            {{ else }}
-            <span class="softtext">no description</span>
-            {{ endif }}
-        </p>
-    </li>
-    {{ endfor }}
-</ul>
--->
+<div hx-trigger="load once" hx-get="/api/v1/ledger/accounts">
+</div>
 
 <div id="create-account-area" hx-ext="response-targets">
     <div id="create-account-status"></div>

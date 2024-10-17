@@ -1,12 +1,16 @@
 //! TODO use `rows_affected` to ensure IDs are actually affected
 
-use crate::server::{internal_error, state::AppState, user_session::UserSession};
+use crate::server::{
+    api::{Commodity, CommodityInfo},
+    internal_error,
+    state::AppState,
+    user_session::UserSession,
+};
 use axum::{
     extract::{Form, Json, Path, State},
     http::StatusCode,
     routing, Router,
 };
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 pub fn router() -> Router<AppState> {
@@ -16,20 +20,6 @@ pub fn router() -> Router<AppState> {
         .route("/:id", routing::get(read))
         .route("/:id", routing::put(update))
         .route("/:id", routing::delete(delete))
-}
-
-#[derive(Debug, Serialize, Deserialize, FromRow)]
-struct Commodity {
-    id: Uuid,
-    created: DateTime<Utc>,
-    name: String,
-    format: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct CommodityInfo {
-    name: String,
-    format: String,
 }
 
 #[derive(Debug, thiserror::Error)]
