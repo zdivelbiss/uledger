@@ -48,6 +48,16 @@ struct Account {
     description: Option<String>,
 }
 
+impl From<Account> for AccountInfo {
+    fn from(value: Account) -> Self {
+        Self {
+            kind: value.kind,
+            name: value.name,
+            description: value.description,
+        }
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("account already exists")]

@@ -1,11 +1,11 @@
 {{ extends "base.html" }}
 
-{{ block HEAD }}
-<link rel="stylesheet" href="/styles/login.scss" />
-{{ endblock }}
-
 {{ block TITLE }}
 µLedger: Login
+{{ endblock }}
+
+{{ block HEAD }}
+<link rel="stylesheet" href="/styles/login.scss" />
 {{ endblock }}
 
 {{ block BODY }}
@@ -15,12 +15,12 @@
     <form hx-post="/api/v1/user/login" hx-target="#login-status" hx-target-error="#login-status">
         <label>
             Your Email Address<br />
-            <input type="text" name="email_address" placeholder="email address..." />
+            <input type="text" name="email_address" placeholder="email address..." required />
         </label>
 
         <label>
             Your Password<br />
-            <input type="password" name="password" placeholder="password..." />
+            <input type="password" name="password" placeholder="password..." required />
         </label>
 
         <input type="submit" value="Login" />

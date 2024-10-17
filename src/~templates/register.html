@@ -1,22 +1,33 @@
 {{ extends "base.html" }}
 
 {{ block TITLE }}
-µLedger: Login
+µLedger: Register
+{{ endblock }}
+
+{{ block HEAD }}
+<link rel="stylesheet" href="/styles/login.scss" />
 {{ endblock }}
 
 {{ block BODY }}
-<div id="login-form" hx-ext="response-targets">
-    <div id="login-form-status"></div>
+<div id="register-form" hx-ext="response-targets">
+    <div id="register-status"></div>
 
-    <form class="form" hx-post="/api/v1/user/register" hx-target-error="#login-form-status" hx-swap="innerHTML">
-        <label for="display_name">What should we call you?</label>
-        <input type="text" name="display_name" placeholder="your name..." />
+    <form class="form" hx-post="/api/v1/user/register" hx-target-error="#register-status" hx-swap="innerHTML">
+        <label>
+            What should we call you?<br />
+            <input type="text" name="display_name" placeholder="your name..." required />
+        </label>
 
-        <label for="email_address">Your Email Address</label>
-        <input type="text" name="email_address" placeholder="email address..." />
 
-        <label for="password">Your Password</label>
-        <input type="password" name="password" placeholder="password..." />
+        <label>
+            Your Email Address<br />
+            <input type="text" name="email_address" placeholder="email address..." required />
+        </label>
+
+        <label>
+            Your Password<br />
+            <input type="password" name="password" placeholder="password..." required />
+        </label>
 
         <input type="submit" value="Register" />
     </form>

@@ -12,14 +12,6 @@
 
     form {
         flex: 1;
-
-        display: flex;
-        flex-flow: column nowrap;
-
         width: 40ch;
-
-        input {
-            width: 100%;
-        }
     }
 }

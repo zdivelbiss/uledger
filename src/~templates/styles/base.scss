@@ -17,3 +17,12 @@ main {
 footer {
     flex: 0;
 }
+
+form {
+    display: flex;
+    flex-flow: column nowrap;
+
+    input {
+        width: 100%;
+    }
+}
