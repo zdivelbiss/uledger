@@ -116,7 +116,7 @@ async fn create(
     account_info: Form<AccountInfo>,
 ) -> Result<()> {
     let user_id = user_session.get_user_id().await;
-    let account_kind = i16::from(account_info.kind);
+    let account_kind = account_info.kind.as_str();
     let account_name = account_info.name.as_str();
     let account_description = account_info.description.as_deref();
 
@@ -173,7 +173,7 @@ async fn update(
 ) -> Result<()> {
     let user_id = user_session.get_user_id().await;
     let account_id = *account_id;
-    let account_kind = i16::from(account_info.kind);
+    let account_kind = account_info.kind.as_str();
     let account_name = account_info.name.as_str();
     let account_description = account_info.description.as_deref();
 

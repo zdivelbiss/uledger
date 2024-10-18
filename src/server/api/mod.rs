@@ -1,6 +1,5 @@
 use crate::server::state::AppState;
 use chrono::{DateTime, Utc};
-use serde::Serialize;
 use uuid::Uuid;
 
 mod v1;
@@ -9,32 +8,45 @@ pub fn router() -> axum::Router<AppState> {
     axum::Router::new().nest("/v1", v1::router())
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    IntoPrimitive,
-    FromPrimitive,
-    Serialize_repr,
-    Deserialize_repr,
-)]
-#[repr(i16)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum AccountKind {
-    Equity = 0,
-    Asset = 1,
-    Liability = 2,
-    Income = 3,
-    Expense = 4,
+    Equity,
+    Asset,
+    Liability,
+    Income,
+    Expense,
+}
 
-    #[default]
-    Unknown = -1,
+impl AccountKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            AccountKind::Equity => "EQUITY",
+            AccountKind::Asset => "ASSET",
+            AccountKind::Liability => "LIABILITY",
+            AccountKind::Income => "INCOME",
+            AccountKind::Expense => "EXPENSE",
+        }
+    }
 }
 
 impl std::fmt::Display for AccountKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Debug::fmt(self, f)
+        f.write_str(self.as_str())
+    }
+}
+
+impl From<String> for AccountKind {
+    fn from(value: String) -> Self {
+        match value.as_str() {
+            "EQUITY" => Self::Equity,
+            "ASSET" => Self::Asset,
+            "LIABILITY" => Self::Liability,
+            "INCOME" => Self::Income,
+            "EXPENSE" => Self::Expense,
+
+            value => panic!("not a variant: {value}"),
+        }
     }
 }
 
