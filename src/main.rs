@@ -26,6 +26,9 @@ extern crate num_enum;
 extern crate serde;
 
 #[macro_use]
+extern crate serde_repr;
+
+#[macro_use]
 extern crate askama;
 
 const fn user_agent() -> &'static str {

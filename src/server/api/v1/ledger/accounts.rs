@@ -25,8 +25,8 @@ pub fn router() -> Router<AppState> {
 }
 
 #[derive(askama::Template)]
-#[template(path = "partials/accounts.html")]
-pub struct AccountsTemplate {
+#[template(path = "partials/account-list.html")]
+pub struct AccountListTemplate {
     accounts: Box<[AccountInfo]>,
 }
 
@@ -90,7 +90,7 @@ async fn get_all(
         .await?
         .into_boxed_slice();
 
-        Ok(AccountsTemplate { accounts }.into_response())
+        Ok(AccountListTemplate { accounts }.into_response())
     } else {
         let accounts = query_as!(
             Account,

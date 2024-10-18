@@ -1,8 +1,7 @@
+use crate::server::state::AppState;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use uuid::Uuid;
-
-use crate::server::state::AppState;
 
 mod v1;
 
@@ -11,34 +10,37 @@ pub fn router() -> axum::Router<AppState> {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, IntoPrimitive, FromPrimitive, Serialize, Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    IntoPrimitive,
+    FromPrimitive,
+    Serialize_repr,
+    Deserialize_repr,
 )]
-#[serde(rename_all = "UPPERCASE")]
 #[repr(i16)]
-pub enum Kind {
-    #[default]
+pub enum AccountKind {
     Equity = 0,
     Asset = 1,
     Liability = 2,
     Income = 3,
     Expense = 4,
+
+    #[default]
+    Unknown = -1,
 }
 
-impl std::fmt::Display for Kind {
+impl std::fmt::Display for AccountKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self {
-            Kind::Equity => "Equity",
-            Kind::Asset => "Asset",
-            Kind::Liability => "Liability",
-            Kind::Income => "Income",
-            Kind::Expense => "Expense",
-        })
+        std::fmt::Debug::fmt(self, f)
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AccountInfo {
-    kind: Kind,
+    kind: AccountKind,
     name: String,
     description: Option<String>,
 }
@@ -47,7 +49,7 @@ pub struct AccountInfo {
 pub struct Account {
     id: Uuid,
     created: DateTime<Utc>,
-    kind: Kind,
+    kind: AccountKind,
     name: String,
     description: Option<String>,
 }
