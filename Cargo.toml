@@ -7,7 +7,7 @@ edition = "2021"
 dotenvy = "*"
 thiserror = "*"
 
-tokio = { version = "*", features = [] }
+tokio = "*"
 tracing = "*"
 tracing-subscriber = "*"
 
@@ -59,7 +59,8 @@ tower-sessions = { version = "*", default-features = false, features = [
     "signed",
 ] }
 tower-sessions-redis-store = "*"
-grass = "*"
+mini-moka = "*"
+grass = { path = "../grass/crates/lib" }
 
 reqwest = { version = "*", default-features = false, features = [
     "http2",

@@ -16,10 +16,10 @@ use tower_sessions_redis_store::{
 };
 
 mod api;
+mod assets;
 mod htmx;
 mod site;
 mod state;
-mod styles;
 mod user_session;
 
 #[derive(askama::Template)]
@@ -85,7 +85,7 @@ async fn build_router() -> Router {
     Router::new()
         .nest("/", site::router())
         .nest("/api", api::router())
-        .nest("/styles", styles::router())
+        .nest("/assets", assets::router())
         .route("/logout", axum::routing::get(logout))
         .fallback(|| async { FallbackTemplate {} })
         .layer(set_server_layer)
@@ -104,7 +104,13 @@ async fn logout(session: tower_sessions::Session) -> axum::response::Redirect {
     axum::response::Redirect::temporary("/login")
 }
 
-pub fn internal_error(error: impl std::fmt::Debug) -> StatusCode {
+pub fn internal_error(error: impl std::error::Error) -> StatusCode {
+    error!("{error}");
+
+    StatusCode::INTERNAL_SERVER_ERROR
+}
+
+pub fn internal_error_dbg(error: impl std::fmt::Debug) -> StatusCode {
     error!("{error:?}");
 
     StatusCode::INTERNAL_SERVER_ERROR

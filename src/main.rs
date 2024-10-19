@@ -39,7 +39,7 @@ async fn main() {
         dotenvy::dotenv().expect("no `.env` file");
 
         tracing_subscriber::fmt()
-            .with_max_level(tracing::Level::DEBUG)
+            .with_max_level(tracing::Level::TRACE)
             .init();
     }
     #[cfg(not(debug_assertions))]

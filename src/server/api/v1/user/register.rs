@@ -2,7 +2,6 @@ use crate::{
     server::{
         api::Role,
         htmx::{hx_redirect, is_htmx},
-        internal_error,
         state::AppState,
     },
     util::EmailAddress,
@@ -52,11 +51,13 @@ impl From<sqlx::Error> for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
+        use crate::server::{internal_error, internal_error_dbg};
+
         axum::response::Response::builder()
             .status(match &self {
                 Self::DuplicateEmail => StatusCode::CONFLICT,
-                Self::PasswordHashing(error) => internal_error(error),
                 Self::Database(error) => internal_error(error),
+                Self::PasswordHashing(error) => internal_error_dbg(error),
             })
             .body(self.to_string().into())
             .unwrap()

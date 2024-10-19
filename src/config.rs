@@ -24,7 +24,7 @@ pub struct Config {
     pub database: Database,
     pub session: Session,
     pub postmark: Postmark,
-    pub styles: PathBuf,
+    pub assets: PathBuf,
 }
 
 #[derive(Debug, Deserialize)]
