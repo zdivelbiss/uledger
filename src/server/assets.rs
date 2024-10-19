@@ -1,16 +1,10 @@
-use crate::server::state::AppState;
-use axum::{
-    body::Bytes,
-    http,
-    response::{IntoResponse, Response},
-    routing::get,
-    Router,
-};
+use crate::{config::cfg, server::state::AppState};
+use axum::{body::Bytes, http, response::IntoResponse, routing::get, Router};
 use mini_moka::sync::Cache;
 use std::{path::PathBuf, sync::LazyLock};
 
 pub fn router() -> Router<AppState> {
-    Router::new().route("/*path", get(get_or_cache))
+    Router::new().route("/*path", get(get_cached))
 }
 
 #[derive(Debug, Clone)]
@@ -19,7 +13,7 @@ enum Asset {
 }
 
 impl IntoResponse for Asset {
-    fn into_response(self) -> Response {
+    fn into_response(self) -> axum::response::Response {
         match self {
             Asset::Css(bytes) => (
                 [(http::header::CONTENT_TYPE, "text/css; charset=utf-8")],
@@ -30,7 +24,15 @@ impl IntoResponse for Asset {
     }
 }
 
-static CACHE: LazyLock<Cache<PathBuf, Asset>> = LazyLock::new(|| Cache::new(50));
+static CACHE: LazyLock<Cache<PathBuf, Asset>> = LazyLock::new(|| {
+    let capacity = cfg().assets.cache.capacity;
+    let lifetime = cfg().assets.cache.lifetime;
+
+    Cache::builder()
+        .max_capacity(capacity)
+        .time_to_live(lifetime)
+        .build()
+});
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -68,8 +70,8 @@ impl IntoResponse for Error {
 }
 
 #[instrument]
-async fn get_or_cache(path: axum::extract::Path<PathBuf>) -> Result<Asset, Error> {
-    let path = crate::cfg().assets.join(&*path).canonicalize()?;
+async fn get_cached(path: axum::extract::Path<PathBuf>) -> Result<Asset, Error> {
+    let path = cfg().assets.path.join(&*path).canonicalize()?;
 
     trace!("Fetching asset...");
 

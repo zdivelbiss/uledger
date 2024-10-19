@@ -24,7 +24,7 @@ pub struct Config {
     pub database: Database,
     pub session: Session,
     pub postmark: Postmark,
-    pub assets: PathBuf,
+    pub assets: Assets,
 }
 
 #[derive(Debug, Deserialize)]
@@ -62,6 +62,20 @@ pub struct Session {
 pub struct Postmark {
     pub apikey: String,
     pub sender: EmailAddress,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Assets {
+    pub path: PathBuf,
+    pub cache: Cache,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Cache {
+    pub capacity: u64,
+
+    #[serde(deserialize_with = "deserialize::duration::secs")]
+    pub lifetime: Duration,
 }
 
 mod deserialize {
