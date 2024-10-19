@@ -1,7 +1,7 @@
-<div id="create-account-area" hx-ext="response-targets">
-    <div id="create-account-status"></div>
+<div class="create-account-area" hx-ext="response-targets">
+    <div id="form-status"></div>
 
-    <form class="form" hx-post="/api/v1/ledger/accounts" hx-target-error="#create-account-status" hx-swap="innerHTML">
+    <form class="form" hx-post="/api/v1/ledger/accounts" hx-target-error="#form-status">
         <label>
             Account Name<br />
             <input type="text" name="name" placeholder="account name..." required />
@@ -9,7 +9,7 @@
 
         <label>
             Account Kind<br />
-            <select>
+            <select name="kind">
                 <option value="INCOME">Income</option>
                 <option value="EXPENSE">Expense</option>
                 <option value="ASSET">Asset</option>
@@ -20,7 +20,7 @@
 
         <label>
             Account Description<br />
-            <input type="" name="description" placeholder="account descrition..." />
+            <input type="text" name="description" placeholder="account descrition..." />
         </label>
 
         <input type="submit" value="Create Account" />

@@ -1,6 +1,8 @@
 CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION uledger;
 CREATE SCHEMA IF NOT EXISTS ledger AUTHORIZATION uledger;
 
+CREATE TYPE USER_ROLE AS ENUM ('ADMIN', 'REGULAR');
+CREATE TYPE ACCOUNT_KIND AS ENUM ('EQUITY', 'ASSET', 'LIABILITY', 'INCOME', 'EXPENSE');
 
 -- AUTH --
 ----------
@@ -9,7 +11,7 @@ CREATE TABLE IF NOT EXISTS auth.users (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created             TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 
-    role                SMALLINT NOT NULL,
+    role                USER_ROLE NOT NULL,
 
     email               TEXT UNIQUE NOT NULL,
     email_verified_on   TIMESTAMP WITH TIME ZONE,
@@ -17,7 +19,7 @@ CREATE TABLE IF NOT EXISTS auth.users (
     password_salt       TEXT NOT NULL,
     password_hash       TEXT NOT NULL,
 
-    display_name        TEXT
+    display_name        TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS auth.email_verification (
@@ -36,7 +38,7 @@ CREATE TABLE IF NOT EXISTS ledger.accounts (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID NOT NULL,
     created         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    kind            SMALLINT NOT NULL,
+    kind            ACCOUNT_KIND NOT NULL,
     name            TEXT NOT NULL,
     description     TEXT,
     UNIQUE          (user_id, kind, name),

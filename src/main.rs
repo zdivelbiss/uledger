@@ -20,13 +20,10 @@ extern crate tracing;
 extern crate sqlx;
 
 #[macro_use]
-extern crate num_enum;
+extern crate strum;
 
 #[macro_use]
 extern crate serde;
-
-#[macro_use]
-extern crate serde_repr;
 
 #[macro_use]
 extern crate askama;

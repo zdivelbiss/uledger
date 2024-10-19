@@ -19,14 +19,26 @@
 </head>
 
 <body>
-    <main>
-        {{ block BODY }}
-        {{ endblock }}
-    </main>
+    <nav>
+        <ul>
+            <li>List Item 1</li>
+            <li>List Item 2</li>
+            <li>List Item 3</li>
+            <li>List Item 4</li>
+        </ul>
+    </nav>
 
-    <footer>
-        <p>Copyright © 2024, Noname Software Technologies</p>
-    </footer>
+    <div class="content">
+        <main>
+            {{ block CONTENT }}
+            {{ endblock }}
+        </main>
+
+        <footer>
+            <span style="margin-right: auto;">Copyright © 2024, Noname Software Technologies</span>
+            <a href="/logout">Logout</a>
+        </footer>
+    </div>
 </body>
 
 </html>

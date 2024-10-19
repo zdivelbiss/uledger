@@ -1,4 +1,4 @@
-{{ extends "base.html" }}
+{{ extends "~base.html" }}
 
 {{ block TITLE }}
 µLedger: Login
@@ -8,11 +8,11 @@
 <link rel="stylesheet" href="/styles/login.scss" />
 {{ endblock }}
 
-{{ block BODY }}
+{{ block CONTENT }}
 <div class="login-area" hx-ext="response-targets">
-    <div id="login-status"></div>
+    <div id="form-status"></div>
 
-    <form hx-post="/api/v1/user/login" hx-target="#login-status" hx-target-error="#login-status">
+    <form hx-post="/api/v1/user/login" hx-target-error="#form-status">
         <label>
             Your Email Address<br />
             <input type="text" name="email_address" placeholder="email address..." required />

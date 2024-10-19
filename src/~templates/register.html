@@ -1,4 +1,4 @@
-{{ extends "base.html" }}
+{{ extends "~base.html" }}
 
 {{ block TITLE }}
 µLedger: Register
@@ -8,11 +8,11 @@
 <link rel="stylesheet" href="/styles/login.scss" />
 {{ endblock }}
 
-{{ block BODY }}
-<div id="register-form" hx-ext="response-targets">
-    <div id="register-status"></div>
+{{ block CONTENT }}
+<div class="login-area" hx-ext="response-targets">
+    <div id="form-status"></div>
 
-    <form class="form" hx-post="/api/v1/user/register" hx-target-error="#register-status" hx-swap="innerHTML">
+    <form class="form" hx-post="/api/v1/user/register" hx-target-error="#register-status">
         <label>
             What should we call you?<br />
             <input type="text" name="display_name" placeholder="your name..." required />

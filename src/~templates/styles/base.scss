@@ -1,28 +1,52 @@
-body {
+body,
+input,
+p {
     margin: 0;
     padding: 0;
+}
 
+body {
     display: flex;
-    flex-direction: column;
+    flex-flow: row nowrap;
     min-height: 100vh;
-}
 
-main {
-    flex: 1;
+    nav {
+        height: 100vh;
 
-    display: flex;
-    flex-flow: column nowrap;
-}
+        background-color: blanchedalmond;
+    }
 
-footer {
-    flex: 0;
-}
+    .content {
+        padding: 1rem 2rem;
 
-form {
-    display: flex;
-    flex-flow: column nowrap;
+        display: flex;
+        flex-flow: column nowrap;
 
-    input {
-        width: 100%;
+        main {
+            flex: 1;
+
+            display: flex;
+            flex-flow: column nowrap;
+
+            form {
+                display: flex;
+                flex-flow: column nowrap;
+
+                input {
+                    width: 80%;
+                }
+            }
+        }
+
+        footer {
+            flex: 0;
+
+            padding: 0.25rem 0.75rem;
+
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: space-around;
+
+        }
     }
 }

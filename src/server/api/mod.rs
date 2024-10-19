@@ -8,46 +8,23 @@ pub fn router() -> axum::Router<AppState> {
     axum::Router::new().nest("/v1", v1::router())
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[serde(rename_all = "UPPERCASE")]
+#[sqlx(type_name = "USER_ROLE", rename_all = "UPPERCASE")]
+pub enum Role {
+    Admin,
+    Regular,
+}
+
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[serde(rename_all = "UPPERCASE")]
+#[sqlx(type_name = "ACCOUNT_KIND", rename_all = "UPPERCASE")]
 pub enum AccountKind {
     Equity,
     Asset,
     Liability,
     Income,
     Expense,
-}
-
-impl AccountKind {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            AccountKind::Equity => "EQUITY",
-            AccountKind::Asset => "ASSET",
-            AccountKind::Liability => "LIABILITY",
-            AccountKind::Income => "INCOME",
-            AccountKind::Expense => "EXPENSE",
-        }
-    }
-}
-
-impl std::fmt::Display for AccountKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.as_str())
-    }
-}
-
-impl From<String> for AccountKind {
-    fn from(value: String) -> Self {
-        match value.as_str() {
-            "EQUITY" => Self::Equity,
-            "ASSET" => Self::Asset,
-            "LIABILITY" => Self::Liability,
-            "INCOME" => Self::Income,
-            "EXPENSE" => Self::Expense,
-
-            value => panic!("not a variant: {value}"),
-        }
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

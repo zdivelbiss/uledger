@@ -86,12 +86,22 @@ async fn build_router() -> Router {
         .nest("/", site::router())
         .nest("/api", api::router())
         .nest("/styles", styles::router())
+        .route("/logout", axum::routing::get(logout))
         .fallback(|| async { FallbackTemplate {} })
         .layer(set_server_layer)
         .layer(compression_layer)
         .layer(decompression_layer)
         .layer(session_layer)
         .with_state(state)
+}
+
+#[allow(clippy::disallowed_types)]
+async fn logout(session: tower_sessions::Session) -> axum::response::Redirect {
+    if let Err(error) = session.flush().await {
+        error!("session error: {error:?}");
+    }
+
+    axum::response::Redirect::temporary("/login")
 }
 
 pub fn internal_error(error: impl std::fmt::Debug) -> StatusCode {

@@ -1,7 +1,7 @@
 //! TODO use `rows_affected` to ensure IDs are actually affected
 
 use crate::server::{
-    api::{Account, AccountInfo},
+    api::{Account, AccountInfo, AccountKind},
     htmx::is_htmx,
     internal_error,
     state::AppState,
@@ -78,7 +78,7 @@ async fn get_all(
         let accounts = query_as!(
             AccountInfo,
             "
-            SELECT kind, name, description
+            SELECT kind AS \"kind: AccountKind\", name, description
                 FROM ledger.accounts
                 WHERE
                     user_id = $1
@@ -95,7 +95,7 @@ async fn get_all(
         let accounts = query_as!(
             Account,
             "
-            SELECT id, created, kind, name, description
+            SELECT id, created, kind AS \"kind: AccountKind\", name, description
                 FROM ledger.accounts
                 WHERE
                     user_id = $1
@@ -116,7 +116,7 @@ async fn create(
     account_info: Form<AccountInfo>,
 ) -> Result<()> {
     let user_id = user_session.get_user_id().await;
-    let account_kind = account_info.kind.as_str();
+    let account_kind = account_info.kind;
     let account_name = account_info.name.as_str();
     let account_description = account_info.description.as_deref();
 
@@ -127,7 +127,7 @@ async fn create(
         ;
         ",
         user_id,
-        account_kind,
+        account_kind as _,
         account_name,
         account_description
     )
@@ -148,7 +148,7 @@ async fn read(
     let account = query_as!(
         Account,
         "
-        SELECT id, created, kind, name, description
+        SELECT id, created, kind AS \"kind: AccountKind\", name, description
             FROM ledger.accounts
             WHERE
                 user_id = $2
@@ -173,7 +173,7 @@ async fn update(
 ) -> Result<()> {
     let user_id = user_session.get_user_id().await;
     let account_id = *account_id;
-    let account_kind = account_info.kind.as_str();
+    let account_kind = account_info.kind;
     let account_name = account_info.name.as_str();
     let account_description = account_info.description.as_deref();
 
@@ -192,7 +192,7 @@ async fn update(
         ",
         user_id,
         account_id,
-        account_kind,
+        account_kind as _,
         account_name,
         account_description
     )

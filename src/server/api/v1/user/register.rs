@@ -1,5 +1,6 @@
 use crate::{
     server::{
+        api::Role,
         htmx::{hx_redirect, is_htmx},
         internal_error,
         state::AppState,
@@ -84,16 +85,19 @@ pub async fn handler(
         .hash_password(password.as_bytes(), &salt)?
         .serialize();
 
+    let salt = salt.as_str();
+    let password_hash = password_hash.as_str();
+
     query!(
         "
         INSERT INTO auth.users (role, email, password_salt, password_hash, display_name)
             VALUES ($1, $2, $3, $4, $5)
         ;
         ",
-        i16::from(super::Role::Regular),
+        Role::Regular as _,
         email_address,
-        salt.as_str(),
-        password_hash.as_str(),
+        salt,
+        password_hash,
         display_name
     )
     .execute(state.db())
