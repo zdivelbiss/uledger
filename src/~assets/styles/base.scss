@@ -5,38 +5,6 @@ p {
     padding: 0;
 }
 
-body {
-    display: flex;
-    flex-flow: row nowrap;
-    min-height: 100vh;
-
-    nav {
-        height: 100vh;
-        background-color: blanchedalmond;
-    }
-
-    .content {
-        display: flex;
-        flex-flow: column nowrap;
-
-        main {
-            display: flex;
-            flex-flow: column nowrap;
-            justify-content: center;
-
-            padding: 1rem 2rem;
-        }
-
-        footer {
-            padding: 0.25rem 0.75rem;
-
-            display: flex;
-            flex-flow: row wrap;
-            justify-content: space-between;
-        }
-    }
-}
-
 .flex-grow {
     flex-grow: 1;
 }

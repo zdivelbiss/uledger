@@ -8,7 +8,6 @@
     <script src="https://unpkg.com/htmx-ext-response-targets@2.0.0/response-targets.js"></script>
 
     <link rel="icon" href="/assets/favicon.png">
-    <link rel="stylesheet" href="/assets/styles/base.scss" />
 
     {{ block HEAD }}
     {{ endblock }}
@@ -17,29 +16,16 @@
         {{ block TITLE }}
         {{ endblock }}
     </title>
+
+    <script>
+        /*to prevent Firefox FOUC, this must be here*/
+        let FF_FOUC_FIX;
+    </script>
 </head>
 
 <body>
-    <nav>
-        <ul>
-            <li>List Item 1</li>
-            <li>List Item 2</li>
-            <li>List Item 3</li>
-            <li>List Item 4</li>
-        </ul>
-    </nav>
-
-    <div class="content flex-grow">
-        <main class="flex-grow">
-            {{ block CONTENT }}
-            {{ endblock }}
-        </main>
-
-        <footer>
-            <span>Copyright © 2024, Noname Software Technologies</span>
-            <a href="/logout">Logout</a>
-        </footer>
-    </div>
+    {{ block BODY }}
+    {{ endblock }}
 </body>
 
 </html>
