@@ -1,17 +1,20 @@
 .login-area {
-    align-self: center;
-
     display: flex;
     flex-flow: column nowrap;
-
+    align-self: center;
     align-items: center;
 
-    #login-status {
-        flex: 0;
-    }
 
     form {
-        flex: 1;
-        width: 40ch;
+        width: 32rem;
+        display: flex;
+        flex-flow: column nowrap;
+
+        input {
+            margin-bottom: 0.5rem;
+
+            width: 95%;
+            align-self: center;
+        }
     }
 }

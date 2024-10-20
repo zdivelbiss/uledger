@@ -12,41 +12,41 @@ body {
 
     nav {
         height: 100vh;
-
         background-color: blanchedalmond;
     }
 
     .content {
-        padding: 1rem 2rem;
-
         display: flex;
         flex-flow: column nowrap;
 
         main {
-            flex: 1;
-
             display: flex;
             flex-flow: column nowrap;
+            justify-content: center;
 
-            form {
-                display: flex;
-                flex-flow: column nowrap;
-
-                input {
-                    width: 80%;
-                }
-            }
+            padding: 1rem 2rem;
         }
 
         footer {
-            flex: 0;
-
             padding: 0.25rem 0.75rem;
 
             display: flex;
             flex-flow: row wrap;
-            justify-content: space-around;
-
+            justify-content: space-between;
         }
     }
+}
+
+.flex-grow {
+    flex-grow: 1;
+}
+
+.flex-col-form {
+    display: flex;
+    flex-flow: column nowrap;
+}
+
+.hor-spacer {
+    margin-right: auto;
+    margin-left: auto;
 }

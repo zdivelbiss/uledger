@@ -29,14 +29,14 @@
         </ul>
     </nav>
 
-    <div class="content">
-        <main>
+    <div class="content flex-grow">
+        <main class="flex-grow">
             {{ block CONTENT }}
             {{ endblock }}
         </main>
 
         <footer>
-            <span style="margin-right: auto;">Copyright © 2024, Noname Software Technologies</span>
+            <span>Copyright © 2024, Noname Software Technologies</span>
             <a href="/logout">Logout</a>
         </footer>
     </div>
