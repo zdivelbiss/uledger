@@ -10,6 +10,7 @@ pub fn router() -> Router<AppState> {
 #[derive(Debug, Clone)]
 enum Asset {
     Css(Bytes),
+    Png(Bytes),
 }
 
 impl IntoResponse for Asset {
@@ -20,6 +21,10 @@ impl IntoResponse for Asset {
                 bytes,
             )
                 .into_response(),
+
+            Asset::Png(bytes) => {
+                ([(http::header::CONTENT_TYPE, "image/png")], bytes).into_response()
+            }
         }
     }
 }
@@ -71,9 +76,9 @@ impl IntoResponse for Error {
 
 #[instrument]
 async fn get_cached(path: axum::extract::Path<PathBuf>) -> Result<Asset, Error> {
-    let path = cfg().assets.path.join(&*path).canonicalize()?;
-
     trace!("Fetching asset...");
+
+    let path = cfg().assets.path.join(&*path).canonicalize()?;
 
     if !path.exists() || path.is_dir() {
         return Err(Error::NotFound);
@@ -102,15 +107,17 @@ async fn get_cached(path: axum::extract::Path<PathBuf>) -> Result<Asset, Error> 
                 trace!("Transpiling SCSS...");
                 let css = grass::from_string(file, &options)?;
 
-                Asset::Css(Bytes::from(css))
+                Asset::Css(css.into())
             }
+
+            Some("png") => Asset::Png(file.into()),
 
             _ => return Err(Error::UnsupportedAsset),
         }
     };
 
     CACHE.insert(path.clone(), asset.clone());
-    trace!("Asset cached.");
+    trace!("Cached asset.");
 
     Ok(asset)
 }
