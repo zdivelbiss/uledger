@@ -116,8 +116,11 @@ async fn get_cached(path: axum::extract::Path<PathBuf>) -> Result<Asset, Error> 
         }
     };
 
-    CACHE.insert(path.clone(), asset.clone());
-    trace!("Cached asset.");
+    #[cfg(not(debug_assertions))]
+    {
+        CACHE.insert(path.clone(), asset.clone());
+        trace!("Cached asset.");
+    }
 
     Ok(asset)
 }
