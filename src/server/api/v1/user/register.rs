@@ -2,7 +2,7 @@ use crate::{
     server::{
         api::Role,
         htmx::{hx_redirect, is_htmx},
-        state::AppState,
+        AppState,
     },
     util::EmailAddress,
 };

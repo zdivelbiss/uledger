@@ -1,4 +1,4 @@
-use crate::server::user_session::UserSession;
+use crate::server::UserSession;
 
 #[derive(askama::Template)]
 #[template(path = "index.html")]

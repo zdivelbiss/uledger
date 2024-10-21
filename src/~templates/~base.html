@@ -2,25 +2,22 @@
 <html>
 
 <head>
-    <script src="https://unpkg.com/htmx.org@2.0.3"
-        integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous">
-        </script>
-    <script src="https://unpkg.com/htmx-ext-response-targets@2.0.0/response-targets.js"></script>
-
-    <link rel="icon" href="/assets/favicon.png">
-
-    {{ block HEAD }}
-    {{ endblock }}
-
     <title>
         {{ block TITLE }}
         {{ endblock }}
     </title>
 
-    <script>
-        /*to prevent Firefox FOUC, this must be here*/
-        let FF_FOUC_FIX;
-    </script>
+    {{ block HEAD }}
+    {{ endblock }}
+
+    <link rel="icon" href="/assets/favicon.png">
+
+    <script src="https://unpkg.com/htmx.org@2.0.3"
+        integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous">
+        </script>
+    <script src="https://unpkg.com/htmx-ext-response-targets@2.0.0"
+        integrity="sha384-25EjMH+UroVBJlocVAefkTNIVpGryrC7PN/vwZFZrLDWJ64ZlgE+7tOg1z7pWEfW"
+        crossorigin="anonymous"></script>
 </head>
 
 <body>

@@ -1,4 +1,4 @@
-use crate::server::state::AppState;
+use crate::server::AppState;
 
 mod accounts;
 mod commodities;

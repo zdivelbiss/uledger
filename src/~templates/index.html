@@ -5,22 +5,22 @@
 {{ endblock }}
 
 {{ block HEAD }}
-<link rel="stylesheet" href="/assets/styles/page.scss" />
+<link rel="stylesheet" href="/assets/styles/index.scss" />
 {{ endblock }}
 
 {{ block BODY }}
-<nav>
-    <ul>
-        <li>
-            <button hx-get="/api/v1/ledger/accounts" hx-trigger="click" hx-target="#main-content">Accounts</button>
-        </li>
-        <li>
-            <button hx-get="/login" hx-trigger="click" hx-target="#main-content">Test</button>
-        </li>
-        <li>List Item 3</li>
-        <li>List Item 4</li>
-    </ul>
-</nav>
+<div class="sidebar">
+    <header>
+        Welcome<br />
+        <strong>{:display_name:}</strong>
+    </header>
+
+    <nav>
+        <button hx-get="/pages/accounts" hx-trigger="click" hx-target="#main-content">Accounts</button>
+        <button hx-get="/login" hx-trigger="click" hx-target="#main-content">Test</button>
+    </nav>
+</div>
+
 
 <div class="content flex-grow">
     <main id="main-content" class="flex-grow">

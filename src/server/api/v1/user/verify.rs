@@ -1,6 +1,6 @@
 use crate::{
     postmark,
-    server::{internal_error, state::AppState, user_session::UserSession},
+    server::{internal_error, AppState, UserSession},
     util::{EmailAddress, VerificationToken},
 };
 use axum::{

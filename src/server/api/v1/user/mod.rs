@@ -1,4 +1,4 @@
-use crate::server::state::AppState;
+use crate::server::AppState;
 use axum::routing::post;
 
 mod login;

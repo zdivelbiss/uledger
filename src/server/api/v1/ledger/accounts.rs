@@ -4,8 +4,8 @@ use crate::server::{
     api::{Account, AccountInfo, AccountKind},
     htmx::is_htmx,
     internal_error,
-    state::AppState,
-    user_session::UserSession,
+    AppState,
+    UserSession,
 };
 use axum::{
     extract::{Form, Json, Path, State},
@@ -25,7 +25,7 @@ pub fn router() -> Router<AppState> {
 }
 
 #[derive(askama::Template)]
-#[template(path = "partials/account-list.html")]
+#[template(path = "partials/account/list-all.html")]
 pub struct AccountListTemplate {
     accounts: Box<[AccountInfo]>,
 }
