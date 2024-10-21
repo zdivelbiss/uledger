@@ -11,6 +11,7 @@ pub fn router() -> Router<AppState> {
 enum Asset {
     Css(Bytes),
     Png(Bytes),
+    Js(Bytes),
 }
 
 impl IntoResponse for Asset {
@@ -18,6 +19,12 @@ impl IntoResponse for Asset {
         match self {
             Asset::Css(bytes) => (
                 [(http::header::CONTENT_TYPE, "text/css; charset=utf-8")],
+                bytes,
+            )
+                .into_response(),
+
+            Asset::Js(bytes) => (
+                [(http::header::CONTENT_TYPE, "text/javascript; charset=utf-8")],
                 bytes,
             )
                 .into_response(),
@@ -109,6 +116,8 @@ async fn get_cached(path: axum::extract::Path<PathBuf>) -> Result<Asset, Error> 
 
                 Asset::Css(css.into())
             }
+
+            Some("js") => Asset::Js(file.into()),
 
             Some("png") => Asset::Png(file.into()),
 
