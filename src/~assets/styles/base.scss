@@ -1,10 +1,28 @@
 html,
 body {
-    margin: 0;
-    padding: 0;
-
     height: 100%;
     width: 100%;
+}
+
+html,
+body,
+ul,
+ol {
+    margin: 0;
+    padding: 0;
+}
+
+ul,
+ol {
+    list-style: none;
+}
+
+hr {
+    width: 100%;
+}
+
+summary {
+    cursor: pointer;
 }
 
 body {

@@ -18,14 +18,13 @@ body {
         }
     }
 
-    .content {
+    .page {
         display: flex;
         flex-flow: column nowrap;
 
         main {
             display: flex;
             flex-flow: column nowrap;
-            justify-content: center;
 
             padding: 1rem 2rem;
         }

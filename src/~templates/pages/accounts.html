@@ -1,5 +1,7 @@
 <h1>Your Accounts</h1>
 
+<hr />
+
 <details>
     <summary>Add a New Account</summary>
 
@@ -20,11 +22,13 @@
             </select>
 
             <label for="description">Account Description</label>
-            <input type="text" name="description" placeholder="account descrition..." />
+            <textarea name="description" placeholder="account descrition..."></textarea>
 
             <input type="submit" value="Create Account" />
         </form>
     </div>
 </details>
 
-<div hx-trigger="load" hx-get="/api/v1/ledger/accounts"></div>
+<hr />
+
+<section class="accounts-list" hx-trigger="load" hx-get="/api/v1/ledger/accounts"></section>
