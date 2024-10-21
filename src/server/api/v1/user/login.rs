@@ -89,7 +89,7 @@ pub async fn handler(
     let user = query!(
         "
         SELECT id, password_salt, password_hash, display_name FROM auth.users
-            WHERE email = $1
+            WHERE email_address = $1
         ;
         ",
         email_address

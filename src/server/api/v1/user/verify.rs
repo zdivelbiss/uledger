@@ -151,7 +151,7 @@ async fn delete(
                 "
                 UPDATE auth.users
                     SET
-                        email = $2,
+                        email_address = $2,
                         email_verified_on = $3
                     WHERE id = $1
                 ;

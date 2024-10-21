@@ -91,7 +91,7 @@ pub async fn handler(
 
     query!(
         "
-        INSERT INTO auth.users (role, email, password_salt, password_hash, display_name)
+        INSERT INTO auth.users (role, email_address, password_salt, password_hash, display_name)
             VALUES ($1, $2, $3, $4, $5)
         ;
         ",
