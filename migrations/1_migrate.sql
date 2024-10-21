@@ -1,3 +1,5 @@
+CREATE EXTENSION citext;
+
 CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION uledger;
 CREATE SCHEMA IF NOT EXISTS ledger AUTHORIZATION uledger;
 
@@ -13,7 +15,7 @@ CREATE TABLE IF NOT EXISTS auth.users (
 
     role                USER_ROLE NOT NULL,
 
-    email               TEXT UNIQUE NOT NULL,
+    email_address       CITEXT UNIQUE NOT NULL,
     email_verified_on   TIMESTAMP WITH TIME ZONE,
 
     password_salt       TEXT NOT NULL,
@@ -25,7 +27,7 @@ CREATE TABLE IF NOT EXISTS auth.users (
 CREATE TABLE IF NOT EXISTS auth.email_verification (
     user_id         UUID PRIMARY KEY,
     created         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    email_address   TEXT UNIQUE NOT NULL,
+    email_address   CITEXT UNIQUE NOT NULL,
     proof_token     TEXT NOT NULL,
     FOREIGN KEY     (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
 );
@@ -39,7 +41,7 @@ CREATE TABLE IF NOT EXISTS ledger.accounts (
     user_id         UUID NOT NULL,
     created         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     kind            ACCOUNT_KIND NOT NULL,
-    name            TEXT NOT NULL,
+    name            CITEXT NOT NULL,
     description     TEXT,
     UNIQUE          (user_id, kind, name),
     FOREIGN KEY     (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
@@ -49,7 +51,7 @@ CREATE TABLE IF NOT EXISTS ledger.commodities (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id      UUID NOT NULL,
     created      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    name         TEXT NOT NULL,
+    name         CITEXT NOT NULL,
     format       TEXT NOT NULL,
     UNIQUE       (user_id, name),
     FOREIGN KEY  (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
@@ -73,7 +75,7 @@ CREATE TABLE IF NOT EXISTS ledger.payees (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID NOT NULL,
     created     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    name        TEXT NOT NULL,
+    name        CITEXT NOT NULL,
     UNIQUE      (user_id, name),
     FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
 );
