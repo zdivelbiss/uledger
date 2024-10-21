@@ -4,8 +4,16 @@
 µLedger: Not Found
 {{ endblock }}
 
-{{ block CONTENT }}
-<p>
-    We could not find the page you are looking for...
-</p>
+{{ block HEAD }}
+<link rel="stylesheet" href="/assets/styles/404.scss" />
+{{ endblock }}
+
+{{ block BODY }}
+<h1>
+    We could not find the page you are looking for 😅
+</h1>
+
+<h2>
+    <a href="/">Go back home?</a>
+</h2>
 {{ endblock }}
