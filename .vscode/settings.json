@@ -2,5 +2,5 @@
   "workbench.editor.customLabels.patterns": {
     "**/mod.rs": "${dirname}/mod.rs"
   },
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
 }

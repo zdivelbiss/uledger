@@ -1,9 +1,0 @@
-@use "_base.scss";
-
-body {
-    @include flex(column, nowrap, $justify: center, $align: center);
-
-    form {
-        width: 32rem;
-    }
-}

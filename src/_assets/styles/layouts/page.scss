@@ -1,0 +1,29 @@
+@use "_base.scss";
+@use "_mixins.scss";
+
+body {
+    @include flex(row, nowrap);
+
+    .sidebar {
+        @include flex(column, wrap);
+
+        padding: 1.25rem;
+        background-color: blanchedalmond;
+    }
+
+    .content {
+        @include flex(column, wrap);
+
+        main {
+            @include flex(column, wrap);
+
+            padding: 1rem 2rem;
+        }
+
+        footer {
+            @include flex(row, wrap, $justify: space-between);
+
+            padding: 0.25rem 0.75rem;
+        }
+    }
+}

@@ -1,0 +1,6 @@
+@use "_base.scss";
+@use "_mixins.scss";
+
+body {
+    @include flex(row, nowrap, $justify: center, $align: center);
+}

@@ -1,8 +1,0 @@
-@use "_base.scss";
-
-body {
-    @include flex-col;
-
-    justify-content: center;
-    align-items: center;
-}
