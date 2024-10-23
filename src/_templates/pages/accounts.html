@@ -1,4 +1,4 @@
-{{ extends "pages/~page.html" }}
+{{ extends "pages/_page.html" }}
 
 {{ block CONTENT }}
 <h1>Your Accounts</h1>
@@ -8,10 +8,10 @@
 <details>
     <summary>Add a New Account</summary>
 
-    <div class="create-account-area" hx-ext="response-targets">
+    <div class="flex-col" hx-ext="response-targets">
         <div id="form-status"></div>
 
-        <form class="flex-col-form" hx-post="/api/v1/ledger/accounts" hx-target-error="#form-status">
+        <form hx-post="/api/v1/ledger/accounts" hx-target-error="#form-status">
             <label for="name">Account Name</label>
             <input type="text" name="name" placeholder="account name..." required />
 

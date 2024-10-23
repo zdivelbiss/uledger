@@ -1,3 +1,5 @@
+@use "_mixins.scss";
+
 html,
 body {
     height: 100%;
@@ -34,13 +36,15 @@ body {
         "wdth" 100;
 }
 
-.flex-grow {
-    flex-grow: 1;
-}
-
-.flex-col-nowrap {
+form {
     display: flex;
     flex-flow: column nowrap;
+    align-items: center;
+
+    input {
+        margin-bottom: 0.5rem;
+        width: 95%;
+    }
 }
 
 .hor-spacer {

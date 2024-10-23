@@ -21,11 +21,16 @@ pub struct LoginTemplate {}
 #[template(path = "pages/accounts.html")]
 struct AccountsTemplate {}
 
+#[derive(askama::Template)]
+#[template(path = "pages/commodities.html")]
+struct CommoditiesTemplate {}
+
 pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
         // Authenticated
         .route("/", get(|| async { Redirect::temporary("/accounts") }))
         .route("/accounts", get(|| async { AccountsTemplate {} }))
+        .route("/commodities", get(|| async { CommoditiesTemplate {} }))
         .layer(axum::middleware::from_fn(
             |user_session: Option<UserSession>, request: Request, next: Next| async move {
                 if user_session.is_none() {

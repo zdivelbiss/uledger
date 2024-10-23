@@ -1,5 +1,5 @@
 [general]
-dirs = ["src/~templates"]
+dirs = ["src/_templates"]
 whitespace = "preserve"
 default_syntax = "custom"
 

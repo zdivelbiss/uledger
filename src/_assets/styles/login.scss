@@ -1,0 +1,12 @@
+@use "_base.scss";
+
+.login-area {
+    @include flex-col;
+
+    align-self: center;
+    align-items: center;
+
+    form {
+        width: 32rem;
+    }
+}
