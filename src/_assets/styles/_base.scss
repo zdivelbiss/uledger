@@ -1,5 +1,3 @@
-@use "_mixins.scss";
-
 html,
 body {
     height: 100%;
@@ -37,8 +35,6 @@ body {
 }
 
 form {
-    display: flex;
-    flex-flow: column nowrap;
     align-items: center;
 
     input {
@@ -50,4 +46,18 @@ form {
 .hor-spacer {
     margin-right: auto;
     margin-left: auto;
+}
+
+// ----------
+// - MIXINS -
+// ----------
+
+@mixin flex($flow, $wrap, $grow: initial, $justify: initial, $align: initial) {
+    flex-grow: $grow;
+
+    display: flex;
+    flex-flow: $flow, $wrap;
+
+    justify-content: $justify;
+    align-items: $align;
 }

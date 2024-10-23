@@ -1,15 +1,7 @@
 {{ extends "_base.html" }}
 
-{{ block TITLE }}
-µLedger: Home
-{{ endblock }}
-
-{{ block HEAD }}
-<link rel="stylesheet" href="/assets/styles/page.scss" />
-{{ endblock }}
-
 {{ block BODY }}
-<div class="sidebar">
+<div id="sidebar">
     <header>
         Welcome<br />
         <strong hx-get="/api/v1/user/display_name" hx-trigger="load"></strong>
@@ -22,15 +14,20 @@
 </div>
 
 
-<div class="page flex-grow">
-    <main id="content" class="flex-grow">
+<div id="page">
+    <main id="content">
+        {{ block HEADER }}
+        {{ endblock }}
+
+        <hr />
+
         {{ block CONTENT }}
         {{ endblock }}
     </main>
 
     <footer>
         <span>Copyright © 2024, Noname Software Technologies</span>
-        <a href="/logout">Logout</a>
+        <a href="#content">Back to Top</a>
     </footer>
 </div>
 {{ endblock }}

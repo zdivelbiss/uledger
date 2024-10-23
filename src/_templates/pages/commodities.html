@@ -1,17 +1,25 @@
 {{ extends "pages/_page.html" }}
 
-{{ block CONTENT }}
+{{ block HEAD }}
+<link rel="stylesheet" href="/assets/styles/_list.scss" />
+{{ endblock }}
+
+{{ block TITLE }}
+µLedger: Commodities
+{{ endblock }}
+
+{{ block HEADER }}
 <h1>Your Commodities</h1>
+{{ endblock }}
 
-<hr />
-
+{{ block CONTENT }}
 <details>
     <summary>Add a New Commodity</summary>
 
-    <div class="flex-col" hx-ext="response-targets">
+    <div id="create-form" hx-ext="response-targets">
         <div id="form-status"></div>
 
-        <form class="flex-col" hx-post="/api/v1/ledger/commodities" hx-target-error="#form-status">
+        <form hx-post="/api/v1/ledger/commodities" hx-target-error="#form-status">
             <label for="name">Commodity Name</label>
             <input type="text" name="name" placeholder="commodity name..." required />
 
