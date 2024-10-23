@@ -48,20 +48,29 @@ static CACHE: LazyLock<Cache<PathBuf, Asset>> = LazyLock::new(|| {
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("asset not found")]
+    #[error("Asset not found.")]
     NotFound,
 
-    #[error("asset type not supported")]
+    #[error("Asset type not supported.")]
     UnsupportedAsset,
 
-    #[error("internal server error")]
-    Io(#[from] tokio::io::Error),
+    #[error("Internal server error.")]
+    Io(tokio::io::Error),
 
-    #[error("internal server error")]
+    #[error("Internal server error.")]
     Utf8(#[from] std::string::FromUtf8Error),
 
-    #[error("internal server error")]
+    #[error("Internal server error.")]
     Grass(#[from] Box<grass::Error>),
+}
+
+impl From<std::io::Error> for Error {
+    fn from(error: std::io::Error) -> Self {
+        match error.kind() {
+            std::io::ErrorKind::NotFound => Self::NotFound,
+            _ => Self::Io(error),
+        }
+    }
 }
 
 impl IntoResponse for Error {

@@ -1,3 +1,6 @@
+{{ extends "pages/~page.html" }}
+
+{{ block CONTENT }}
 <h1>Your Accounts</h1>
 
 <hr />
@@ -32,3 +35,4 @@
 <hr />
 
 <section class="accounts-list" hx-trigger="load" hx-get="/api/v1/ledger/accounts"></section>
+{{ endblock }}

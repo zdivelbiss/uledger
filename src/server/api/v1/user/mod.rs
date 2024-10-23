@@ -1,5 +1,5 @@
-use crate::server::AppState;
-use axum::routing::post;
+use crate::server::{AppState, UserSession};
+use axum::routing::{get, post};
 
 mod login;
 mod register;
@@ -12,4 +12,8 @@ pub fn router() -> axum::Router<AppState> {
         .nest("/verify", verify::router())
         .route("/register", post(register::handler))
         .route("/login", post(login::handler))
+        .route(
+            "/display_name",
+            get(|user_session: UserSession| async move { user_session.get_display_name().await }),
+        )
 }

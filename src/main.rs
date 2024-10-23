@@ -25,9 +25,6 @@ extern crate strum;
 #[macro_use]
 extern crate serde;
 
-#[macro_use]
-extern crate askama;
-
 const fn user_agent() -> &'static str {
     concat!("uledger-srv/", env!("CARGO_PKG_VERSION"))
 }

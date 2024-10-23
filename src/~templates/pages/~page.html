@@ -5,24 +5,26 @@
 {{ endblock }}
 
 {{ block HEAD }}
-<link rel="stylesheet" href="/assets/styles/index.scss" />
+<link rel="stylesheet" href="/assets/styles/page.scss" />
 {{ endblock }}
 
 {{ block BODY }}
 <div class="sidebar">
     <header>
         Welcome<br />
-        <strong>{:display_name:}</strong>
+        <strong hx-get="/api/v1/user/display_name" hx-trigger="load"></strong>
     </header>
 
     <nav>
-        <button hx-get="/pages/accounts" hx-trigger="click" hx-target="#content">Accounts</button>
+        <a href="/accounts">Accounts</a>
     </nav>
 </div>
 
 
 <div class="page flex-grow">
     <main id="content" class="flex-grow">
+        {{ block CONTENT }}
+        {{ endblock }}
     </main>
 
     <footer>

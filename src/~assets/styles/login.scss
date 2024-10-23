@@ -8,13 +8,16 @@
 
 
     form {
+        display: flex;
+        flex-flow: column nowrap;
+        align-items: center;
+
         width: 32rem;
 
         input {
             margin-bottom: 0.5rem;
 
             width: 95%;
-            align-self: center;
         }
     }
 }

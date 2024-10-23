@@ -12,7 +12,7 @@
 <div class="login-area" hx-ext="response-targets">
     <div id="form-status"></div>
 
-    <form class="flex-col-form" hx-post="/api/v1/user/register" hx-target-error="#register-status">
+    <form hx-post="/api/v1/user/register" hx-target-error="#register-status">
         <label for="display_name">What should we call you?</label>
         <input type="text" name="display_name" placeholder="your name..." required />
 

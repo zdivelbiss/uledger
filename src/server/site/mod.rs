@@ -2,39 +2,39 @@ use crate::server::{AppState, UserSession};
 use axum::{
     extract::Request,
     middleware::Next,
-    response::{IntoResponse, Redirect, Response},
+    response::{IntoResponse, Redirect},
     routing::get,
 };
 
-mod index;
-mod pages;
+// mod index;
+// mod pages;
 
-async fn redirect_unauthorized(
-    user_session: Option<UserSession>,
-    request: Request,
-    next: Next,
-) -> Response {
-    if user_session.is_some() {
-        next.run(request).await
-    } else {
-        Redirect::temporary("/login").into_response()
-    }
-}
-
-#[derive(Template)]
-#[template(path = "register.html")]
+#[derive(askama::Template)]
+#[template(path = "auth/register.html")]
 pub struct RegisterTemplate {}
 
-#[derive(Template)]
-#[template(path = "login.html")]
+#[derive(askama::Template)]
+#[template(path = "auth/login.html")]
 pub struct LoginTemplate {}
+
+#[derive(askama::Template)]
+#[template(path = "pages/accounts.html")]
+struct AccountsTemplate {}
 
 pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
         // Authenticated
-        .nest("/pages", pages::router())
-        .route("/", get(index::serve))
-        .layer(axum::middleware::from_fn(redirect_unauthorized))
+        .route("/", get(|| async { Redirect::temporary("/accounts") }))
+        .route("/accounts", get(|| async { AccountsTemplate {} }))
+        .layer(axum::middleware::from_fn(
+            |user_session: Option<UserSession>, request: Request, next: Next| async move {
+                if user_session.is_none() {
+                    Redirect::temporary("/login").into_response()
+                } else {
+                    next.run(request).await
+                }
+            },
+        ))
         // Unauthenticated
         .route("/register", get(|| async { RegisterTemplate {} }))
         .route("/login", get(|| async { LoginTemplate {} }))
