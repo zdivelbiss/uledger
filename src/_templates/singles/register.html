@@ -1,18 +1,14 @@
-{{ extends "_base.html" }}
+{{ extends "singles/_single.html" }}
 
 {{ block TITLE }}
 µLedger: Register
 {{ endblock }}
 
-{{ block HEAD }}
-<link rel="stylesheet" href="/assets/styles/single.scss" />
-{{ endblock }}
+{{ block CONTENT }}
+<div class="flex-grow flex-col flex-axis-center flex-naxis-center w-dialog">
+    <p id="form-status"></p>
 
-{{ block BODY }}
-<div id="content" hx-ext="response-targets">
-    <div id="form-status"></div>
-
-    <form hx-post="/api/v1/user/register" hx-target-error="#register-status">
+    <form class="flex-col w-100" hx-post="/api/v1/user/register" hx-target-error="#form-status">
         <label for="display_name">What should we call you?</label>
         <input type="text" name="display_name" placeholder="your name..." required />
 

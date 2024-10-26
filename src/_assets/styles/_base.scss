@@ -12,6 +12,10 @@ ol {
     padding: 0;
 }
 
+footer {
+    padding: 0.5rem;
+}
+
 ul,
 ol {
     list-style: none;
@@ -32,4 +36,8 @@ body {
     font-style: normal;
     font-variation-settings:
         "wdth" 100;
+}
+
+* {
+    box-sizing: border-box;
 }

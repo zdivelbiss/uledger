@@ -2,6 +2,10 @@
 // - FLEX -
 // --------
 
+.flex-grow {
+    flex: 1;
+}
+
 .flex-col {
     display: flex;
     flex-flow: column nowrap;
@@ -22,17 +26,18 @@
     flex-flow: row wrap;
 }
 
-.flex-grow {
-    flex: 1;
-}
-
 .flex-axis-center {
     justify-content: center;
+}
+
+.flex-axis-separate {
+    justify-content: space-between;
 }
 
 .flex-naxis-center {
     align-items: center;
 }
+
 
 // --------
 // - SIZE -

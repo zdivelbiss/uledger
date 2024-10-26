@@ -1,19 +1,17 @@
-{{ extends "_base.html" }}
+{{ extends "singles/_single.html" }}
 
 {{ block TITLE }}
 µLedger: Not Found
 {{ endblock }}
 
-{{ block HEAD }}
-<link rel="stylesheet" href="/assets/styles/single.scss" />
-{{ endblock }}
+{{ block CONTENT }}
+<div class="flex-grow flex-col flex-axis-center flex-naxis-center">
+    <h1>
+        ⛔ We couldn't find that page ⛔
+    </h1>
 
-{{ block BODY }}
-<h1>
-    We could not find the page you are looking for 😅
-</h1>
-
-<h2>
-    <a href="/">Go back home?</a>
-</h2>
+    <h2>
+        <a href="/">Go back home?</a>
+    </h2>
+</div>
 {{ endblock }}

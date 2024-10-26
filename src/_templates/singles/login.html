@@ -5,8 +5,8 @@
 {{ endblock }}
 
 {{ block CONTENT }}
-<div class="flex-col flex-naxis-center w-dialog">
-    <span id="form-status"></span>
+<div class="flex-grow flex-col flex-axis-center flex-naxis-center w-dialog">
+    <p id="form-status"></p>
 
     <form class="flex-col w-100" hx-post="/api/v1/user/login" hx-target-error="#form-status">
         <label for="email_address">Your Email Address</label>
@@ -18,8 +18,8 @@
         <input type="submit" value="Login" />
     </form>
 
-    <span>
+    <p>
         If you don't have an account, <a href="/register">please register</a>.
-    </span>
+    </p>
 </div>
 {{ endblock }}
