@@ -1,0 +1,55 @@
+// --------
+// - FLEX -
+// --------
+
+.flex-col {
+    display: flex;
+    flex-flow: column nowrap;
+}
+
+.flex-col-wrap {
+    display: flex;
+    flex-flow: column wrap;
+}
+
+.flex-row {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+.flex-row-wrap {
+    display: flex;
+    flex-flow: row wrap;
+}
+
+.flex-grow {
+    flex: 1;
+}
+
+.flex-axis-center {
+    justify-content: center;
+}
+
+.flex-naxis-center {
+    align-items: center;
+}
+
+// --------
+// - SIZE -
+// --------
+
+.w-100 {
+    width: 100%;
+}
+
+.h-100 {
+    height: 100%;
+}
+
+.w-dialog {
+    width: 36rem;
+}
+
+.w-paragraph {
+    width: 72rem;
+}

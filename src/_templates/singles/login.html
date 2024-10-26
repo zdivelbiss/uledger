@@ -1,18 +1,14 @@
-{{ extends "_base.html" }}
+{{ extends "singles/_single.html" }}
 
 {{ block TITLE }}
 µLedger: Login
 {{ endblock }}
 
-{{ block HEAD }}
-<link rel="stylesheet" href="/assets/styles/single-content.scss" />
-{{ endblock }}
+{{ block CONTENT }}
+<div class="flex-col flex-naxis-center w-dialog">
+    <span id="form-status"></span>
 
-{{ block BODY }}
-<div id="content" hx-ext="response-targets">
-    <div id="form-status"></div>
-
-    <form hx-post="/api/v1/user/login" hx-target-error="#form-status">
+    <form class="flex-col w-100" hx-post="/api/v1/user/login" hx-target-error="#form-status">
         <label for="email_address">Your Email Address</label>
         <input type="text" name="email_address" placeholder="email address..." required />
 
@@ -22,6 +18,8 @@
         <input type="submit" value="Login" />
     </form>
 
-    <span class="register-msg">If you don't have an account, <a href="/register">please register</a>.</span>
+    <span>
+        If you don't have an account, <a href="/register">please register</a>.
+    </span>
 </div>
 {{ endblock }}

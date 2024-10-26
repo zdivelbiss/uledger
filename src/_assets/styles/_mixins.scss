@@ -1,9 +1,0 @@
-@mixin flex($flow, $wrap, $grow: initial, $justify: initial, $align: initial) {
-    flex-grow: $grow;
-
-    display: flex;
-    flex-flow: $flow, $wrap;
-
-    justify-content: $justify;
-    align-items: $align;
-}

@@ -27,7 +27,7 @@ mod user_session;
 pub use user_session::*;
 
 #[derive(askama::Template)]
-#[template(path = "404.html")]
+#[template(path = "singles/404.html")]
 struct FallbackTemplate {}
 
 pub async fn run() {

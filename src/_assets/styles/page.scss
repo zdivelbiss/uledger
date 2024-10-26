@@ -1,5 +1,5 @@
-@use "_base.scss";
-@use "_mixins.scss";
+@use "base";
+@use "layouts";
 
 body {
     @include flex(row, nowrap);

@@ -10,11 +10,11 @@ use axum::{
 // mod pages;
 
 #[derive(askama::Template)]
-#[template(path = "auth/register.html")]
+#[template(path = "singles/register.html")]
 pub struct RegisterTemplate {}
 
 #[derive(askama::Template)]
-#[template(path = "auth/login.html")]
+#[template(path = "singles/login.html")]
 pub struct LoginTemplate {}
 
 #[derive(askama::Template)]
