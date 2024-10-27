@@ -2,7 +2,7 @@
 
 use crate::{
     server::{
-        htmx::{hx_redirect, is_htmx},
+        htmx::{hx_redirect, IsHtmx},
         AppState,
     },
     util::EmailAddress,
@@ -10,7 +10,7 @@ use crate::{
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
 use axum::{
     extract::State,
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     response::{IntoResponse, Response},
     Form,
 };
@@ -76,7 +76,7 @@ pub struct Info {
 pub async fn handler(
     state: State<AppState>,
     session: Session,
-    headers: HeaderMap,
+    is_htmx: IsHtmx,
     form: Form<Info>,
 ) -> Result<Response, Error> {
     if !session.is_empty().await {
@@ -88,8 +88,10 @@ pub async fn handler(
 
     let user = query!(
         "
-        SELECT id, password_salt, password_hash, display_name FROM auth.users
-            WHERE email_address = $1
+        SELECT id, password_salt, password_hash
+            FROM users.account
+            WHERE
+                email_address = $1
         ;
         ",
         email_address
@@ -107,15 +109,9 @@ pub async fn handler(
         return Err(Error::InvalidLogin);
     }
 
-    // clear session ...
-    session.clear().await;
-    // update session ...
-    session.insert("user_id", user.id).await?;
-    let user_agent = headers.get("User-Agent").and_then(|v| v.to_str().ok());
-    session.insert("user_agent", user_agent).await?;
-    session.insert("display_name", user.display_name).await?;
+    session.insert("id", user.id).await?;
 
-    if is_htmx(&headers) {
+    if *is_htmx {
         Ok([hx_redirect("/")].into_response())
     } else {
         Ok(().into_response())

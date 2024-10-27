@@ -77,19 +77,21 @@ async fn create(
     state: State<AppState>,
     create_info: Json<CreateInfo>,
 ) -> Result<()> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
     let email_address = &create_info.email_address;
     let verification_token = VerificationToken::gen();
 
     query!(
         "
-        INSERT INTO auth.email_verification (user_id, email_address, proof_token)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (user_id) DO UPDATE SET
-                user_id = $1,
-                created = NOW(),
-                email_address = $2,
-                proof_token = $3
+        INSERT INTO users.email_verification
+                (id, email_address, proof_token)
+            VALUES
+                ($1, $2, $3)
+            ON CONFLICT (id)
+                DO UPDATE SET
+                    created = NOW(),
+                    email_address = $2,
+                    proof_token = $3
         ;
         ",
         user_id,
@@ -122,15 +124,15 @@ async fn delete(
     app_state: State<AppState>,
     delete_info: Json<DeleteInfo>,
 ) -> Result<()> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
     let email_address = &delete_info.email_address;
     let proof_token = &delete_info.proof_token;
 
     let rows_affected = query!(
         "
-        DELETE FROM auth.email_verification
+        DELETE FROM users.email_verification
             WHERE
-                user_id = $1
+                id = $1
                     AND
                 email_address = $2
                     AND
@@ -149,11 +151,12 @@ async fn delete(
         1 => {
             query!(
                 "
-                UPDATE auth.users
+                UPDATE users.account
                     SET
                         email_address = $2,
                         email_verified_on = $3
-                    WHERE id = $1
+                    WHERE
+                        id = $1
                 ;
                 ",
                 user_id,

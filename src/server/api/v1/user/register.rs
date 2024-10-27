@@ -1,7 +1,7 @@
 use crate::{
     server::{
         api::UserAccess,
-        htmx::{hx_redirect, is_htmx},
+        htmx::{hx_redirect, IsHtmx},
         AppState,
     },
     util::EmailAddress,
@@ -12,7 +12,7 @@ use argon2::{
 };
 use axum::{
     extract::State,
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     response::{IntoResponse, Response},
     Form,
 };
@@ -74,7 +74,7 @@ pub struct Info {
 #[axum::debug_handler]
 pub async fn handler(
     state: State<AppState>,
-    headers: HeaderMap,
+    is_htmx: IsHtmx,
     form: Form<Info>,
 ) -> Result<Response, Error> {
     let display_name = form.display_name.as_str();
@@ -91,8 +91,10 @@ pub async fn handler(
 
     query!(
         "
-        INSERT INTO auth.users (access, email_address, password_salt, password_hash, display_name)
-            VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO users.account
+                (access, email_address, password_salt, password_hash, display_name)
+            VALUES
+                ($1, $2, $3, $4, $5)
         ;
         ",
         UserAccess::Regular as _,
@@ -106,7 +108,7 @@ pub async fn handler(
 
     // TODO login
 
-    if is_htmx(&headers) {
+    if *is_htmx {
         Ok([hx_redirect("/login")].into_response())
     } else {
         Ok(().into_response())

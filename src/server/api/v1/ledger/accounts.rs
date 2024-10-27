@@ -2,14 +2,12 @@
 
 use crate::server::{
     api::{Account, AccountInfo, AccountKind},
-    htmx::is_htmx,
-    internal_error,
-    AppState,
-    UserSession,
+    htmx::HtmxRequest,
+    internal_error, AppState, UserSession,
 };
 use axum::{
     extract::{Form, Json, Path, State},
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     response::IntoResponse,
     routing, Router,
 };
@@ -69,17 +67,17 @@ type Result<T> = std::result::Result<T, Error>;
 
 async fn get_all(
     user_session: UserSession,
-    headers: HeaderMap,
+    htmx: Option<HtmxRequest>,
     app_state: State<AppState>,
 ) -> Result<impl IntoResponse> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
 
-    if is_htmx(&headers) {
+    if htmx.is_some() {
         let accounts = query_as!(
             AccountInfo,
             "
             SELECT kind AS \"kind: AccountKind\", name, description
-                FROM ledger.accounts
+                FROM ledger.account
                 WHERE
                     user_id = $1
             ;
@@ -96,7 +94,7 @@ async fn get_all(
             Account,
             "
             SELECT id, created, kind AS \"kind: AccountKind\", name, description
-                FROM ledger.accounts
+                FROM ledger.account
                 WHERE
                     user_id = $1
             ;
@@ -115,15 +113,17 @@ async fn create(
     app_state: State<AppState>,
     account_info: Form<AccountInfo>,
 ) -> Result<()> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
     let account_kind = account_info.kind;
     let account_name = account_info.name.as_str();
     let account_description = account_info.description.as_deref();
 
     query!(
         "
-        INSERT INTO ledger.accounts (user_id, kind, name, description)
-            VALUES ($1, $2, $3, $4)
+        INSERT INTO ledger.account
+                (user_id, kind, name, description)
+            VALUES
+                ($1, $2, $3, $4)
         ;
         ",
         user_id,
@@ -142,14 +142,14 @@ async fn read(
     app_state: State<AppState>,
     account_id: Path<Uuid>,
 ) -> Result<Json<Account>> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
     let account_id = *account_id;
 
     let account = query_as!(
         Account,
         "
         SELECT id, created, kind AS \"kind: AccountKind\", name, description
-            FROM ledger.accounts
+            FROM ledger.account
             WHERE
                 user_id = $2
                     AND
@@ -171,7 +171,7 @@ async fn update(
     account_id: Path<Uuid>,
     account_info: Json<AccountInfo>,
 ) -> Result<()> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
     let account_id = *account_id;
     let account_kind = account_info.kind;
     let account_name = account_info.name.as_str();
@@ -179,7 +179,7 @@ async fn update(
 
     query!(
         "
-        UPDATE ledger.accounts
+        UPDATE ledger.account
             SET
                 kind = $3,
                 name = $4,
@@ -207,12 +207,12 @@ async fn delete(
     app_state: State<AppState>,
     account_id: Path<Uuid>,
 ) -> Result<()> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
     let account_id = *account_id;
 
     query!(
         "
-        DELETE FROM ledger.accounts
+        DELETE FROM ledger.account
             WHERE
                 user_id = $2
                     AND

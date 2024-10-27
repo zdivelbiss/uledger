@@ -63,13 +63,13 @@ async fn get_all(
     user_session: UserSession,
     app_state: State<AppState>,
 ) -> Result<Json<Vec<Commodity>>> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
 
     let commodities = query_as!(
         Commodity,
         "
         SELECT id, created, name, format
-            FROM ledger.commodities
+            FROM ledger.commodity
             WHERE
                 user_id = $1
         ;
@@ -87,14 +87,16 @@ async fn create(
     app_state: State<AppState>,
     commodity_info: Form<CommodityInfo>,
 ) -> Result<()> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
     let commodity_name = commodity_info.name.as_str();
     let commodity_format = commodity_info.format.as_str();
 
     query!(
         "
-        INSERT INTO ledger.commodities (user_id, name, format)
-            VALUES ($1, $2, $3)
+        INSERT INTO ledger.commodity
+                (user_id, name, format)
+            VALUES
+                ($1, $2, $3)
         ;
         ",
         user_id,
@@ -112,14 +114,14 @@ async fn read(
     app_state: State<AppState>,
     commodity_id: Path<Uuid>,
 ) -> Result<Json<Commodity>> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
     let commodity_id = *commodity_id;
 
     let commodity = query_as!(
         Commodity,
         "
         SELECT id, created, name, format
-            FROM ledger.commodities
+            FROM ledger.commodity
             WHERE
                 user_id = $2
                     AND
@@ -141,14 +143,14 @@ async fn update(
     commodity_id: Path<Uuid>,
     commodity_info: Json<CommodityInfo>,
 ) -> Result<()> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
     let commodity_id = *commodity_id;
     let commodity_name = commodity_info.name.as_str();
     let commodity_format = commodity_info.format.as_str();
 
     query!(
         "
-        UPDATE ledger.commodities
+        UPDATE ledger.commodity
             SET
                 name = $3,
                 format = $4
@@ -174,12 +176,12 @@ async fn delete(
     app_state: State<AppState>,
     commodity_id: Path<Uuid>,
 ) -> Result<()> {
-    let user_id = user_session.get_user_id().await;
+    let user_id = user_session.get_id().await;
     let commodity_id = *commodity_id;
 
     query!(
         "
-        DELETE FROM ledger.accounts
+        DELETE FROM ledger.commodity
             WHERE
                 user_id = $2
                     AND
