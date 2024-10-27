@@ -1,9 +1,5 @@
 {{ extends "pages/_page.html" }}
 
-{{ block HEAD }}
-<link rel="stylesheet" href="/assets/styles/page.scss" />
-{{ endblock }}
-
 {{ block TITLE }}
 µLedger: Accounts
 {{ endblock }}
@@ -16,7 +12,7 @@
 <details>
     <summary>Add a New Account</summary>
 
-    <div id="create-form" >
+    <div id="create-form">
         <div id="form-status"></div>
 
         <form hx-post="/api/v1/ledger/accounts" hx-target-error="#form-status">
@@ -42,5 +38,5 @@
 
 <hr />
 
-<section class="accounts-list" hx-trigger="load" hx-get="/api/v1/ledger/accounts"></section>
+<section class="list" hx-trigger="load" hx-get="/api/v1/ledger/accounts"></section>
 {{ endblock }}

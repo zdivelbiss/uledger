@@ -1,9 +1,5 @@
 {{ extends "pages/_page.html" }}
 
-{{ block HEAD }}
-<link rel="stylesheet" href="/assets/styles/page.scss" />
-{{ endblock }}
-
 {{ block TITLE }}
 µLedger: Commodities
 {{ endblock }}
@@ -36,5 +32,5 @@
 
 <hr />
 
-<section class="commodities-list" hx-trigger="load" hx-get="/api/v1/ledger/commodities"></section>
+<section class="list" hx-trigger="load" hx-get="/api/v1/ledger/commodities"></section>
 {{ endblock }}

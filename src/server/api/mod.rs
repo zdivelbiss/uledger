@@ -10,8 +10,8 @@ pub fn router() -> axum::Router<AppState> {
 
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[serde(rename_all = "UPPERCASE")]
-#[sqlx(type_name = "USER_ROLE", rename_all = "UPPERCASE")]
-pub enum Role {
+#[sqlx(type_name = "USER_ACCESS", rename_all = "UPPERCASE")]
+pub enum UserAccess {
     Admin,
     Regular,
 }

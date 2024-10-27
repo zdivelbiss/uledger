@@ -1,0 +1,15 @@
+@use "colors";
+
+#sidebar {
+    padding: 2rem 1rem;
+
+    nav {
+        a {
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}

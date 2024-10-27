@@ -1,6 +1,6 @@
 use crate::{
     server::{
-        api::Role,
+        api::UserAccess,
         htmx::{hx_redirect, is_htmx},
         AppState,
     },
@@ -91,11 +91,11 @@ pub async fn handler(
 
     query!(
         "
-        INSERT INTO auth.users (role, email_address, password_salt, password_hash, display_name)
+        INSERT INTO auth.users (access, email_address, password_salt, password_hash, display_name)
             VALUES ($1, $2, $3, $4, $5)
         ;
         ",
-        Role::Regular as _,
+        UserAccess::Regular as _,
         email_address,
         salt,
         password_hash,
