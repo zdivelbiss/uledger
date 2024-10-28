@@ -1,10 +1,10 @@
-use crate::server::App;
+use crate::server::state::App;
 
-mod accounts;
-mod commodities;
+mod account;
+mod commodity;
 
 pub fn router() -> axum::Router<App> {
     axum::Router::new()
-    .nest("/accounts", accounts::router())
-    .nest("/commodities", commodities::router())
+    .nest("/account", account::router())
+    .nest("/commodity", commodity::router())
 }

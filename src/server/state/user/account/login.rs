@@ -23,7 +23,7 @@ impl From<sqlx::Error> for Error {
     }
 }
 
-impl super::UserAccounts {
+impl super::UserAccount {
     pub async fn login(&self, email_address: &EmailAddress, password: &str) -> Result<Uuid, Error> {
         let user = query!(
             "
@@ -35,7 +35,7 @@ impl super::UserAccounts {
             ",
             email_address.as_str()
         )
-        .fetch_one(self.db())
+        .fetch_one(&self.db)
         .await?;
 
         let password_salt = SaltString::from_b64(&user.password_salt)?;

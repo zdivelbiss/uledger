@@ -1,7 +1,7 @@
 use serde::de::{Error, Unexpected, Visitor};
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct VerificationToken([u8; Self::SIZE]);
 
 impl VerificationToken {

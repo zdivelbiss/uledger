@@ -18,11 +18,9 @@ serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 serde-big-array = "*"
 argon2 = { version = "*", features = ["std", "simple"] }
-strum = { version = "*", features = ["derive"] }
 rand = "*"
 num_enum = "*"
 base64 = "*"
-hex = "*"
 
 chrono = { version = "*", features = ["serde"] }
 uuid = { version = "*", features = ["serde", "v4", "v7"] }

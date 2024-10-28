@@ -67,7 +67,7 @@ async fn get_all(
     htmx: Option<HtmxInfo>,
     app_state: State<App>,
 ) -> Result<impl IntoResponse> {
-    let user_id = user_session.get_id().await;
+    let user_id = user_session.get_user_id().await;
 
     if htmx.is_some() {
         let accounts = query_as!(
@@ -110,7 +110,7 @@ async fn create(
     app_state: State<App>,
     account_info: Form<AccountInfo>,
 ) -> Result<()> {
-    let user_id = user_session.get_id().await;
+    let user_id = user_session.get_user_id().await;
     let account_kind = account_info.kind;
     let account_name = account_info.name.as_str();
     let account_description = account_info.description.as_deref();
@@ -139,7 +139,7 @@ async fn read(
     app_state: State<App>,
     account_id: Path<Uuid>,
 ) -> Result<Json<Account>> {
-    let user_id = user_session.get_id().await;
+    let user_id = user_session.get_user_id().await;
     let account_id = *account_id;
 
     let account = query_as!(
@@ -168,7 +168,7 @@ async fn update(
     account_id: Path<Uuid>,
     account_info: Json<AccountInfo>,
 ) -> Result<()> {
-    let user_id = user_session.get_id().await;
+    let user_id = user_session.get_user_id().await;
     let account_id = *account_id;
     let account_kind = account_info.kind;
     let account_name = account_info.name.as_str();
@@ -204,7 +204,7 @@ async fn delete(
     app_state: State<App>,
     account_id: Path<Uuid>,
 ) -> Result<()> {
-    let user_id = user_session.get_id().await;
+    let user_id = user_session.get_user_id().await;
     let account_id = *account_id;
 
     query!(

@@ -1,36 +1,37 @@
 use crate::{
     postmark,
-    server::{internal_error_old, App, UserSession},
-    util::{EmailAddress, VerificationToken},
+    server::{
+        internal_error, internal_error_old,
+        state::{user::UserVerification, App},
+        UserSession,
+    },
 };
 use axum::{
     extract::{Json, State},
     http::StatusCode,
     response::IntoResponse,
-    routing, Router,
+    routing::{post, delete}, Router,
 };
+use lib::EmailAddress;
 
 pub fn router() -> Router<App> {
     Router::new()
-        .route("/", routing::post(create))
-        .route("/", routing::delete(delete))
+        .route("/", post(create))
+        .route("/", delete(confirm))
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("user does not exist")]
-    UserNotExists,
-
     #[error("email already in use")]
     EmailInUse,
 
     #[error("no verification match")]
     NoVerificationMatch,
 
-    #[error("internal server error")]
+    #[error(transparent)]
     Database(sqlx::Error),
 
-    #[error("internal server error")]
+    #[error(transparent)]
     Postmark(#[from] crate::postmark::Error),
 }
 
@@ -41,7 +42,6 @@ impl From<sqlx::Error> for Error {
         };
 
         match (db_err.code().as_deref(), db_err.constraint()) {
-            (Some("23503"), Some("email_verification_user_id_fkey")) => Error::UserNotExists,
             (Some("23505"), Some("email_verification_email_address_key")) => Error::EmailInUse,
 
             _ => Self::Database(err),
@@ -74,42 +74,22 @@ struct CreateInfo {
 #[axum::debug_handler]
 async fn create(
     user_session: UserSession,
-    state: State<App>,
-    create_info: Json<CreateInfo>,
-) -> Result<()> {
-    let user_id = user_session.get_id().await;
-    let email_address = &create_info.email_address;
-    let verification_token = VerificationToken::gen();
+    user_verifiaction: State<UserVerification>,
+    form: Json<CreateInfo>,
+) -> impl IntoResponse {
+    use crate::server::state::user::verification::CreateError;
 
-    query!(
-        "
-        INSERT INTO _user.email_verification
-                (id, email_address, proof_token)
-            VALUES
-                ($1, $2, $3)
-            ON CONFLICT (id)
-                DO UPDATE SET
-                    created = NOW(),
-                    email_address = $2,
-                    proof_token = $3
-        ;
-        ",
-        user_id,
-        email_address.as_str(),
-        (&verification_token).to_string()
-    )
-    .execute(state.db())
-    .await?;
+    let user_id = user_session.get_user_id().await;
+    match user_verifiaction.create(user_id, &form.email_address).await {
+        Ok(_) => (StatusCode::OK, "verification sent to email").into_response(),
 
-    let transaction = postmark::Transaction::verification(
-        &create_info.email_address,
-        chrono::Utc::now(),
-        verification_token,
-    );
+        Err(CreateError::EmailInUse) => {
+            (StatusCode::CONFLICT, "email already being used").into_response()
+        }
 
-    postmark::send(transaction).await?;
-
-    Ok(())
+        Err(CreateError::Database(error)) => internal_error(error).into_response(),
+        Err(CreateError::Postmark(error)) => internal_error(error).into_response(),
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -124,7 +104,7 @@ async fn delete(
     app_state: State<App>,
     delete_info: Json<DeleteInfo>,
 ) -> Result<()> {
-    let user_id = user_session.get_id().await;
+    let user_id = user_session.get_user_id().await;
     let email_address = &delete_info.email_address;
     let proof_token = &delete_info.proof_token;
 

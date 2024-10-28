@@ -59,11 +59,8 @@ impl axum::response::IntoResponse for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-async fn get_all(
-    user_session: UserSession,
-    app_state: State<App>,
-) -> Result<Json<Vec<Commodity>>> {
-    let user_id = user_session.get_id().await;
+async fn get_all(user_session: UserSession, app_state: State<App>) -> Result<Json<Vec<Commodity>>> {
+    let user_id = user_session.get_user_id().await;
 
     let commodities = query_as!(
         Commodity,
@@ -87,7 +84,7 @@ async fn create(
     app_state: State<App>,
     commodity_info: Form<CommodityInfo>,
 ) -> Result<()> {
-    let user_id = user_session.get_id().await;
+    let user_id = user_session.get_user_id().await;
     let commodity_name = commodity_info.name.as_str();
     let commodity_format = commodity_info.format.as_str();
 
@@ -114,7 +111,7 @@ async fn read(
     app_state: State<App>,
     commodity_id: Path<Uuid>,
 ) -> Result<Json<Commodity>> {
-    let user_id = user_session.get_id().await;
+    let user_id = user_session.get_user_id().await;
     let commodity_id = *commodity_id;
 
     let commodity = query_as!(
@@ -143,7 +140,7 @@ async fn update(
     commodity_id: Path<Uuid>,
     commodity_info: Json<CommodityInfo>,
 ) -> Result<()> {
-    let user_id = user_session.get_id().await;
+    let user_id = user_session.get_user_id().await;
     let commodity_id = *commodity_id;
     let commodity_name = commodity_info.name.as_str();
     let commodity_format = commodity_info.format.as_str();
@@ -176,7 +173,7 @@ async fn delete(
     app_state: State<App>,
     commodity_id: Path<Uuid>,
 ) -> Result<()> {
-    let user_id = user_session.get_id().await;
+    let user_id = user_session.get_user_id().await;
     let commodity_id = *commodity_id;
 
     query!(

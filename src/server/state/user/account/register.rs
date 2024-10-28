@@ -31,7 +31,7 @@ impl From<sqlx::Error> for Error {
     }
 }
 
-impl super::UserAccounts {
+impl super::UserAccount {
     pub async fn register(
         &self,
         email_address: &EmailAddress,
@@ -57,7 +57,7 @@ impl super::UserAccounts {
             password_hash.as_str(),
             display_name
         )
-        .execute(self.db())
+        .execute(&self.db)
         .await?;
 
         Ok(())

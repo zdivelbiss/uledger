@@ -1,7 +1,7 @@
 use crate::server::{
     htmx::{hx_redirect, IsHtmx},
     internal_error,
-    state::{user::UserAccounts, App},
+    state::{user::account::UserAccount, App},
     UserSession,
 };
 use axum::{
@@ -19,40 +19,39 @@ pub fn router() -> axum::Router<App> {
 
     axum::Router::new()
         .nest("/verify", verify::router())
-        .route("/register", post(register))
+        .route("/register", post({
+            #[derive(Debug, Deserialize)]
+            pub struct RegisterInfo {
+                display_name: String,
+                email_address: EmailAddress,
+                password: String,
+            }
+
+|
+            user_account: State<UserAccount>,
+            is_htmx: IsHtmx,
+            form: Form<RegisterInfo>,
+ | async move {
+            use crate::server::state::user::account::RegisterError;
+        
+            match user_account
+                .register(&form.email_address, &form.password, &form.display_name)
+                .await
+            {
+                Ok(_) if *is_htmx => (StatusCode::OK, [hx_redirect("/login")]).into_response(),
+                Ok(_) => (StatusCode::OK, "your account has been registered").into_response(),
+        
+                Err(RegisterError::DuplicateEmail) => {
+                    (StatusCode::CONFLICT, "email address already in use").into_response()
+                }
+        
+                Err(RegisterError::Database(error)) => internal_error(error).into_response(),
+                Err(RegisterError::PasswordHash(error)) => internal_error(error).into_response(),
+            }
+        }
+        }))
         .route("/login", post(login))
         .route("/display_name", get(display_name))
-}
-
-#[derive(Debug, Deserialize)]
-pub struct RegisterInfo {
-    display_name: String,
-    email_address: EmailAddress,
-    password: String,
-}
-
-#[axum::debug_handler]
-pub async fn register(
-    user: State<UserAccounts>,
-    is_htmx: IsHtmx,
-    form: Form<RegisterInfo>,
-) -> impl IntoResponse {
-    use crate::server::state::user::RegisterError;
-
-    match user
-        .register(&form.email_address, &form.password, &form.display_name)
-        .await
-    {
-        Ok(_) if *is_htmx => (StatusCode::OK, [hx_redirect("/login")]).into_response(),
-        Ok(_) => (StatusCode::OK, "your account has been registered").into_response(),
-
-        Err(RegisterError::DuplicateEmail) => {
-            (StatusCode::CONFLICT, "email address already in use").into_response()
-        }
-
-        Err(RegisterError::Database(error)) => internal_error(error).into_response(),
-        Err(RegisterError::PasswordHash(error)) => internal_error(error).into_response(),
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -64,18 +63,21 @@ pub struct LoginInfo {
 #[allow(clippy::disallowed_types)]
 #[axum::debug_handler]
 async fn login(
-    user: State<UserAccounts>,
+    user_account: State<UserAccount>,
     session: tower_sessions::Session,
     is_htmx: IsHtmx,
     form: Form<LoginInfo>,
 ) -> impl IntoResponse {
-    use crate::server::state::user::LoginError;
+    use crate::server::state::user::account::LoginError;
 
     if !session.is_empty().await {
         return (StatusCode::CONFLICT, "you are already logged in").into_response();
     }
 
-    match user.login(&form.email_address, &form.password).await {
+    match user_account
+        .login(&form.email_address, &form.password)
+        .await
+    {
         Ok(user_id) => {
             session.insert("id", user_id).await.unwrap();
 
@@ -96,7 +98,7 @@ async fn login(
 }
 
 async fn display_name(state: State<App>, user_session: UserSession) -> impl IntoResponse {
-    let user_id = user_session.get_id().await;
+    let user_id = user_session.get_user_id().await;
 
     match query!(
         "

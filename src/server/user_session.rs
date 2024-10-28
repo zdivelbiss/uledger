@@ -10,18 +10,18 @@ use uuid::Uuid;
 pub struct UserSession(Session);
 
 impl UserSession {
-    const ID: &str = "id";
+    const USER_ID: &str = "user_id";
 
     async fn new(session: Session) -> Option<Self> {
-        if let Ok(Some(_)) = session.get_value(Self::ID).await {
+        if let Ok(Some(_)) = session.get_value(Self::USER_ID).await {
             Some(Self(session))
         } else {
             None
         }
     }
 
-    pub async fn get_id(&self) -> Uuid {
-        self.0.get(Self::ID).await.unwrap().unwrap()
+    pub async fn get_user_id(&self) -> Uuid {
+        self.0.get(Self::USER_ID).await.unwrap().unwrap()
     }
 }
 

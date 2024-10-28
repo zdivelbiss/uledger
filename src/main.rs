@@ -19,9 +19,6 @@ extern crate tracing;
 extern crate sqlx;
 
 #[macro_use]
-extern crate strum;
-
-#[macro_use]
 extern crate serde;
 
 const fn user_agent() -> &'static str {
