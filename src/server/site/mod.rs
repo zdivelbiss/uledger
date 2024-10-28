@@ -1,4 +1,4 @@
-use crate::server::{AppState, UserSession};
+use crate::server::{state::App, UserSession};
 use axum::{
     extract::Request,
     middleware::Next,
@@ -25,7 +25,7 @@ struct AccountsTemplate {}
 #[template(path = "pages/commodities.html")]
 struct CommoditiesTemplate {}
 
-pub fn router() -> axum::Router<AppState> {
+pub fn router() -> axum::Router<App> {
     axum::Router::new()
         // Authenticated
         .route("/", get(|| async { Redirect::temporary("/accounts") }))

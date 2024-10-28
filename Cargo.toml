@@ -15,7 +15,7 @@ figment = { version = "*", features = ["env"] }
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 serde-big-array = "*"
-argon2 = { version = "*", features = ["simple"] }
+argon2 = { version = "*", features = ["std", "simple"] }
 rand = { version = "*", features = ["getrandom"] }
 num_enum = "*"
 strum = { version = "*", features = ["derive"] }

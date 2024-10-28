@@ -1,6 +1,7 @@
 use crate::cfg;
 use axum::{
     http::{header, HeaderValue, StatusCode},
+    response::IntoResponse,
     Router,
 };
 use std::time::Duration;
@@ -19,9 +20,7 @@ mod api;
 mod assets;
 mod htmx;
 mod site;
-
 mod state;
-pub use state::*;
 
 mod user_session;
 pub use user_session::*;
@@ -47,7 +46,7 @@ pub async fn run() {
 }
 
 async fn build_router() -> Router {
-    let state = AppState::create().await;
+    let state = state::App::create().await;
 
     let url = cfg().session.url.as_str();
 
@@ -108,7 +107,13 @@ async fn logout(session: tower_sessions::Session) -> axum::response::Redirect {
     axum::response::Redirect::temporary("/login")
 }
 
-pub fn internal_error(error: impl std::error::Error) -> StatusCode {
+pub fn internal_error(error: impl std::error::Error) -> (StatusCode, &'static str) {
+    error!("{error}");
+
+    (StatusCode::INTERNAL_SERVER_ERROR, "Internal server errror.")
+}
+
+pub fn internal_error_old(error: impl std::error::Error) -> StatusCode {
     error!("{error}");
 
     StatusCode::INTERNAL_SERVER_ERROR

@@ -1,19 +1,11 @@
-use crate::server::AppState;
+use crate::server::state::App;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 mod v1;
 
-pub fn router() -> axum::Router<AppState> {
+pub fn router() -> axum::Router<App> {
     axum::Router::new().nest("/v1", v1::router())
-}
-
-#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
-#[serde(rename_all = "UPPERCASE")]
-#[sqlx(type_name = "USER_ACCESS", rename_all = "UPPERCASE")]
-pub enum UserAccess {
-    Admin,
-    Regular,
 }
 
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]

@@ -1,6 +1,6 @@
 use crate::{
     postmark,
-    server::{internal_error, AppState, UserSession},
+    server::{internal_error_old, App, UserSession},
     util::{EmailAddress, VerificationToken},
 };
 use axum::{
@@ -10,7 +10,7 @@ use axum::{
     routing, Router,
 };
 
-pub fn router() -> Router<AppState> {
+pub fn router() -> Router<App> {
     Router::new()
         .route("/", routing::post(create))
         .route("/", routing::delete(delete))
@@ -56,8 +56,8 @@ impl IntoResponse for Error {
                 Self::UserNotExists => StatusCode::NOT_FOUND,
                 Self::EmailInUse => StatusCode::CONFLICT,
                 Self::NoVerificationMatch => StatusCode::NOT_FOUND,
-                Self::Database(error) => internal_error(error),
-                Self::Postmark(error) => internal_error(error),
+                Self::Database(error) => internal_error_old(error),
+                Self::Postmark(error) => internal_error_old(error),
             })
             .body(self.to_string().into())
             .unwrap()
@@ -74,7 +74,7 @@ struct CreateInfo {
 #[axum::debug_handler]
 async fn create(
     user_session: UserSession,
-    state: State<AppState>,
+    state: State<App>,
     create_info: Json<CreateInfo>,
 ) -> Result<()> {
     let user_id = user_session.get_id().await;
@@ -83,7 +83,7 @@ async fn create(
 
     query!(
         "
-        INSERT INTO users.email_verification
+        INSERT INTO _user.email_verification
                 (id, email_address, proof_token)
             VALUES
                 ($1, $2, $3)
@@ -121,7 +121,7 @@ struct DeleteInfo {
 #[axum::debug_handler]
 async fn delete(
     user_session: UserSession,
-    app_state: State<AppState>,
+    app_state: State<App>,
     delete_info: Json<DeleteInfo>,
 ) -> Result<()> {
     let user_id = user_session.get_id().await;
@@ -130,7 +130,7 @@ async fn delete(
 
     let rows_affected = query!(
         "
-        DELETE FROM users.email_verification
+        DELETE FROM _user.email_verification
             WHERE
                 id = $1
                     AND
@@ -151,7 +151,7 @@ async fn delete(
         1 => {
             query!(
                 "
-                UPDATE users.account
+                UPDATE _user.account
                     SET
                         email_address = $2,
                         email_verified_on = $3

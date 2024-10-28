@@ -3,7 +3,7 @@ use axum::{
     http::{request::Parts, HeaderMap, StatusCode},
 };
 
-pub struct HtmxRequest {
+pub struct HtmxInfo {
     is_boosted: bool,
     prompt: Option<String>,
     target: Option<String>,
@@ -11,7 +11,7 @@ pub struct HtmxRequest {
     trigger_name: Option<String>,
 }
 
-impl HtmxRequest {
+impl HtmxInfo {
     fn new(headers: &HeaderMap) -> Option<Self> {
         headers.get("HX-Request").map(|_| Self {
             is_boosted: headers.get("HX-Boosted").map_or(false, |_| true),
@@ -56,11 +56,11 @@ impl HtmxRequest {
 }
 
 #[axum::async_trait]
-impl<S: Sync + Send> FromRequestParts<S> for HtmxRequest {
+impl<S: Sync + Send> FromRequestParts<S> for HtmxInfo {
     type Rejection = (StatusCode, &'static str);
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let headers = HeaderMap::from_request_parts(parts, state).await.unwrap();
-        HtmxRequest::new(&headers).ok_or((StatusCode::BAD_REQUEST, "Expected an HTMX request."))
+        HtmxInfo::new(&headers).ok_or((StatusCode::BAD_REQUEST, "Expected an HTMX request."))
     }
 }

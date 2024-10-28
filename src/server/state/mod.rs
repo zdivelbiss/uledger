@@ -1,12 +1,15 @@
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::time::Duration;
 
+pub mod ledger;
+pub mod user;
+
 #[derive(Clone)]
-pub struct AppState {
+pub struct App {
     db: Pool<Postgres>,
 }
 
-impl AppState {
+impl App {
     pub async fn create() -> Self {
         use crate::config::cfg;
 

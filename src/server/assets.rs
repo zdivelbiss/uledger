@@ -1,9 +1,9 @@
-use crate::{config::cfg, server::AppState};
+use crate::{config::cfg, server::state::App};
 use axum::{body::Bytes, http, response::IntoResponse, routing::get, Router};
 use mini_moka::sync::Cache;
 use std::{path::PathBuf, sync::LazyLock};
 
-pub fn router() -> Router<AppState> {
+pub fn router() -> Router<App> {
     Router::new().route("/*path", get(get_cached))
 }
 
@@ -75,15 +75,15 @@ impl From<std::io::Error> for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        use crate::server::internal_error;
+        use crate::server::internal_error_old;
 
         axum::response::Response::builder()
             .status(match &self {
                 Error::NotFound => http::StatusCode::NOT_FOUND,
                 Error::UnsupportedAsset => http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
-                Error::Io(error) => internal_error(error),
-                Error::Utf8(error) => internal_error(error),
-                Error::Grass(error) => internal_error(error),
+                Error::Io(error) => internal_error_old(error),
+                Error::Utf8(error) => internal_error_old(error),
+                Error::Grass(error) => internal_error_old(error),
             })
             .body(self.to_string().into())
             .unwrap()

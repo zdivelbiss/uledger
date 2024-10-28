@@ -2,8 +2,8 @@
 
 use crate::server::{
     api::{Commodity, CommodityInfo},
-    internal_error,
-    AppState,
+    internal_error_old,
+    state::App,
     UserSession,
 };
 use axum::{
@@ -13,7 +13,7 @@ use axum::{
 };
 use uuid::Uuid;
 
-pub fn router() -> Router<AppState> {
+pub fn router() -> Router<App> {
     Router::new()
         .route("/", routing::get(get_all))
         .route("/", routing::post(create))
@@ -50,7 +50,7 @@ impl axum::response::IntoResponse for Error {
         axum::response::Response::builder()
             .status(match &self {
                 Self::Duplicate => StatusCode::CONFLICT,
-                Self::Database(error) => internal_error(error),
+                Self::Database(error) => internal_error_old(error),
             })
             .body(self.to_string().into())
             .unwrap()
@@ -61,7 +61,7 @@ type Result<T> = std::result::Result<T, Error>;
 
 async fn get_all(
     user_session: UserSession,
-    app_state: State<AppState>,
+    app_state: State<App>,
 ) -> Result<Json<Vec<Commodity>>> {
     let user_id = user_session.get_id().await;
 
@@ -69,7 +69,7 @@ async fn get_all(
         Commodity,
         "
         SELECT id, created, name, format
-            FROM ledger.commodity
+            FROM _ledger..commodity
             WHERE
                 user_id = $1
         ;
@@ -84,7 +84,7 @@ async fn get_all(
 
 async fn create(
     user_session: UserSession,
-    app_state: State<AppState>,
+    app_state: State<App>,
     commodity_info: Form<CommodityInfo>,
 ) -> Result<()> {
     let user_id = user_session.get_id().await;
@@ -93,7 +93,7 @@ async fn create(
 
     query!(
         "
-        INSERT INTO ledger.commodity
+        INSERT INTO _ledger..commodity
                 (user_id, name, format)
             VALUES
                 ($1, $2, $3)
@@ -111,7 +111,7 @@ async fn create(
 
 async fn read(
     user_session: UserSession,
-    app_state: State<AppState>,
+    app_state: State<App>,
     commodity_id: Path<Uuid>,
 ) -> Result<Json<Commodity>> {
     let user_id = user_session.get_id().await;
@@ -121,7 +121,7 @@ async fn read(
         Commodity,
         "
         SELECT id, created, name, format
-            FROM ledger.commodity
+            FROM _ledger..commodity
             WHERE
                 user_id = $2
                     AND
@@ -139,7 +139,7 @@ async fn read(
 
 async fn update(
     user_session: UserSession,
-    app_state: State<AppState>,
+    app_state: State<App>,
     commodity_id: Path<Uuid>,
     commodity_info: Json<CommodityInfo>,
 ) -> Result<()> {
@@ -150,7 +150,7 @@ async fn update(
 
     query!(
         "
-        UPDATE ledger.commodity
+        UPDATE _ledger..commodity
             SET
                 name = $3,
                 format = $4
@@ -173,7 +173,7 @@ async fn update(
 
 async fn delete(
     user_session: UserSession,
-    app_state: State<AppState>,
+    app_state: State<App>,
     commodity_id: Path<Uuid>,
 ) -> Result<()> {
     let user_id = user_session.get_id().await;
@@ -181,7 +181,7 @@ async fn delete(
 
     query!(
         "
-        DELETE FROM ledger.commodity
+        DELETE FROM _ledger..commodity
             WHERE
                 user_id = $2
                     AND

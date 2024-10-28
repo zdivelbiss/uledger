@@ -8,7 +8,9 @@
 
 mod postmark;
 mod server;
+
 mod util;
+use util::*;
 
 mod config;
 use config::cfg;
