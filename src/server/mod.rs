@@ -1,7 +1,6 @@
 use crate::cfg;
 use axum::{
     http::{header, HeaderValue, StatusCode},
-    response::IntoResponse,
     Router,
 };
 use std::time::Duration;

@@ -1,11 +1,8 @@
-use crate::{
-    server::{
-        htmx::{hx_redirect, IsHtmx},
-        internal_error, internal_error_old,
-        state::{user::User, App},
-        UserSession,
-    },
-    EmailAddress,
+use crate::server::{
+    htmx::{hx_redirect, IsHtmx},
+    internal_error,
+    state::{user::UserAccounts, App},
+    UserSession,
 };
 use axum::{
     extract::{Form, State},
@@ -13,6 +10,7 @@ use axum::{
     response::IntoResponse,
     routing::{get, post},
 };
+use lib::EmailAddress;
 
 mod verify;
 
@@ -35,11 +33,11 @@ pub struct RegisterInfo {
 
 #[axum::debug_handler]
 pub async fn register(
-    user: State<User>,
+    user: State<UserAccounts>,
     is_htmx: IsHtmx,
     form: Form<RegisterInfo>,
 ) -> impl IntoResponse {
-    use crate::server::state::user::register::Error;
+    use crate::server::state::user::RegisterError;
 
     match user
         .register(&form.email_address, &form.password, &form.display_name)
@@ -48,12 +46,12 @@ pub async fn register(
         Ok(_) if *is_htmx => (StatusCode::OK, [hx_redirect("/login")]).into_response(),
         Ok(_) => (StatusCode::OK, "your account has been registered").into_response(),
 
-        Err(Error::DuplicateEmail) => {
+        Err(RegisterError::DuplicateEmail) => {
             (StatusCode::CONFLICT, "email address already in use").into_response()
         }
 
-        Err(Error::Database(error)) => internal_error(error).into_response(),
-        Err(Error::PasswordHash(error)) => internal_error(error).into_response(),
+        Err(RegisterError::Database(error)) => internal_error(error).into_response(),
+        Err(RegisterError::PasswordHash(error)) => internal_error(error).into_response(),
     }
 }
 
@@ -66,12 +64,12 @@ pub struct LoginInfo {
 #[allow(clippy::disallowed_types)]
 #[axum::debug_handler]
 async fn login(
-    user: State<User>,
+    user: State<UserAccounts>,
     session: tower_sessions::Session,
     is_htmx: IsHtmx,
     form: Form<LoginInfo>,
 ) -> impl IntoResponse {
-    use crate::server::state::user::login::Error;
+    use crate::server::state::user::LoginError;
 
     if !session.is_empty().await {
         return (StatusCode::CONFLICT, "you are already logged in").into_response();
@@ -88,12 +86,12 @@ async fn login(
             }
         }
 
-        Err(Error::InvalidLogin) => {
+        Err(LoginError::InvalidCredentials) => {
             (StatusCode::UNAUTHORIZED, "invalid login credentials").into_response()
         }
 
-        Err(Error::Database(error)) => internal_error(error).into_response(),
-        Err(Error::PasswordHash(error)) => internal_error(error).into_response(),
+        Err(LoginError::Database(error)) => internal_error(error).into_response(),
+        Err(LoginError::PasswordHash(error)) => internal_error(error).into_response(),
     }
 }
 
@@ -113,6 +111,6 @@ async fn display_name(state: State<App>, user_session: UserSession) -> impl Into
     .await
     {
         Ok(record) => (StatusCode::OK, record.display_name).into_response(),
-        Err(error) => (internal_error_old(error), "Internal server error.").into_response(),
+        Err(error) => internal_error(error).into_response(),
     }
 }

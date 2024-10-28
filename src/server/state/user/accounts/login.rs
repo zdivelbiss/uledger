@@ -1,11 +1,11 @@
-use crate::EmailAddress;
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
+use lib::EmailAddress;
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("invalid email & password combination")]
-    InvalidLogin,
+    InvalidCredentials,
 
     #[error(transparent)]
     Database(sqlx::Error),
@@ -17,13 +17,13 @@ pub enum Error {
 impl From<sqlx::Error> for Error {
     fn from(error: sqlx::Error) -> Self {
         match error {
-            sqlx::Error::RowNotFound => Self::InvalidLogin,
+            sqlx::Error::RowNotFound => Self::InvalidCredentials,
             error => Self::Database(error),
         }
     }
 }
 
-impl super::User {
+impl super::UserAccounts {
     pub async fn login(&self, email_address: &EmailAddress, password: &str) -> Result<Uuid, Error> {
         let user = query!(
             "
@@ -45,7 +45,7 @@ impl super::User {
 
         // check password ...
         if user.password_hash.as_str() != calculated_hash.as_str() {
-            return Err(Error::InvalidLogin);
+            return Err(Error::InvalidCredentials);
         }
 
         Ok(user.id)
