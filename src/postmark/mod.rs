@@ -1,28 +1,27 @@
 use crate::{config::cfg, user_agent};
-use reqwest::header::HeaderMap;
+use reqwest::header::{HeaderMap, HeaderValue};
 use std::sync::LazyLock;
-use Serialize;
 
 mod transaction;
 pub use transaction::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("could not serialize email body")]
+    #[error(transparent)]
     BodySerialization(#[from] serde_json::Error),
 
-    #[error("http request error")]
+    #[error(transparent)]
     Http(#[from] reqwest::Error),
 }
 
 static HTTP_CLIENT: LazyLock<reqwest::Client> = LazyLock::new(|| {
     let mut headers = HeaderMap::new();
 
-    headers.insert("Accept", "application/json".try_into().unwrap());
-    headers.insert("Content-Type", "application/json".try_into().unwrap());
+    headers.insert("Accept", HeaderValue::from_static("application/json"));
+    headers.insert("Content-Type", HeaderValue::from_static("application/json"));
     headers.insert(
         "X-Postmark-Server-Token",
-        crate::cfg().postmark.apikey.as_str().try_into().unwrap(),
+        HeaderValue::from_static(crate::cfg().postmark.apikey.as_str()),
     );
 
     reqwest::Client::builder()

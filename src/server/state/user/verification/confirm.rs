@@ -14,7 +14,7 @@ pub enum Error {
 }
 
 impl super::UserVerification {
-    pub async fn delete(
+    pub async fn confirm(
         &self,
         user_id: Uuid,
         email_address: &EmailAddress,
