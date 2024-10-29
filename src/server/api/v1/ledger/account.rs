@@ -7,7 +7,7 @@ use axum::{
     response::IntoResponse,
     routing, Router,
 };
-use lib::ledger::account::{Info, Kind, Record};
+use lib::ledger::account::{AccountKind, AccountRecord, Info};
 use uuid::Uuid;
 
 pub fn router() -> Router<App> {

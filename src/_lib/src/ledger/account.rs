@@ -14,7 +14,7 @@ use uuid::Uuid;
 )]
 #[serde(rename_all = "UPPERCASE")]
 #[sqlx(type_name = "ACCOUNT_KIND", rename_all = "UPPERCASE")]
-pub enum Kind {
+pub enum AccountKind {
     Equity,
     Asset,
     Liability,
@@ -22,28 +22,11 @@ pub enum Kind {
     Expense,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub struct Info {
-    kind: Kind,
-    name: String,
-    description: Option<String>,
-}
-
 #[derive(Debug, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
-pub struct Record {
+pub struct AccountRecord {
     id: Uuid,
     created: DateTime<Utc>,
-    kind: Kind,
+    kind: AccountKind,
     name: String,
     description: Option<String>,
-}
-
-impl From<Record> for Info {
-    fn from(value: Record) -> Self {
-        Self {
-            kind: value.kind,
-            name: value.name,
-            description: value.description,
-        }
-    }
 }

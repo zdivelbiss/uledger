@@ -17,6 +17,7 @@ use tower_sessions_redis_store::{
 
 mod api;
 mod assets;
+mod crud;
 mod htmx;
 mod site;
 mod state;

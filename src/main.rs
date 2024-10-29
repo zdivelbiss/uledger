@@ -21,6 +21,8 @@ extern crate sqlx;
 #[macro_use]
 extern crate serde;
 
+pub type Datastore = sqlx::Pool<sqlx::Postgres>;
+
 const fn user_agent() -> &'static str {
     concat!("uledger-srv/", env!("CARGO_PKG_VERSION"))
 }
