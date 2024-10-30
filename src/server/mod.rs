@@ -47,21 +47,20 @@ pub async fn run() {
 async fn build_router() -> Router {
     let state = state::App::create().await;
 
+    // Connect to session database ...
     let url = cfg().session.url.as_str();
-
-    debug!("Creating connection configuration for session storage: {url:?}");
+    debug!("Creating connection configuration for session database: {url:?}");
     let config = fred::types::RedisConfig::from_url(url).expect("invalid url");
-    debug!("Building session storage connection...");
-    let client = fred::types::Builder::from_config(config)
-        .build()
-        .expect("could not crate");
-    debug!("Connecting to session storage...");
+    debug!("Building session database connection...");
+    let client = fred::types::Builder::from_config(config).build().unwrap();
+    debug!("Connecting to session database...");
     let _ = client.init().await;
-    debug!("Session storage connection established.");
+    debug!("Session database connection established.");
 
     let session_expiry = Expiry::OnInactivity(cfg().session.lifetime.try_into().unwrap());
-    debug!("Using session expiry: {session_expiry:?}");
+    info!("Using session expiry: {session_expiry:?}");
     let session_store = RedisStore::new(client);
+    info!("Session database conection ready.");
 
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(true)
@@ -88,7 +87,6 @@ async fn build_router() -> Router {
         .nest("/", site::router())
         .nest("/api", api::router())
         .nest("/assets", assets::router())
-        .route("/logout", axum::routing::get(logout))
         .fallback(|| async { FallbackTemplate {} })
         .layer(set_server_layer)
         .layer(compression_layer)
@@ -97,29 +95,8 @@ async fn build_router() -> Router {
         .with_state(state)
 }
 
-#[allow(clippy::disallowed_types)]
-async fn logout(session: tower_sessions::Session) -> axum::response::Redirect {
-    if let Err(error) = session.flush().await {
-        error!("session error: {error:?}");
-    }
-
-    axum::response::Redirect::temporary("/login")
-}
-
 pub fn internal_error(error: impl std::error::Error) -> (StatusCode, &'static str) {
     error!("{error}");
 
     (StatusCode::INTERNAL_SERVER_ERROR, "Internal server errror.")
-}
-
-pub fn internal_error_old(error: impl std::error::Error) -> StatusCode {
-    error!("{error}");
-
-    StatusCode::INTERNAL_SERVER_ERROR
-}
-
-pub fn internal_error_dbg(error: impl std::fmt::Debug) -> StatusCode {
-    error!("{error:?}");
-
-    StatusCode::INTERNAL_SERVER_ERROR
 }

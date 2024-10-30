@@ -53,7 +53,7 @@ impl super::UserVerification {
         .await?;
 
         let transaction = postmark::Transaction::verification(
-            &email_address,
+            email_address,
             chrono::Utc::now(),
             verification_token,
         );

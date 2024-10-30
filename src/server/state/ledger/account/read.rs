@@ -7,7 +7,16 @@ pub enum Error {
     NotFound,
 
     #[error(transparent)]
-    Database(#[from] sqlx::Error),
+    Database(sqlx::Error),
+}
+
+impl From<sqlx::Error> for Error {
+    fn from(error: sqlx::Error) -> Self {
+        match error {
+            sqlx::Error::RowNotFound => Self::NotFound,
+            error => Self::Database(error),
+        }
+    }
 }
 
 impl super::AccountLedger {
@@ -40,6 +49,7 @@ impl super::AccountLedger {
                     user_id = $1
                         AND
                     id = $2
+                LIMIT 1
             ;
             ",
             user_id,

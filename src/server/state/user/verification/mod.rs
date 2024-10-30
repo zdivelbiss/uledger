@@ -1,11 +1,8 @@
 use crate::server::state::App;
 use sqlx::{Pool, Postgres};
 
-mod confirm;
-pub use confirm::Error as ConfirmError;
-
-mod create;
-pub use create::Error as CreateError;
+pub mod confirm;
+pub mod create;
 
 #[derive(Clone)]
 pub struct UserVerification {

@@ -1,4 +1,5 @@
 use crate::server::{
+    htmx::IsHtmx,
     internal_error,
     state::{ledger::account::AccountLedger, App},
     UserSession,
@@ -18,10 +19,11 @@ pub fn router() -> Router<App> {
         .route(
             "/",
             get(
-                |user_session: UserSession, ledger: State<AccountLedger>| async move {
+                |user_session: UserSession, State(account_ledger): State<AccountLedger>| async move {
                     let user_id = user_session.get_user_id().await;
-                    match ledger.read_all(user_id).await {
-                        Ok(_records) => todo!(),
+                    match account_ledger.read_all(user_id).await {
+                        Ok(records) => todo!(),
+
                         Err(error) => internal_error(error).into_response(),
                     }
                 },
@@ -37,36 +39,53 @@ pub fn router() -> Router<App> {
                     description: Option<String>,
                 }
 
-                |user_session: UserSession, ledger: State<AccountLedger>, info: Form<Info>| async move {
+                |user_session: UserSession,
+                 State(account_ledger): State<AccountLedger>,
+                 IsHtmx(is_htmx): IsHtmx,
+                 Form(Info {
+                     kind,
+                     name,
+                     description,
+                 }): Form<Info>| async move {
                     use crate::server::state::ledger::account::create::Error;
-                    
-                    let user_id = user_session.get_user_id()
-                    .await;
-                    match ledger.create(user_id, info.kind, info.name.as_str(), info.description.as_deref()).await {
-                        Ok(_record) => todo!(),
+                    let user_id = user_session.get_user_id().await;
+                    match account_ledger
+                        .create(user_id, kind, name.as_str(), description.as_deref())
+                        .await
+                    {
+                        Ok(record) => todo!(),
 
-                        Err(Error::Duplicate) => (StatusCode::CONFLICT, "account already exists").into_response(),
-                    
-                        Err(error) => internal_error(error).into_response()
+                        Err(Error::Duplicate) => {
+                            (StatusCode::CONFLICT, "account already exists").into_response()
+                        }
+
+                        Err(error) => internal_error(error).into_response(),
                     }
                 }
             }),
         )
-    .route("/:id", get(
-        |user_session: UserSession, ledger: State<AccountLedger>, id: Path<Uuid>| async
-        move {
-            use crate::server::state::ledger::account::read::Error;
+        .route(
+            "/:id",
+            get(
+                |user_session: UserSession,
+                 State(account_ledger): State<AccountLedger>,
+                 IsHtmx(is_htmx): IsHtmx,
+                 Path(id): Path<Uuid>| async move {
+                    use crate::server::state::ledger::account::read::Error;
 
-            let user_id = user_session.get_user_id().await;
-            match ledger.read(user_id, *id).await {
-                Ok(_record) => todo!(),
+                    let user_id = user_session.get_user_id().await;
+                    match account_ledger.read(user_id, id).await {
+                        Ok(record) => todo!(),
 
-                Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+                        Err(Error::NotFound) => {
+                            (StatusCode::NOT_FOUND, "account not found").into_response()
+                        }
 
-                Err(error) => internal_error(error).into_response()
-            }
-        }
-    ))
+                        Err(error) => internal_error(error).into_response(),
+                    }
+                },
+            ),
+        )
     // .route("/:id", put(update))
     // .route("/:id", delete(delete))
 }
@@ -76,7 +95,6 @@ pub fn router() -> Router<App> {
 // pub struct AccountListTemplate {
 //     accounts: Box<[AccountInfo]>,
 // }
-
 
 // async fn get_all(
 //     user_session: UserSession,

@@ -14,15 +14,19 @@ pub enum Error {
 }
 
 impl From<sqlx::Error> for Error {
-    fn from(err: sqlx::Error) -> Self {
-        let Some(db_err) = err.as_database_error() else {
-            return Self::Database(err);
+    fn from(error: sqlx::Error) -> Self {
+        if let sqlx::Error::RowNotFound = error {
+            return Self::NotFound;
+        }
+
+        let Some(db_error) = error.as_database_error() else {
+            return Self::Database(error);
         };
 
-        match (db_err.code().as_deref(), db_err.constraint()) {
+        match (db_error.code().as_deref(), db_error.constraint()) {
             (Some("23505"), Some("accounts_user_id_kind_name_key")) => Error::Duplicate,
 
-            _ => Self::Database(err),
+            _ => Self::Database(error),
         }
     }
 }

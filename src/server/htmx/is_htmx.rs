@@ -3,7 +3,7 @@ use axum::{
     http::{request::Parts, HeaderMap},
 };
 
-pub struct IsHtmx(bool);
+pub struct IsHtmx(pub bool);
 
 impl IsHtmx {
     fn new(headers: &HeaderMap) -> Self {

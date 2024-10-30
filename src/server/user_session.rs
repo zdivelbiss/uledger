@@ -23,6 +23,12 @@ impl UserSession {
     pub async fn get_user_id(&self) -> Uuid {
         self.0.get(Self::USER_ID).await.unwrap().unwrap()
     }
+
+    pub async fn destroy(&self) {
+        if let Err(error) = self.0.flush().await {
+            error!("{error:?}");
+        }
+    }
 }
 
 #[axum::async_trait]

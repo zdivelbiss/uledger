@@ -26,19 +26,19 @@ pub fn router() -> axum::Router<App> {
                 }
 
                 |user_session: UserSession,
-                 user_verifiaction: State<UserVerification>,
-                 form: Form<Info>| async move {
-                    use crate::server::state::user::verification::CreateError;
+                 State(user_verifiaction): State<UserVerification>,
+                 Form(Info { email_address }): Form<Info>| async move {
+                    use crate::server::state::user::verification::create::Error;
 
                     let user_id = user_session.get_user_id().await;
-                    match user_verifiaction.create(user_id, &form.email_address).await {
+                    match user_verifiaction.create(user_id, &email_address).await {
                         Ok(_) => (StatusCode::OK, "verification sent to email").into_response(),
 
-                        Err(CreateError::EmailInUse) => {
+                        Err(Error::EmailInUse) => {
                             (StatusCode::CONFLICT, "email already being used").into_response()
                         }
-                        Err(CreateError::Database(error)) => internal_error(error).into_response(),
-                        Err(CreateError::Postmark(error)) => internal_error(error).into_response(),
+
+                        Err(error) => internal_error(error).into_response(),
                     }
                 }
             })
@@ -50,22 +50,24 @@ pub fn router() -> axum::Router<App> {
                 }
 
                 |user_session: UserSession,
-                 user_verification: State<UserVerification>,
-                 form: Form<Info>| async move {
-                    use crate::server::state::user::verification::ConfirmError;
+                 State(user_verification): State<UserVerification>,
+                 Form(Info {
+                     email_address,
+                     proof_token,
+                 }): Form<Info>| async move {
+                    use crate::server::state::user::verification::confirm::Error;
 
                     let user_id = user_session.get_user_id().await;
                     match user_verification
-                        .confirm(user_id, &form.email_address, form.proof_token)
+                        .confirm(user_id, &email_address, proof_token)
                         .await
                     {
                         Ok(_) => (StatusCode::OK, "your email has been verified").into_response(),
 
-                        Err(ConfirmError::NoMatch) => {
+                        Err(Error::NoMatch) => {
                             (StatusCode::NOT_FOUND, "verification does not match").into_response()
                         }
-                        Err(ConfirmError::Database(error)) => internal_error(error).into_response(),
-                        Err(ConfirmError::Postmark(error)) => internal_error(error).into_response(),
+                        Err(error) => internal_error(error).into_response(),
                     }
                 }
             }),
@@ -80,17 +82,22 @@ pub fn router() -> axum::Router<App> {
                     password: String,
                 }
 
-                |user_account: State<UserAccount>, is_htmx: IsHtmx, form: Form<Info>| async move {
+                |State(user_account): State<UserAccount>,
+                 IsHtmx(is_htmx): IsHtmx,
+                 Form(Info {
+                     display_name,
+                     email_address,
+                     password,
+                 }): Form<Info>| async move {
                     use crate::server::state::user::account::register::Error;
 
                     match user_account
-                        .register(&form.email_address, &form.password, &form.display_name)
+                        .register(&email_address, password.as_str(), display_name.as_str())
                         .await
                     {
-                        Ok(_) if *is_htmx => {
+                        Ok(_) if is_htmx => {
                             (StatusCode::OK, [hx_redirect("/login")]).into_response()
                         }
-
                         Ok(_) => {
                             (StatusCode::OK, "your account has been registered").into_response()
                         }
@@ -114,24 +121,24 @@ pub fn router() -> axum::Router<App> {
                 }
 
                 #[allow(clippy::disallowed_types)]
-                |user_account: State<UserAccount>,
-                 session: tower_sessions::Session,
-                 is_htmx: IsHtmx,
-                 form: Form<Info>| async move {
+                |session: tower_sessions::Session,
+                 State(user_account): State<UserAccount>,
+                 IsHtmx(is_htmx): IsHtmx,
+                 Form(Info {
+                     email_address,
+                     password,
+                 }): Form<Info>| async move {
                     use crate::server::state::user::account::login::Error;
 
                     if !session.is_empty().await {
                         return (StatusCode::CONFLICT, "you are already logged in").into_response();
                     }
 
-                    match user_account
-                        .login(&form.email_address, &form.password)
-                        .await
-                    {
+                    match user_account.login(&email_address, password.as_str()).await {
                         Ok(user_id) => {
                             session.insert("id", user_id).await.unwrap();
 
-                            if *is_htmx {
+                            if is_htmx {
                                 (StatusCode::OK, [hx_redirect("/")]).into_response()
                             } else {
                                 (StatusCode::OK, "you have been logged in").into_response()
@@ -144,6 +151,17 @@ pub fn router() -> axum::Router<App> {
 
                         Err(error) => internal_error(error).into_response(),
                     }
+                }
+            }),
+        )
+        .route(
+            "/logout",
+            post({
+                #[allow(clippy::disallowed_types)]
+                |user_session: UserSession| async move {
+                    user_session.destroy().await;
+
+                    axum::response::Redirect::temporary("/login")
                 }
             }),
         )
