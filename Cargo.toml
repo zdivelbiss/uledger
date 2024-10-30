@@ -60,6 +60,7 @@ tower-sessions = { version = "*", default-features = false, features = [
 tower-sessions-redis-store = "*"
 mini-moka = "*"
 grass = { path = "../grass/crates/lib" }
+mime = "*"
 
 reqwest = { version = "*", default-features = false, features = [
     "http2",

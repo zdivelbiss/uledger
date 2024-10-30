@@ -1,5 +1,11 @@
-use crate::{config::cfg, server::state::App};
-use axum::{body::Bytes, http, response::IntoResponse, routing::get, Router};
+use crate::{config::cfg, server::internal_error, server::state::App};
+use axum::{
+    body::Bytes,
+    http::{header, StatusCode},
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use mini_moka::sync::Cache;
 use std::{path::PathBuf, sync::LazyLock};
 
@@ -16,23 +22,18 @@ enum Asset {
 
 impl IntoResponse for Asset {
     fn into_response(self) -> axum::response::Response {
-        match self {
-            Asset::Css(bytes) => (
-                [(http::header::CONTENT_TYPE, "text/css; charset=utf-8")],
-                bytes,
-            )
-                .into_response(),
+        let (mime, bytes) = match self {
+            Asset::Css(bytes) => (mime::TEXT_CSS_UTF_8, bytes),
+            Asset::Js(bytes) => (mime::TEXT_JAVASCRIPT, bytes),
+            Asset::Png(bytes) => (mime::IMAGE_PNG, bytes),
+        };
 
-            Asset::Js(bytes) => (
-                [(http::header::CONTENT_TYPE, "text/javascript; charset=utf-8")],
-                bytes,
-            )
-                .into_response(),
-
-            Asset::Png(bytes) => {
-                ([(http::header::CONTENT_TYPE, "image/png")], bytes).into_response()
-            }
-        }
+        (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, mime.as_ref())],
+            bytes,
+        )
+            .into_response()
     }
 }
 
@@ -54,13 +55,13 @@ pub enum Error {
     #[error("Asset type not supported.")]
     UnsupportedAsset,
 
-    #[error("Internal server error.")]
+    #[error(transparent)]
     Io(tokio::io::Error),
 
-    #[error("Internal server error.")]
+    #[error(transparent)]
     Utf8(#[from] std::string::FromUtf8Error),
 
-    #[error("Internal server error.")]
+    #[error(transparent)]
     Grass(#[from] Box<grass::Error>),
 }
 
@@ -75,18 +76,15 @@ impl From<std::io::Error> for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        use crate::server::internal_error_old;
+        match &self {
+            Error::NotFound => (StatusCode::NOT_FOUND, self.to_string()).into_response(),
 
-        axum::response::Response::builder()
-            .status(match &self {
-                Error::NotFound => http::StatusCode::NOT_FOUND,
-                Error::UnsupportedAsset => http::StatusCode::UNSUPPORTED_MEDIA_TYPE,
-                Error::Io(error) => internal_error_old(error),
-                Error::Utf8(error) => internal_error_old(error),
-                Error::Grass(error) => internal_error_old(error),
-            })
-            .body(self.to_string().into())
-            .unwrap()
+            Error::UnsupportedAsset => {
+                (StatusCode::UNSUPPORTED_MEDIA_TYPE, self.to_string()).into_response()
+            }
+
+            error => internal_error(error).into_response(),
+        }
     }
 }
 
