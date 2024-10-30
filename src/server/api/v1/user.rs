@@ -74,14 +74,14 @@ pub fn router() -> axum::Router<App> {
             "/register",
             post({
                 #[derive(Debug, Deserialize)]
-                pub struct Info {
+                struct Info {
                     display_name: String,
                     email_address: EmailAddress,
                     password: String,
                 }
 
                 |user_account: State<UserAccount>, is_htmx: IsHtmx, form: Form<Info>| async move {
-                    use crate::server::state::user::account::RegisterError;
+                    use crate::server::state::user::account::register::Error;
 
                     match user_account
                         .register(&form.email_address, &form.password, &form.display_name)
@@ -90,19 +90,16 @@ pub fn router() -> axum::Router<App> {
                         Ok(_) if *is_htmx => {
                             (StatusCode::OK, [hx_redirect("/login")]).into_response()
                         }
+
                         Ok(_) => {
                             (StatusCode::OK, "your account has been registered").into_response()
                         }
 
-                        Err(RegisterError::DuplicateEmail) => {
+                        Err(Error::DuplicateEmail) => {
                             (StatusCode::CONFLICT, "email address already in use").into_response()
                         }
-                        Err(RegisterError::Database(error)) => {
-                            internal_error(error).into_response()
-                        }
-                        Err(RegisterError::PasswordHash(error)) => {
-                            internal_error(error).into_response()
-                        }
+
+                        Err(error) => internal_error(error).into_response(),
                     }
                 }
             }),
@@ -111,7 +108,7 @@ pub fn router() -> axum::Router<App> {
             "/login",
             post({
                 #[derive(Debug, Deserialize)]
-                pub struct Info {
+                struct Info {
                     email_address: EmailAddress,
                     password: String,
                 }
@@ -121,7 +118,7 @@ pub fn router() -> axum::Router<App> {
                  session: tower_sessions::Session,
                  is_htmx: IsHtmx,
                  form: Form<Info>| async move {
-                    use crate::server::state::user::account::LoginError;
+                    use crate::server::state::user::account::login::Error;
 
                     if !session.is_empty().await {
                         return (StatusCode::CONFLICT, "you are already logged in").into_response();
@@ -141,14 +138,11 @@ pub fn router() -> axum::Router<App> {
                             }
                         }
 
-                        Err(LoginError::InvalidCredentials) => {
+                        Err(Error::InvalidCredentials) => {
                             (StatusCode::UNAUTHORIZED, "invalid login credentials").into_response()
                         }
 
-                        Err(LoginError::Database(error)) => internal_error(error).into_response(),
-                        Err(LoginError::PasswordHash(error)) => {
-                            internal_error(error).into_response()
-                        }
+                        Err(error) => internal_error(error).into_response(),
                     }
                 }
             }),

@@ -3,7 +3,10 @@ use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("account already exists")]
+    #[error("could not find account")]
+    NotFound,
+
+    #[error("account name/kind already used")]
     Duplicate,
 
     #[error(transparent)]
@@ -25,10 +28,10 @@ impl From<sqlx::Error> for Error {
 }
 
 impl super::AccountLedger {
-    #[instrument]
-    pub async fn create(
+    pub async fn update(
         &self,
         user_id: Uuid,
+        id: Uuid,
         kind: AccountKind,
         name: &str,
         description: Option<&str>,
@@ -36,15 +39,21 @@ impl super::AccountLedger {
         let record = query_as!(
             AccountRecord,
             "
-            INSERT INTO _ledger.account
-                    (user_id, kind, name, description)
-                VALUES
-                    ($1, $2, $3, $4)
+            UPDATE _ledger.account
+                SET
+                    kind = $3,
+                    name = $4,
+                    description = $5
+                WHERE
+                    user_id = $1
+                        AND
+                    id = $2
                 RETURNING
                     id, created, kind AS \"kind: AccountKind\", name, description
             ;
             ",
             user_id,
+            id,
             kind as _,
             name,
             description

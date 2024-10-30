@@ -22,11 +22,11 @@ pub enum AccountKind {
     Expense,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct AccountRecord {
-    id: Uuid,
-    created: DateTime<Utc>,
-    kind: AccountKind,
-    name: String,
-    description: Option<String>,
+    pub id: Uuid,
+    pub created: DateTime<Utc>,
+    pub kind: AccountKind,
+    pub name: String,
+    pub description: Option<String>,
 }

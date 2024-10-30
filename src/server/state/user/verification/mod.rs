@@ -14,8 +14,6 @@ pub struct UserVerification {
 
 impl axum::extract::FromRef<App> for UserVerification {
     fn from_ref(app: &App) -> Self {
-        Self {
-            db: app.db().clone(),
-        }
+        Self { db: app.db.clone() }
     }
 }
