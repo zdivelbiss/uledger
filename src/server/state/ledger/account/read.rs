@@ -20,6 +20,7 @@ impl From<sqlx::Error> for Error {
 }
 
 impl super::AccountLedger {
+    #[instrument]
     pub async fn read_all(&self, user_id: Uuid) -> Result<Box<[AccountRecord]>, Error> {
         let accounts = query_as!(
             AccountRecord,
@@ -39,6 +40,7 @@ impl super::AccountLedger {
         Ok(accounts)
     }
 
+    #[instrument]
     pub async fn read(&self, user_id: Uuid, id: Uuid) -> Result<AccountRecord, Error> {
         let record = query_as!(
             AccountRecord,

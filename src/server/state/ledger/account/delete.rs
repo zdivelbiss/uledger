@@ -20,7 +20,7 @@ impl From<sqlx::Error> for Error {
 
 impl super::AccountLedger {
     #[instrument]
-    async fn delete(&self, user_id: Uuid, id: Uuid) -> Result<(), Error> {
+    pub async fn delete(&self, user_id: Uuid, id: Uuid) -> Result<(), Error> {
         let rows_affected = query!(
             "
             DELETE FROM _ledger.account

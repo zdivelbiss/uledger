@@ -16,216 +16,117 @@ use uuid::Uuid;
 
 pub fn router() -> Router<App> {
     Router::new()
-        .route(
-            "/",
-            get(
-                |user_session: UserSession, State(account_ledger): State<AccountLedger>| async move {
-                    let user_id = user_session.get_user_id().await;
-                    match account_ledger.read_all(user_id).await {
-                        Ok(records) => todo!(),
-
-                        Err(error) => internal_error(error).into_response(),
-                    }
-                },
-            ),
-        )
-        .route(
-            "/",
-            post({
-                #[derive(Debug, Deserialize)]
-                struct Info {
-                    kind: AccountKind,
-                    name: String,
-                    description: Option<String>,
-                }
-
-                |user_session: UserSession,
-                 State(account_ledger): State<AccountLedger>,
-                 IsHtmx(is_htmx): IsHtmx,
-                 Form(Info {
-                     kind,
-                     name,
-                     description,
-                 }): Form<Info>| async move {
-                    use crate::server::state::ledger::account::create::Error;
-                    let user_id = user_session.get_user_id().await;
-                    match account_ledger
-                        .create(user_id, kind, name.as_str(), description.as_deref())
-                        .await
-                    {
-                        Ok(record) => todo!(),
-
-                        Err(Error::Duplicate) => {
-                            (StatusCode::CONFLICT, "account already exists").into_response()
-                        }
-
-                        Err(error) => internal_error(error).into_response(),
-                    }
-                }
-            }),
-        )
-        .route(
-            "/:id",
-            get(
-                |user_session: UserSession,
-                 State(account_ledger): State<AccountLedger>,
-                 IsHtmx(is_htmx): IsHtmx,
-                 Path(id): Path<Uuid>| async move {
-                    use crate::server::state::ledger::account::read::Error;
-
-                    let user_id = user_session.get_user_id().await;
-                    match account_ledger.read(user_id, id).await {
-                        Ok(record) => todo!(),
-
-                        Err(Error::NotFound) => {
-                            (StatusCode::NOT_FOUND, "account not found").into_response()
-                        }
-
-                        Err(error) => internal_error(error).into_response(),
-                    }
-                },
-            ),
-        )
-    // .route("/:id", put(update))
-    // .route("/:id", delete(delete))
+        .route("/", get(_read_all))
+        .route("/", post(_create))
+        .route("/:id", get(_read))
+        .route("/:id", put(_update))
+        .route("/:id", delete(_delete))
 }
 
-// #[derive(askama::Template)]
-// #[template(path = "partials/account/list-all.html")]
-// pub struct AccountListTemplate {
-//     accounts: Box<[AccountInfo]>,
-// }
+#[derive(Debug, Deserialize)]
+struct Info {
+    kind: AccountKind,
+    name: String,
+    description: Option<String>,
+}
 
-// async fn get_all(
-//     user_session: UserSession,
-//     htmx: Option<HtmxInfo>,
-//     app_state: State<App>,
-// ) -> Result<impl IntoResponse> {
-//     let user_id = user_session.get_user_id().await;
+async fn _read_all(
+    user_session: UserSession,
+    State(account_ledger): State<AccountLedger>,
+) -> impl IntoResponse {
+    match account_ledger.read_all(user_session.id()).await {
+        Ok(records) => todo!(),
 
-//     if htmx.is_some() {
-//         let accounts = query_as!(
-//             AccountInfo,
-//             "
-//             SELECT kind AS \"kind: AccountKind\", name, description
-//                 FROM _ledger..account
-//                 WHERE
-//                     user_id = $1
-//             ;
-//             ",
-//             user_id
-//         )
-//         .fetch_all(app_state.db())
-//         .await?
-//         .into_boxed_slice();
+        Err(error) => internal_error(error).into_response(),
+    }
+}
 
-//         Ok(AccountListTemplate { accounts }.into_response())
-//     } else {
-//         let accounts = query_as!(
-//             Account,
-//             "
-//             SELECT id, created, kind AS \"kind: AccountKind\", name, description
-//                 FROM _ledger..account
-//                 WHERE
-//                     user_id = $1
-//             ;
-//             ",
-//             user_id
-//         )
-//         .fetch_all(app_state.db())
-//         .await?;
+async fn _create(
+    user_session: UserSession,
+    State(account_ledger): State<AccountLedger>,
+    IsHtmx(is_htmx): IsHtmx,
+    Form(Info {
+        kind,
+        name,
+        description,
+    }): Form<Info>,
+) -> impl IntoResponse {
+    use crate::server::state::ledger::account::create::Error;
 
-//         Ok(Json::from(accounts).into_response())
-//     }
-// }
+    match account_ledger
+        .create(
+            user_session.id(),
+            kind,
+            name.as_str(),
+            description.as_deref(),
+        )
+        .await
+    {
+        Ok(record) => todo!(),
 
-// async fn read(
-//     user_session: UserSession,
-//     app_state: State<App>,
-//     account_id: Path<Uuid>,
-// ) -> Result<Json<Account>> {
-//     let user_id = user_session.get_user_id().await;
-//     let account_id = *account_id;
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "account already exists").into_response(),
+        Err(error) => internal_error(error).into_response(),
+    }
+}
 
-//     let account = query_as!(
-//         Account,
-//         "
-//         SELECT id, created, kind AS \"kind: AccountKind\", name, description
-//             FROM _ledger..account
-//             WHERE
-//                 user_id = $2
-//                     AND
-//                 id = $1
-//         ;
-//         ",
-//         user_id,
-//         account_id,
-//     )
-//     .fetch_one(app_state.db())
-//     .await?;
+async fn _read(
+    user_session: UserSession,
+    State(account_ledger): State<AccountLedger>,
+    IsHtmx(is_htmx): IsHtmx,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    use crate::server::state::ledger::account::read::Error;
 
-//     Ok(Json::from(account))
-// }
+    match account_ledger.read(user_session.id(), id).await {
+        Ok(record) => todo!(),
 
-// async fn update(
-//     user_session: UserSession,
-//     app_state: State<App>,
-//     account_id: Path<Uuid>,
-//     account_info: Json<AccountInfo>,
-// ) -> Result<()> {
-//     let user_id = user_session.get_user_id().await;
-//     let account_id = *account_id;
-//     let account_kind = account_info.kind;
-//     let account_name = account_info.name.as_str();
-//     let account_description = account_info.description.as_deref();
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(error) => internal_error(error).into_response(),
+    }
+}
 
-//     query!(
-//         "
-//         UPDATE _ledger..account
-//             SET
-//                 kind = $3,
-//                 name = $4,
-//                 description = $5
-//             WHERE
-//                 user_id = $2
-//                     AND
-//                 id = $1
-//         ;
-//         ",
-//         user_id,
-//         account_id,
-//         account_kind as _,
-//         account_name,
-//         account_description
-//     )
-//     .execute(app_state.db())
-//     .await?;
+async fn _update(
+    user_session: UserSession,
+    State(account_ledger): State<AccountLedger>,
+    IsHtmx(is_htmx): IsHtmx,
+    Path(id): Path<Uuid>,
+    Form(Info {
+        kind,
+        name,
+        description,
+    }): Form<Info>,
+) -> impl IntoResponse {
+    use crate::server::state::ledger::account::update::Error;
 
-//     Ok(())
-// }
+    match account_ledger
+        .update(
+            user_session.id(),
+            id,
+            kind,
+            name.as_str(),
+            description.as_deref(),
+        )
+        .await
+    {
+        Ok(record) => todo!(),
 
-// async fn delete(
-//     user_session: UserSession,
-//     app_state: State<App>,
-//     account_id: Path<Uuid>,
-// ) -> Result<()> {
-//     let user_id = user_session.get_user_id().await;
-//     let account_id = *account_id;
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "account already exists").into_response(),
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(error) => internal_error(error).into_response(),
+    }
+}
 
-//     query!(
-//         "
-//         DELETE FROM _ledger..account
-//             WHERE
-//                 user_id = $2
-//                     AND
-//                 id = $1
-//         ;
-//         ",
-//         user_id,
-//         account_id
-//     )
-//     .execute(app_state.db())
-//     .await?;
+async fn _delete(
+    user_session: UserSession,
+    State(account_ledger): State<AccountLedger>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    use crate::server::state::ledger::account::delete::Error;
 
-//     Ok(())
-// }
+    match account_ledger.delete(user_session.id(), id).await {
+        Ok(_) => todo!(),
+
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(error) => internal_error(error).into_response(),
+    }
+}

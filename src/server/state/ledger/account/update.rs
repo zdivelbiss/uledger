@@ -32,6 +32,7 @@ impl From<sqlx::Error> for Error {
 }
 
 impl super::AccountLedger {
+    #[instrument]
     pub async fn update(
         &self,
         user_id: Uuid,
