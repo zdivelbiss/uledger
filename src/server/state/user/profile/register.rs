@@ -1,4 +1,3 @@
-use crate::EmailAddress;
 use argon2::{
     password_hash::{PasswordHasher, SaltString},
     Argon2,
@@ -34,7 +33,7 @@ impl From<sqlx::Error> for Error {
 impl super::UserProfile {
     pub async fn register(
         &self,
-        email_address: &EmailAddress,
+        email_address: &str,
         password: &str,
         display_name: &str,
     ) -> Result<(), Error> {
@@ -46,12 +45,11 @@ impl super::UserProfile {
         query!(
             "
             INSERT INTO _user.profile
-                    (access, email_address, password_salt, password_hash, display_name)
+                    (email_address, password_salt, password_hash, display_name)
                 VALUES
-                    ($1, $2, $3, $4, $5)
+                    ($1, $2, $3, $4)
             ;
             ",
-            lib::user::Access::Regular as _,
             email_address as _,
             salt_string.as_str(),
             password_hash.as_str(),

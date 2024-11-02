@@ -61,7 +61,7 @@ impl super::AccountLedger {
             id,
             kind as _,
             name,
-            description
+            description as _
         )
         .fetch_one(&self.db)
         .await?;

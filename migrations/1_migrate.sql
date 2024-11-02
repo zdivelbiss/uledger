@@ -9,8 +9,20 @@ CREATE TYPE USER_ACCESS     AS ENUM ('ADMIN', 'REGULAR');
 CREATE TYPE ACCOUNT_KIND    AS ENUM ('EQUITY', 'ASSET', 'LIABILITY', 'INCOME', 'EXPENSE');
 
 CREATE DOMAIN EMAIL_ADDRESS AS CITEXT
-    CHECK (CHAR_LENGTH((value)) <= 128)
-    CHECK ((value) ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$')
+    CONSTRAINT check_email_address_length
+        CHECK (CHAR_LENGTH((value)) <= 128)
+    CONSTRAINT check_email_address_format
+        CHECK ((value) ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$')
+;
+
+CREATE DOMAIN NAME AS CITEXT
+    CONSTRAINT check_name_length
+        CHECK (CHAR_LENGTH((value)) <= 128)
+;
+
+CREATE DOMAIN DESCRIPTION AS TEXT
+    CONSTRAINT check_description_length
+        CHECK (CHAR_LENGTH((value)) <= 256)
 ;
 
 -- AUTH --
@@ -25,10 +37,10 @@ CREATE TABLE IF NOT EXISTS _user.profile (
     password_salt       TEXT            NOT NULL,
     password_hash       TEXT            NOT NULL,
 
-    access              USER_ACCESS     NOT NULL,
     display_name        TEXT            NOT NULL,
 
-    CHECK               (CHAR_LENGTH(display_name)  <= 32)
+    CONSTRAINT  check_profile_display_name_length
+        CHECK (CHAR_LENGTH(display_name)  <= 32)
 );
 
 CREATE TABLE IF NOT EXISTS _user.email_verification (
@@ -38,7 +50,10 @@ CREATE TABLE IF NOT EXISTS _user.email_verification (
     email_address   EMAIL_ADDRESS   NOT NULL    UNIQUE,
     proof_token     TEXT            NOT NULL,
 
-    FOREIGN KEY     (id) REFERENCES _user.profile(id) ON DELETE CASCADE
+    FOREIGN KEY     (id) REFERENCES _user.profile(id) ON DELETE CASCADE,
+
+    CONSTRAINT check_email_verification_proof_token_length
+        CHECK (CHAR_LENGTH(proof_token) = 6)
 );
 
 
@@ -51,8 +66,8 @@ CREATE TABLE IF NOT EXISTS _ledger.account (
 
     user_id         UUID           NOT NULL,
     kind            ACCOUNT_KIND   NOT NULL,
-    name            CITEXT         NOT NULL,
-    description     TEXT,
+    name            NAME           NOT NULL,
+    description     DESCRIPTION,
 
     UNIQUE          (user_id, kind, name),
     FOREIGN KEY     (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
@@ -63,11 +78,14 @@ CREATE TABLE IF NOT EXISTS _ledger.commodity (
     created      TIMESTAMP  NOT NULL     DEFAULT NOW(),
 
     user_id      UUID       NOT NULL,
-    name         CITEXT     NOT NULL,
+    name         NAME       NOT NULL,
     format       TEXT       NOT NULL,
 
     UNIQUE       (user_id, name),
-    FOREIGN KEY  (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
+    FOREIGN KEY  (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE,
+
+    CONSTRAINT check_commodity_format_length
+        CHECK (CHAR_LENGTH(format) <= 32)
 );
 
 CREATE TABLE IF NOT EXISTS _ledger.conversion (
@@ -90,8 +108,8 @@ CREATE TABLE IF NOT EXISTS _ledger.payee (
     id          UUID        PRIMARY KEY  DEFAULT GEN_RANDOM_UUID(),
     created     TIMESTAMP   NOT NULL     DEFAULT NOW(),
 
-    user_id     UUID NOT NULL,
-    name        CITEXT NOT NULL,
+    user_id     UUID        NOT NULL,
+    name        NAME        NOT NULL,
 
     UNIQUE      (user_id, name),
     FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
@@ -102,7 +120,6 @@ CREATE TABLE IF NOT EXISTS _ledger.transaction (
     created         TIMESTAMP   NOT NULL     DEFAULT NOW(),
 
     user_id         UUID        NOT NULL,
-
     occurred_on     DATE        NOT NULL,
     posted_on       DATE        NOT NULL,
     from_account    UUID        NOT NULL,
@@ -111,7 +128,7 @@ CREATE TABLE IF NOT EXISTS _ledger.transaction (
     from_commodity  UUID        NOT NULL,
     to_commodity    UUID        NOT NULL,
     payee           UUID        NOT NULL,
-    description     TEXT,
+    description     DESCRIPTION,
 
     FOREIGN KEY     (user_id)         REFERENCES _user.profile(id)      ON DELETE CASCADE,
     FOREIGN KEY     (from_account)    REFERENCES _ledger.account(id)    ON DELETE CASCADE,

@@ -1,4 +1,3 @@
-use crate::EmailAddress;
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
 use uuid::Uuid;
 
@@ -24,7 +23,7 @@ impl From<sqlx::Error> for Error {
 }
 
 impl super::UserProfile {
-    pub async fn login(&self, email_address: &EmailAddress, password: &str) -> Result<Uuid, Error> {
+    pub async fn login(&self, email_address: &str, password: &str) -> Result<Uuid, Error> {
         let user = query!(
             "
             SELECT id, password_salt, password_hash

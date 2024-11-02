@@ -27,7 +27,7 @@ pub fn router() -> axum::Router<App> {
 #[derive(Debug, Deserialize)]
 struct RegisterInfo {
     display_name: String,
-    email_address: EmailAddress,
+    email_address: String,
     password: String,
 }
 
@@ -43,7 +43,11 @@ async fn _register(
     use crate::server::state::user::profile::register::Error;
 
     match user_account
-        .register(&email_address, password.as_str(), display_name.as_str())
+        .register(
+            email_address.as_str(),
+            password.as_str(),
+            display_name.as_str(),
+        )
         .await
     {
         Ok(_) if is_htmx => (StatusCode::OK, [hx_redirect("/login")]).into_response(),
@@ -59,7 +63,7 @@ async fn _register(
 
 #[derive(Debug, Deserialize)]
 struct LoginInfo {
-    email_address: EmailAddress,
+    email_address: String,
     password: String,
 }
 
