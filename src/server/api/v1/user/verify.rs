@@ -3,13 +3,13 @@ use crate::server::{
     state::{user::verification::UserVerification, App},
     UserSession,
 };
+use crate::{EmailAddress, VerificationToken};
 use axum::{
     extract::{Form, State},
     http::StatusCode,
     response::IntoResponse,
     routing::{delete, post},
 };
-use lib::{EmailAddress, VerificationToken};
 
 pub fn router() -> axum::Router<App> {
     axum::Router::new()

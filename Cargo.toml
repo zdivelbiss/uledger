@@ -19,8 +19,9 @@ serde_json = "*"
 serde-big-array = "*"
 argon2 = { version = "*", features = ["std", "simple"] }
 rand = "*"
-num_enum = "*"
 base64 = "*"
+regex = "*"
+hex = "*"
 
 chrono = { version = "*", features = ["serde"] }
 uuid = { version = "*", features = ["serde", "v4", "v7"] }

@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use uuid::Uuid;
 
 #[derive(
@@ -25,7 +25,7 @@ pub enum AccountKind {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct AccountRecord {
     pub id: Uuid,
-    pub created: DateTime<Utc>,
+    pub created: NaiveDateTime,
     pub kind: AccountKind,
     pub name: String,
     pub description: Option<String>,

@@ -1,5 +1,5 @@
 use crate::postmark;
-use lib::{EmailAddress, VerificationToken};
+use crate::{EmailAddress, VerificationToken};
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -46,7 +46,7 @@ impl super::UserVerification {
             ;
             ",
             user_id,
-            email_address.as_str(),
+            email_address as _,
             verification_token.to_string()
         )
         .execute(&self.db)

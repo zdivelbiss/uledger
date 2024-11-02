@@ -9,6 +9,5 @@ strum = { version = "*", features = ["derive"] }
 sqlx = { version = "*", features = ["derive"] }
 rand = { version = "*", features = ["getrandom"] }
 chrono = "*"
-regex = "*"
 uuid = "*"
 hex = "*"

@@ -1,4 +1,4 @@
-use lib::{EmailAddress, VerificationToken};
+use crate::{EmailAddress, VerificationToken};
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -43,7 +43,7 @@ impl super::UserVerification {
             1 => {
                 query!(
                     "
-                    UPDATE _user.account
+                    UPDATE _user.profile
                         SET
                             email_address = $2,
                             email_verified_on = $3
@@ -52,7 +52,7 @@ impl super::UserVerification {
                     ;
                     ",
                     user_id,
-                    email_address.as_str(),
+                    email_address as _,
                     chrono::Utc::now()
                 )
                 .execute(&self.db)

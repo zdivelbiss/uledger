@@ -1,7 +1,10 @@
-use crate::server::{
-    htmx::{hx_redirect, IsHtmx},
-    internal_error,
-    state::{user::account::UserAccount, App},
+use crate::{
+    server::{
+        htmx::{hx_redirect, IsHtmx},
+        internal_error,
+        state::{user::profile::UserProfile, App},
+    },
+    EmailAddress,
 };
 use axum::{
     extract::{Form, State},
@@ -9,7 +12,6 @@ use axum::{
     response::IntoResponse,
     routing::post,
 };
-use lib::EmailAddress;
 
 mod verify;
 
@@ -30,7 +32,7 @@ struct RegisterInfo {
 }
 
 async fn _register(
-    State(user_account): State<UserAccount>,
+    State(user_account): State<UserProfile>,
     IsHtmx(is_htmx): IsHtmx,
     Form(RegisterInfo {
         display_name,
@@ -38,7 +40,7 @@ async fn _register(
         password,
     }): Form<RegisterInfo>,
 ) -> impl IntoResponse {
-    use crate::server::state::user::account::register::Error;
+    use crate::server::state::user::profile::register::Error;
 
     match user_account
         .register(&email_address, password.as_str(), display_name.as_str())
@@ -64,14 +66,14 @@ struct LoginInfo {
 #[allow(clippy::disallowed_types)]
 async fn _login(
     session: tower_sessions::Session,
-    State(user_account): State<UserAccount>,
+    State(user_account): State<UserProfile>,
     IsHtmx(is_htmx): IsHtmx,
     Form(LoginInfo {
         email_address,
         password,
     }): Form<LoginInfo>,
 ) -> impl IntoResponse {
-    use crate::server::state::user::account::login::Error;
+    use crate::server::state::user::profile::login::Error;
 
     if !session.is_empty().await {
         return (StatusCode::CONFLICT, "you are already logged in").into_response();

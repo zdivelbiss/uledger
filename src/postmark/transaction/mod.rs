@@ -1,6 +1,6 @@
 use crate::{config::cfg, postmark::MessageStream};
 use chrono::{DateTime, Utc};
-use lib::{EmailAddress, VerificationToken};
+use crate::{EmailAddress, VerificationToken};
 use serde::{ser::SerializeStruct, Serialize, Serializer};
 use std::fmt::Debug;
 

@@ -1,4 +1,4 @@
-use lib::VerificationToken;
+use crate::VerificationToken;
 use chrono::{DateTime, Utc};
 use serde::{ser::SerializeStruct, Serialize};
 use std::fmt::Debug;

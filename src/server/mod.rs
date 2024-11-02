@@ -87,7 +87,7 @@ async fn build_router() -> Router {
         .nest("/", site::router())
         .nest("/api", api::router())
         .nest("/assets", assets::router())
-        .fallback(|| async { FallbackTemplate {} })
+        .fallback(|| async { (StatusCode::NOT_FOUND, FallbackTemplate {}) })
         .layer(set_server_layer)
         .layer(compression_layer)
         .layer(decompression_layer)

@@ -1,4 +1,5 @@
 use crate::server::{
+    api::crud_router,
     htmx::IsHtmx,
     internal_error,
     state::{ledger::account::AccountLedger, App},
@@ -8,19 +9,13 @@ use axum::{
     extract::{Form, Path, State},
     http::StatusCode,
     response::IntoResponse,
-    routing::{delete, get, post, put},
     Router,
 };
 use lib::ledger::account::AccountKind;
 use uuid::Uuid;
 
 pub fn router() -> Router<App> {
-    Router::new()
-        .route("/", get(_read_all))
-        .route("/", post(_create))
-        .route("/:id", get(_read))
-        .route("/:id", put(_update))
-        .route("/:id", delete(_delete))
+    crud_router(_read_all, _create, _read, _update, _delete)
 }
 
 #[derive(Debug, Deserialize)]

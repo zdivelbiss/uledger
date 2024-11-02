@@ -12,6 +12,9 @@ mod server;
 mod config;
 use config::cfg;
 
+mod util;
+use util::*;
+
 #[macro_use]
 extern crate tracing;
 
