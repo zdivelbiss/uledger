@@ -46,7 +46,7 @@ impl super::AccountLedger {
             ",
             user_id,
             kind as _,
-            name,
+            name as _,
             description as _
         )
         .fetch_one(&self.db)

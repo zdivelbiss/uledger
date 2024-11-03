@@ -14,7 +14,7 @@ impl Verification {
         let creation_datetime = creation.format("%A, %B %e at %l:%M%p %Z").to_string();
 
         let mut proof_token = token.to_string();
-        proof_token.insert(VerificationToken::SIZE, ' ');
+        proof_token.insert(VerificationToken::COMPELXITY, ' ');
 
         Self {
             creation_datetime,

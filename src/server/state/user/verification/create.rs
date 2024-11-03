@@ -31,23 +31,23 @@ impl From<sqlx::Error> for Error {
 impl super::UserVerification {
     pub async fn create(&self, user_id: Uuid, email_address: &str) -> Result<(), Error> {
         let verification_token = VerificationToken::gen();
+        let expiry = chrono::Utc::now() + chrono::Duration::hours(1);
 
         query!(
             "
-            INSERT INTO _user.email_verification
-                    (id, email_address, proof_token)
-                VALUES
-                    ($1, $2, $3)
-                ON CONFLICT (id)
-                    DO UPDATE SET
-                        created = NOW(),
-                        email_address = $2,
-                        proof_token = $3
+            UPDATE _user.profile
+                SET
+                    pending_email_address = $2,
+                    pending_email_address_token = $3,
+                    pending_email_address_expiry = $4
+                WHERE
+                    id = $1
             ;
             ",
-            user_id,
+            user_id as _,
             email_address as _,
-            verification_token.to_string()
+            verification_token.as_bytes(),
+            expiry
         )
         .execute(&self.db)
         .await?;

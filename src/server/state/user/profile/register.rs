@@ -51,8 +51,8 @@ impl super::UserProfile {
             ;
             ",
             email_address as _,
-            salt_string.as_str(),
-            password_hash.as_str(),
+            salt_string.as_str() as _,
+            password_hash.as_str() as _,
             display_name
         )
         .execute(&self.db)

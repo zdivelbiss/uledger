@@ -14,3 +14,4 @@ impl axum::extract::FromRef<App> for UserVerification {
         Self { db: app.db.clone() }
     }
 }
+

@@ -15,3 +15,11 @@ impl axum::extract::FromRef<App> for CommodityLedger {
         Self { db: app.db.clone() }
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CommodityRecord {
+    id: Uuid,
+    created: DateTime<Utc>,
+    name: String,
+    format: String,
+}

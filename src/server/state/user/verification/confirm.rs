@@ -17,53 +17,37 @@ impl super::UserVerification {
     pub async fn confirm(
         &self,
         user_id: Uuid,
-        email_address: &str,
-        proof_token: VerificationToken,
+        verification_token: VerificationToken,
     ) -> Result<(), Error> {
         let rows_affected = query!(
             "
-            DELETE FROM _user.email_verification
+            UPDATE _user.profile
+                SET
+                    email_address = pending_email_address,
+                    pending_email_address = NULL,
+                    pending_email_address_token = NULL,
+                    pending_email_address_expiry = NULL
                 WHERE
                     id = $1
                         AND
-                    email_address = $2
+                    pending_email_address_token = $2
                         AND
-                    proof_token = $3
+                    pending_email_address_expiry > NOW()
             ;
             ",
             user_id,
-            email_address as _,
-            proof_token.to_string()
+            verification_token.as_bytes()
         )
         .execute(&self.db)
         .await?
         .rows_affected();
 
         match rows_affected {
-            1 => {
-                query!(
-                    "
-                    UPDATE _user.profile
-                        SET
-                            email_address = $2,
-                            email_verified_on = $3
-                        WHERE
-                            id = $1
-                    ;
-                    ",
-                    user_id,
-                    email_address as _,
-                    chrono::Utc::now()
-                )
-                .execute(&self.db)
-                .await?;
-
-                Ok(())
-            }
+            1 => Ok(()),
 
             0 => Err(Error::NoMatch),
 
-            rows_affected => unreachable!("Dropped {rows_affected} confirming email validation!"),
+            rows_affected => unreachable!("Unexpected {rows_affected} finishing email validation!"),
         }
     }
 }

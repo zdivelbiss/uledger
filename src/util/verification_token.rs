@@ -1,21 +1,26 @@
 use serde::de::{Error, Unexpected, Visitor};
 use std::fmt;
 
+#[repr(transparent)]
 #[derive(Debug, Clone, Copy)]
-pub struct VerificationToken([u8; Self::SIZE]);
+pub struct VerificationToken([u8; Self::COMPELXITY]);
 
 impl VerificationToken {
-    pub const SIZE: usize = 3;
+    pub const COMPELXITY: usize = 3;
 
     pub fn gen() -> Self {
         Self(rand::random())
     }
 
     pub fn from_str(v: impl AsRef<str>) -> Result<Self, hex::FromHexError> {
-        let mut data = [0u8; Self::SIZE];
+        let mut data = [0u8; Self::COMPELXITY];
         hex::decode_to_slice(v.as_ref(), &mut data)?;
 
         Ok(Self(data))
+    }
+
+    pub fn as_bytes(&self) -> &[u8; 3] {
+        &self.0
     }
 }
 
@@ -25,17 +30,17 @@ impl std::fmt::Display for VerificationToken {
     }
 }
 
-impl serde::Serialize for VerificationToken {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(&self.to_string())
-    }
-}
+// impl serde::Serialize for VerificationToken {
+//     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+//         serializer.serialize_str(&self.to_string())
+//     }
+// }
 
-impl<'de> serde::Deserialize<'de> for VerificationToken {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        deserializer.deserialize_str(VerificationTokenVisitor)
-    }
-}
+// impl<'de> serde::Deserialize<'de> for VerificationToken {
+//     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+//         deserializer.deserialize_str(VerificationTokenVisitor)
+//     }
+// }
 
 struct VerificationTokenVisitor;
 

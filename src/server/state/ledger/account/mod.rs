@@ -3,6 +3,7 @@ pub mod delete;
 pub mod read;
 pub mod update;
 
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::server::state::App;
@@ -14,23 +15,11 @@ pub struct AccountLedger {
 
 impl axum::extract::FromRef<App> for AccountLedger {
     fn from_ref(app: &App) -> Self {
-        Self {
-            db: app.db.clone(),
-        }
+        Self { db: app.db.clone() }
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    strum::Display,
-    serde::Serialize,
-    serde::Deserialize,
-    sqlx::Type,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, strum::Display, sqlx::Type)]
 #[serde(rename_all = "UPPERCASE")]
 #[sqlx(type_name = "ACCOUNT_KIND", rename_all = "UPPERCASE")]
 pub enum AccountKind {
@@ -41,10 +30,10 @@ pub enum AccountKind {
     Expense,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AccountRecord {
     pub id: Uuid,
-    pub created: NaiveDateTime,
+    pub created: DateTime<Utc>,
     pub kind: AccountKind,
     pub name: String,
     pub description: Option<String>,

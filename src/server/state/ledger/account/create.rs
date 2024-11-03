@@ -1,5 +1,6 @@
 use lib::ledger::account::{AccountKind, AccountRecord};
 use uuid::Uuid;
+use super::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -24,7 +25,7 @@ impl From<sqlx::Error> for Error {
     }
 }
 
-impl super::AccountLedger {
+impl AccountLedger {
     #[instrument]
     pub async fn create(
         &self,
@@ -46,7 +47,7 @@ impl super::AccountLedger {
             ",
             user_id,
             kind as _,
-            name,
+            name as _,
             description as _
         )
         .fetch_one(&self.db)

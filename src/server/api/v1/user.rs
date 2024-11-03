@@ -24,20 +24,22 @@ pub fn router() -> axum::Router<App> {
             post({
                 #[derive(Debug, Deserialize)]
                 struct Info {
-                    email_address: String,
-                    proof_token: VerificationToken,
+                    verification_token: String,
                 }
 
                 |user_session: UserSession,
                  State(user_verification): State<UserVerification>,
-                 Form(Info {
-                     email_address,
-                     proof_token,
-                 }): Form<Info>| async move {
+                 Form(Info { verification_token }): Form<Info>| async move {
                     use crate::server::state::user::verification::confirm::Error;
 
+                    let Ok(verification_token) = VerificationToken::from_str(verification_token)
+                    else {
+                        return (StatusCode::BAD_REQUEST, "malformed verification token")
+                            .into_response();
+                    };
+
                     match user_verification
-                        .confirm(user_session.id(), &email_address, proof_token)
+                        .confirm(user_session.id(), verification_token)
                         .await
                     {
                         Ok(_) => (StatusCode::OK, "your email has been verified").into_response(),
