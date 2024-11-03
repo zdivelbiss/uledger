@@ -8,52 +8,59 @@ CREATE SCHEMA IF NOT EXISTS _ledger AUTHORIZATION uledger;
 CREATE TYPE USER_ACCESS     AS ENUM ('ADMIN', 'REGULAR');
 CREATE TYPE ACCOUNT_KIND    AS ENUM ('EQUITY', 'ASSET', 'LIABILITY', 'INCOME', 'EXPENSE');
 
+CREATE DOMAIN AUTO_ID AS UUID
+    DEFAULT GEN_RANDOM_UUID();
+
+CREATE DOMAIN TIMESTAMPZ AS TIMESTAMP WITH TIME ZONE
+    DEFAULT NOW()
+    NOT NULL;
+
 CREATE DOMAIN EMAIL_ADDRESS AS CITEXT
-    CONSTRAINT check_email_address_length
+    CONSTRAINT chk_email_address_len
         CHECK (CHAR_LENGTH((value)) <= 128)
-    CONSTRAINT check_email_address_format
-        CHECK ((value) ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$')
-;
+    CONSTRAINT chk_email_address_format
+        CHECK ((value) ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$');
 
-CREATE DOMAIN NAME AS CITEXT
-    CONSTRAINT check_name_length
-        CHECK (CHAR_LENGTH((value)) <= 128)
-;
-
-CREATE DOMAIN DESCRIPTION AS TEXT
-    CONSTRAINT check_description_length
-        CHECK (CHAR_LENGTH((value)) <= 256)
-;
+CREATE DOMAIN BTEXT AS TEXT
+    CONSTRAINT chk_btext_len
+        CHECK(CHAR_LENGTH((value)) <= 256);
 
 -- AUTH --
 ----------
 
 CREATE TABLE IF NOT EXISTS _user.profile (
-    id                  UUID            PRIMARY KEY     DEFAULT GEN_RANDOM_UUID(),
-    created             TIMESTAMP       NOT NULL        DEFAULT NOW(),
+    id                  AUTO_ID         PRIMARY KEY,
+    created             TIMESTAMPZ,
 
-    email_address       EMAIL_ADDRESS   NOT NULL        UNIQUE,
+    email_address       EMAIL_ADDRESS   NOT NULL,
     email_verified_on   TIMESTAMP WITH TIME ZONE,
-    password_salt       TEXT            NOT NULL,
-    password_hash       TEXT            NOT NULL,
+    password_salt       BTEXT           NOT NULL,
+    password_hash       BTEXT           NOT NULL,
 
-    display_name        TEXT            NOT NULL,
+    display_name        BTEXT           NOT NULL,
 
-    CONSTRAINT  check_profile_display_name_length
-        CHECK (CHAR_LENGTH(display_name)  <= 32)
+    CONSTRAINT profile_unique_email_address
+        UNIQUE (email_address),
+
+    CONSTRAINT profile_chk_display_name_len
+        CHECK (CHAR_LENGTH(display_name)  <= 32),
 );
 
-CREATE TABLE IF NOT EXISTS _user.email_verification (
-    id              UUID            PRIMARY KEY,
-    created         TIMESTAMP       NOT NULL    DEFAULT NOW(),
+CREATE TABLE IF NOT EXISTS _user.verification (
+    id              AUTO_ID         PRIMARY KEY,
+    created         TIMESTAMPZ,
 
     email_address   EMAIL_ADDRESS   NOT NULL    UNIQUE,
     proof_token     TEXT            NOT NULL,
 
-    FOREIGN KEY     (id) REFERENCES _user.profile(id) ON DELETE CASCADE,
+    CONSTRAINT verification_unique_email_address
+        UNIQUE (email_address),
 
-    CONSTRAINT check_email_verification_proof_token_length
-        CHECK (CHAR_LENGTH(proof_token) = 6)
+    CONSTRAINT email_verification_chk_proof_token_len
+        CHECK (CHAR_LENGTH(proof_token) = 6),
+
+    CONSTRAINT verification_fk_user_id
+        FOREIGN KEY (id) REFERENCES _user.profile(id) ON DELETE CASCADE,
 );
 
 
@@ -61,36 +68,42 @@ CREATE TABLE IF NOT EXISTS _user.email_verification (
 ------------
 
 CREATE TABLE IF NOT EXISTS _ledger.account (
-    id              UUID           PRIMARY KEY  DEFAULT GEN_RANDOM_UUID(),
-    created         TIMESTAMP      NOT NULL     DEFAULT NOW(),
+    id              AUTO_ID         PRIMARY KEY,
+    created         TIMESTAMPZ,
 
-    user_id         UUID           NOT NULL,
-    kind            ACCOUNT_KIND   NOT NULL,
-    name            NAME           NOT NULL,
-    description     DESCRIPTION,
+    user_id         UUID            NOT NULL,
+    kind            ACCOUNT_KIND    NOT NULL,
+    name            BTEXT           NOT NULL,
+    description     BTEXT,
 
-    UNIQUE          (user_id, kind, name),
-    FOREIGN KEY     (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
+    CONSTRAINT account_unique
+        UNIQUE (user_id, kind, name),
+
+    CONSTRAINT account_fk_user_id
+        FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE,
 );
 
 CREATE TABLE IF NOT EXISTS _ledger.commodity (
-    id           UUID       PRIMARY KEY  DEFAULT GEN_RANDOM_UUID(),
-    created      TIMESTAMP  NOT NULL     DEFAULT NOW(),
+    id           AUTO_ID    PRIMARY KEY,
+    created      TIMESTAMPZ,
 
     user_id      UUID       NOT NULL,
-    name         NAME       NOT NULL,
-    format       TEXT       NOT NULL,
+    name         BTEXT      NOT NULL,
+    format       BTEXT      NOT NULL,
 
-    UNIQUE       (user_id, name),
-    FOREIGN KEY  (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE,
+    CONSTRAINT commodity_unique
+        UNIQUE (user_id, name),
 
-    CONSTRAINT check_commodity_format_length
-        CHECK (CHAR_LENGTH(format) <= 32)
+    CONSTRAINT chk_commodity_format_len
+        CHECK (CHAR_LENGTH(format) <= 32),
+
+    CONSTRAINT commodity_fk_user_id
+        FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE,
 );
 
 CREATE TABLE IF NOT EXISTS _ledger.conversion (
-    id              UUID        PRIMARY KEY  DEFAULT GEN_RANDOM_UUID(),
-    created         TIMESTAMP   NOT NULL     DEFAULT NOW(),
+    id              AUTO_ID     PRIMARY KEY,
+    created         TIMESTAMPZ,
 
     user_id         UUID        NOT NULL,
     effective       DATE        NOT NULL,
@@ -98,26 +111,34 @@ CREATE TABLE IF NOT EXISTS _ledger.conversion (
     to_commodity    UUID        NOT NULL,
     rate            FLOAT8      NOT NULL,
 
-    UNIQUE          (user_id, effective, from_commodity, to_commodity),
-    FOREIGN KEY     (user_id)         REFERENCES _user.profile(id)      ON DELETE CASCADE,
-    FOREIGN KEY     (from_commodity)  REFERENCES _ledger.commodity(id)  ON DELETE CASCADE,
-    FOREIGN KEY     (to_commodity)    REFERENCES _ledger.commodity(id)  ON DELETE CASCADE
+    CONSTRAINT conversion_unique
+        UNIQUE (user_id, effective, from_commodity, to_commodity),
+
+    CONSTRAINT commodity_fk_user_id
+        FOREIGN KEY (user_id)         REFERENCES _user.profile(id)      ON DELETE CASCADE,
+    CONSTRAINT commodity_fk_from_commodity
+        FOREIGN KEY (from_commodity)  REFERENCES _ledger.commodity(id)  ON DELETE CASCADE,
+    CONSTRAINT commodity_fk_to_commodity
+        FOREIGN KEY (to_commodity)    REFERENCES _ledger.commodity(id)  ON DELETE CASCADE,
 );
 
 CREATE TABLE IF NOT EXISTS _ledger.payee (
-    id          UUID        PRIMARY KEY  DEFAULT GEN_RANDOM_UUID(),
-    created     TIMESTAMP   NOT NULL     DEFAULT NOW(),
+    id          AUTO_ID     PRIMARY KEY,
+    created     TIMESTAMPZ,
 
     user_id     UUID        NOT NULL,
-    name        NAME        NOT NULL,
+    name        BTEXT       NOT NULL,
 
-    UNIQUE      (user_id, name),
-    FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
+    CONSTRAINT payee_unique
+        UNIQUE (user_id, name),
+
+    CONSTRAINT payee_fk_user_id
+        FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE,
 );
 
 CREATE TABLE IF NOT EXISTS _ledger.transaction (
-    id              UUID        PRIMARY KEY  DEFAULT GEN_RANDOM_UUID(),
-    created         TIMESTAMP   NOT NULL     DEFAULT NOW(),
+    id              AUTO_ID     PRIMARY KEY,
+    created         TIMESTAMPZ,
 
     user_id         UUID        NOT NULL,
     occurred_on     DATE        NOT NULL,
@@ -128,12 +149,18 @@ CREATE TABLE IF NOT EXISTS _ledger.transaction (
     from_commodity  UUID        NOT NULL,
     to_commodity    UUID        NOT NULL,
     payee           UUID        NOT NULL,
-    description     DESCRIPTION,
+    description     BTEXT,
 
-    FOREIGN KEY     (user_id)         REFERENCES _user.profile(id)      ON DELETE CASCADE,
-    FOREIGN KEY     (from_account)    REFERENCES _ledger.account(id)    ON DELETE CASCADE,
-    FOREIGN KEY     (to_account)      REFERENCES _ledger.account(id)    ON DELETE CASCADE,
-    FOREIGN KEY     (from_commodity)  REFERENCES _ledger.commodity(id)  ON DELETE CASCADE,
-    FOREIGN KEY     (to_commodity)    REFERENCES _ledger.commodity(id)  ON DELETE CASCADE,
-    FOREIGN KEY     (payee)           REFERENCES _ledger.payee(id)      ON DELETE CASCADE
+    CONSTRAINT transaction_fk_user_id
+        FOREIGN KEY (user_id)         REFERENCES _user.profile(id)      ON DELETE CASCADE,
+    CONSTRAINT transaction_fk_from_account
+        FOREIGN KEY (from_account)    REFERENCES _ledger.account(id)    ON DELETE CASCADE,
+    CONSTRAINT transaction_fk_to_account
+        FOREIGN KEY (to_account)      REFERENCES _ledger.account(id)    ON DELETE CASCADE,
+    CONSTRAINT transaction_fk_from_commodity
+        FOREIGN KEY (from_commodity)  REFERENCES _ledger.commodity(id)  ON DELETE CASCADE,
+    CONSTRAINT transaction_fk_to_commodity
+        FOREIGN KEY (from_commodity)  REFERENCES _ledger.commodity(id)  ON DELETE CASCADE,
+    CONSTRAINT transaction_fk_payee
+        FOREIGN KEY (from_commodity)  REFERENCES _ledger.payee(id)      ON DELETE CASCADE,
 );
