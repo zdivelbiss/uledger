@@ -49,7 +49,7 @@ pub enum MessageStream {
     Verification,
 }
 
-pub async fn send<K: Kind>(transaction: Transaction<K>) -> std::result::Result<(), Error> {
+pub async fn send<K: Kind>(transaction: Transaction<'_, K>) -> std::result::Result<(), Error> {
     HTTP_CLIENT
         .post("https://api.postmarkapp.com/email/withTemplate")
         .body(serde_json::to_string(&transaction)?)

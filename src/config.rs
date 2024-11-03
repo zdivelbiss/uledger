@@ -1,6 +1,5 @@
 #![allow(unused)]
 
-use crate::EmailAddress;
 use std::{net::SocketAddr, path::PathBuf, sync::LazyLock, time::Duration};
 use tower_sessions::cookie::Key;
 use tracing_subscriber::registry::Data;
@@ -61,7 +60,7 @@ pub struct Session {
 #[derive(Debug, Deserialize)]
 pub struct Postmark {
     pub apikey: String,
-    pub sender: EmailAddress,
+    pub sender: String,
 }
 
 #[derive(Debug, Deserialize)]

@@ -1,4 +1,4 @@
-use crate::{EmailAddress, VerificationToken};
+use crate::VerificationToken;
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -17,7 +17,7 @@ impl super::UserVerification {
     pub async fn confirm(
         &self,
         user_id: Uuid,
-        email_address: &EmailAddress,
+        email_address: &str,
         proof_token: VerificationToken,
     ) -> Result<(), Error> {
         let rows_affected = query!(
@@ -32,7 +32,7 @@ impl super::UserVerification {
             ;
             ",
             user_id,
-            email_address.as_str(),
+            email_address as _,
             proof_token.to_string()
         )
         .execute(&self.db)

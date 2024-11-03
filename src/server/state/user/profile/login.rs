@@ -30,6 +30,7 @@ impl super::UserProfile {
                 FROM _user.profile
                 WHERE
                     email_address = $1
+                LIMIT 1
             ;
             ",
             email_address as _

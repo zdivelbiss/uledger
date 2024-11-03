@@ -1,5 +1,5 @@
 use crate::postmark;
-use crate::{EmailAddress, VerificationToken};
+use crate::VerificationToken;
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -29,7 +29,7 @@ impl From<sqlx::Error> for Error {
 }
 
 impl super::UserVerification {
-    pub async fn create(&self, user_id: Uuid, email_address: &EmailAddress) -> Result<(), Error> {
+    pub async fn create(&self, user_id: Uuid, email_address: &str) -> Result<(), Error> {
         let verification_token = VerificationToken::gen();
 
         query!(
@@ -53,7 +53,7 @@ impl super::UserVerification {
         .await?;
 
         let transaction = postmark::Transaction::verification(
-            email_address,
+            email_address.into(),
             chrono::Utc::now(),
             verification_token,
         );
