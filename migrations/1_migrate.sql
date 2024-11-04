@@ -1,3 +1,7 @@
+
+-- LAYOUT --
+------------
+
 CREATE EXTENSION IF NOT EXISTS "citext";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -20,9 +24,7 @@ CREATE DOMAIN EMAIL_ADDRESS AS CITEXT
     CONSTRAINT chk_email_address_format
         CHECK ((value) ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$');
 
-CREATE DOMAIN BTEXT AS TEXT
-    CONSTRAINT chk_btext_len
-        CHECK(CHAR_LENGTH((value)) <= 256);
+
 
 -- AUTH --
 ----------
@@ -41,17 +43,14 @@ CREATE TABLE IF NOT EXISTS _user.profile (
 
     display_name    TEXT NOT NULL,
 
-    CONSTRAINT profile_unq_email_address
-        UNIQUE (email_address),
-
     CONSTRAINT profile_chk_pending_email_address_token_len
         CHECK (LENGTH(pending_email_address_token) = 3),
     CONSTRAINT profile_chk_display_name_len
         CHECK (CHAR_LENGTH(display_name)  <= 32)
 );
 
-CREATE INDEX unq_email_address_1 ON _user.profile(LEAST(email_address, pending_email_address));
-CREATE INDEX unq_email_address_2 ON _user.profile(GREATEST(email_address, pending_email_address));
+CREATE UNIQUE INDEX profile_unq_1 ON _user.profile(LEAST(email_address, pending_email_address));
+CREATE UNIQUE INDEX profile_unq_2 ON _user.profile(GREATEST(email_address, pending_email_address));
 
 -- LEDGER --
 ------------
@@ -62,11 +61,16 @@ CREATE TABLE IF NOT EXISTS _ledger.account (
 
     user_id         UUID            NOT NULL,
     kind            ACCOUNT_KIND    NOT NULL,
-    name            BTEXT           NOT NULL,
-    description     BTEXT,
+    name            TEXT            NOT NULL,
+    description     TEXT,
 
     CONSTRAINT account_unq
         UNIQUE (user_id, kind, name),
+
+    CONSTRAINT account_chk_name_len
+        CHECK (CHAR_LENGTH(name) <= /* text_len: */ 256),
+    CONSTRAINT account_chk_description_len
+        CHECK (CHAR_LENGTH(name) <= /* text_len: */ 256),
 
     CONSTRAINT account_fk_user_id
         FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
@@ -76,13 +80,15 @@ CREATE TABLE IF NOT EXISTS _ledger.commodity (
     id           AUTO_ID PRIMARY KEY,
     created      TIMESTAMPZ NOT NULL,
 
-    user_id      UUID       NOT NULL,
-    name         BTEXT      NOT NULL,
-    format       BTEXT      NOT NULL,
+    user_id      UUID   NOT NULL,
+    name         TEXT   NOT NULL,
+    format       TEXT   NOT NULL,
 
     CONSTRAINT commodity_unq
         UNIQUE (user_id, name),
 
+    CONSTRAINT chk_commodity_name_len
+        CHECK (CHAR_LENGTH(name) <= /* text_len: */ 256),
     CONSTRAINT chk_commodity_format_len
         CHECK (CHAR_LENGTH(format) <= 32),
 
@@ -112,14 +118,20 @@ CREATE TABLE IF NOT EXISTS _ledger.conversion (
 );
 
 CREATE TABLE IF NOT EXISTS _ledger.payee (
-    id          AUTO_ID PRIMARY KEY,
-    created     TIMESTAMPZ NOT NULL,
+    id       AUTO_ID PRIMARY KEY,
+    created  TIMESTAMPZ NOT NULL,
 
-    user_id     UUID        NOT NULL,
-    name        BTEXT       NOT NULL,
+    user_id      UUID  NOT NULL,
+    name         TEXT  NOT NULL,
+    description  TEXT,
 
     CONSTRAINT payee_unq
         UNIQUE (user_id, name),
+
+    CONSTRAINT payee_chk_name_len
+        CHECK (CHAR_LENGTH(name) <= /* text_len: */ 256),
+    CONSTRAINT payee_chk_description_len
+        CHECK (CHAR_LENGTH(description) <= /* text_len: */ 256),
 
     CONSTRAINT payee_fk_user_id
         FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
@@ -138,7 +150,10 @@ CREATE TABLE IF NOT EXISTS _ledger.transaction (
     from_commodity  UUID        NOT NULL,
     to_commodity    UUID        NOT NULL,
     payee           UUID        NOT NULL,
-    description     BTEXT,
+    description     TEXT,
+
+    CONSTRAINT transaction_chk_description_len
+        CHECK (CHAR_LENGTH(description) <= /* text_len: */ 256),
 
     CONSTRAINT transaction_fk_user_id
         FOREIGN KEY (user_id)         REFERENCES _user.profile(id)      ON DELETE CASCADE,
