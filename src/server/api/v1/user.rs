@@ -20,6 +20,108 @@ use axum::{
 pub fn router() -> axum::Router<App> {
     axum::Router::new()
         .route(
+            "/register",
+            post({
+                #[derive(Debug, Deserialize)]
+                struct Info {
+                    display_name: String,
+                    email_address: String,
+                    password: String,
+                }
+
+                |State(user_profile): State<UserProfile>,
+                 IsHtmx(is_htmx): IsHtmx,
+                 Form(Info {
+                     display_name,
+                     email_address,
+                     password,
+                 }): Form<Info>| async move {
+                    use crate::server::state::user::profile::register::Error;
+
+                    match user_profile
+                        .register(
+                            email_address.as_str(),
+                            password.as_str(),
+                            display_name.as_str(),
+                        )
+                        .await
+                    {
+                        Ok(_) if is_htmx => {
+                            (StatusCode::OK, [hx_redirect("/login")]).into_response()
+                        }
+                        Ok(_) => {
+                            (StatusCode::OK, "your account has been registered").into_response()
+                        }
+
+                        Err(Error::DuplicateEmail) => {
+                            (StatusCode::CONFLICT, "email address already in use").into_response()
+                        }
+
+                        Err(error) => internal_error(error).into_response(),
+                    }
+                }
+            }),
+        )
+        .route(
+            "/login",
+            post({
+                #[derive(Debug, Deserialize)]
+                struct Info {
+                    email_address: String,
+                    password: String,
+                }
+
+                #[allow(clippy::disallowed_types)]
+                |session: tower_sessions::Session,
+                 State(user_profile): State<UserProfile>,
+                 IsHtmx(is_htmx): IsHtmx,
+                 Form(Info {
+                     email_address,
+                     password,
+                 }): Form<Info>| async move {
+                    use crate::server::state::user::profile::login::Error;
+
+                    if !session.is_empty().await {
+                        return (StatusCode::CONFLICT, "you are already logged in").into_response();
+                    }
+
+                    match user_profile.login(&email_address, password.as_str()).await {
+                        Ok(user_id) => {
+                            session.insert("id", user_id).await.unwrap();
+
+                            if is_htmx {
+                                (StatusCode::OK, [hx_redirect("/")]).into_response()
+                            } else {
+                                (StatusCode::OK, "you have been logged in").into_response()
+                            }
+                        }
+
+                        Err(Error::InvalidCredentials) => {
+                            (StatusCode::UNAUTHORIZED, "invalid login credentials").into_response()
+                        }
+
+                        Err(error) => internal_error(error).into_response(),
+                    }
+                }
+            }),
+        )
+        .route(
+            "/logout",
+            post({
+                #[allow(clippy::disallowed_types)]
+                |session: tower_sessions::Session| async move {
+                    if session.is_empty().await {
+                        (StatusCode::UNAUTHORIZED, "you are not logged in").into_response()
+                    } else {
+                        session.flush().await.map_or_else(
+                            |error| internal_error(error).into_response(),
+                            |_| (StatusCode::OK, "you have been logged out").into_response(),
+                        )
+                    }
+                }
+            }),
+        )
+        .route(
             "/verify",
             post({
                 #[derive(Debug, Deserialize)]
@@ -72,108 +174,6 @@ pub fn router() -> axum::Router<App> {
                         }
 
                         Err(error) => internal_error(error).into_response(),
-                    }
-                }
-            }),
-        )
-        .route(
-            "/register",
-            post({
-                #[derive(Debug, Deserialize)]
-                struct Info {
-                    display_name: String,
-                    email_address: String,
-                    password: String,
-                }
-
-                |State(user_account): State<UserProfile>,
-                 IsHtmx(is_htmx): IsHtmx,
-                 Form(Info {
-                     display_name,
-                     email_address,
-                     password,
-                 }): Form<Info>| async move {
-                    use crate::server::state::user::profile::register::Error;
-
-                    match user_account
-                        .register(
-                            email_address.as_str(),
-                            password.as_str(),
-                            display_name.as_str(),
-                        )
-                        .await
-                    {
-                        Ok(_) if is_htmx => {
-                            (StatusCode::OK, [hx_redirect("/login")]).into_response()
-                        }
-                        Ok(_) => {
-                            (StatusCode::OK, "your account has been registered").into_response()
-                        }
-
-                        Err(Error::DuplicateEmail) => {
-                            (StatusCode::CONFLICT, "email address already in use").into_response()
-                        }
-
-                        Err(error) => internal_error(error).into_response(),
-                    }
-                }
-            }),
-        )
-        .route(
-            "/login",
-            post({
-                #[derive(Debug, Deserialize)]
-                struct Info {
-                    email_address: String,
-                    password: String,
-                }
-
-                #[allow(clippy::disallowed_types)]
-                |session: tower_sessions::Session,
-                 State(user_account): State<UserProfile>,
-                 IsHtmx(is_htmx): IsHtmx,
-                 Form(Info {
-                     email_address,
-                     password,
-                 }): Form<Info>| async move {
-                    use crate::server::state::user::profile::login::Error;
-
-                    if !session.is_empty().await {
-                        return (StatusCode::CONFLICT, "you are already logged in").into_response();
-                    }
-
-                    match user_account.login(&email_address, password.as_str()).await {
-                        Ok(user_id) => {
-                            session.insert("id", user_id).await.unwrap();
-
-                            if is_htmx {
-                                (StatusCode::OK, [hx_redirect("/")]).into_response()
-                            } else {
-                                (StatusCode::OK, "you have been logged in").into_response()
-                            }
-                        }
-
-                        Err(Error::InvalidCredentials) => {
-                            (StatusCode::UNAUTHORIZED, "invalid login credentials").into_response()
-                        }
-
-                        Err(error) => internal_error(error).into_response(),
-                    }
-                }
-            }),
-        )
-        .route(
-            "/logout",
-            post({
-                #[allow(clippy::disallowed_types)]
-                |session: tower_sessions::Session| async move {
-                    if session.is_empty().await {
-                        (StatusCode::UNAUTHORIZED, "you are not logged in").into_response()
-                    } else {
-                        session.flush().await.map_or_else(
-                            |error| internal_error(error).into_response(),
-                            |_| (StatusCode::OK, "you have been logged out").into_response(),
-                        )
                     }
                 }
             }),

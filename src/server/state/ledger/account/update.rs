@@ -1,4 +1,4 @@
-use lib::ledger::account::{AccountKind, AccountRecord};
+use super::*;
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -60,7 +60,7 @@ impl super::AccountLedger {
             user_id,
             id,
             kind as _,
-            name,
+            name as _,
             description as _
         )
         .fetch_one(&self.db)

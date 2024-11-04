@@ -2,7 +2,10 @@ use crate::server::{
     api::crud_router,
     htmx::IsHtmx,
     internal_error,
-    state::{ledger::account::AccountLedger, App},
+    state::{
+        ledger::account::{AccountKind, AccountLedger},
+        App,
+    },
     UserSession,
 };
 use axum::{
@@ -11,7 +14,6 @@ use axum::{
     response::IntoResponse,
     Router,
 };
-use lib::ledger::account::AccountKind;
 use uuid::Uuid;
 
 pub fn router() -> Router<App> {

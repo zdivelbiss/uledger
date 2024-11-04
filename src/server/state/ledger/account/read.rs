@@ -1,4 +1,4 @@
-use lib::ledger::account::{AccountKind, AccountRecord};
+use super::*;
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
