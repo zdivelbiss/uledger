@@ -17,6 +17,7 @@ impl From<sqlx::Error> for Error {
     fn from(error: sqlx::Error) -> Self {
         match error {
             sqlx::Error::RowNotFound => Self::InvalidCredentials,
+
             error => Self::Database(error),
         }
     }

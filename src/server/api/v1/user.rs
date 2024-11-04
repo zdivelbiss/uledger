@@ -49,8 +49,21 @@ pub fn router() -> axum::Router<App> {
                         Ok(_) if is_htmx => {
                             (StatusCode::OK, [hx_redirect("/login")]).into_response()
                         }
+
                         Ok(_) => {
                             (StatusCode::OK, "your account has been registered").into_response()
+                        }
+
+                        Err(Error::EmailAddressLength) => {
+                            (StatusCode::BAD_REQUEST, "email address is too long").into_response()
+                        }
+
+                        Err(Error::EmailAddressFormat) => {
+                            (StatusCode::BAD_REQUEST, "email address is invalid").into_response()
+                        }
+
+                        Err(Error::DisplayNameLength) => {
+                            (StatusCode::BAD_REQUEST, "display name is too long").into_response()
                         }
 
                         Err(Error::DuplicateEmail) => {
@@ -97,7 +110,7 @@ pub fn router() -> axum::Router<App> {
                         }
 
                         Err(Error::InvalidCredentials) => {
-                            (StatusCode::UNAUTHORIZED, "invalid login credentials").into_response()
+                            (StatusCode::UNAUTHORIZED, "wrong username/password").into_response()
                         }
 
                         Err(error) => internal_error(error).into_response(),

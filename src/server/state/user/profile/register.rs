@@ -6,6 +6,15 @@ use rand::rngs::OsRng;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("email address too long (max 128)")]
+    EmailAddressLength,
+
+    #[error("email address format is invalid")]
+    EmailAddressFormat,
+
+    #[error("display name too long (max 32)")]
+    DisplayNameLength,
+
     #[error("user already exists")]
     DuplicateEmail,
 
@@ -17,15 +26,18 @@ pub enum Error {
 }
 
 impl From<sqlx::Error> for Error {
-    fn from(err: sqlx::Error) -> Self {
-        let Some(db_err) = err.as_database_error() else {
-            return Self::Database(err);
+    fn from(error: sqlx::Error) -> Self {
+        let Some(db_error) = error.as_database_error() else {
+            return Self::Database(error);
         };
 
-        match (db_err.code().as_deref(), db_err.constraint()) {
-            (Some("23505"), Some("users_email_key")) => Error::DuplicateEmail,
+        match (db_error.code().as_deref(), db_error.constraint()) {
+            (Some("23514"), Some("chk_email_address_len")) => Self::EmailAddressLength,
+            (Some("23514"), Some("chk_email_address_format")) => Self::EmailAddressFormat,
+            (Some("23514"), Some("profile_chk_display_name_len")) => Self::DisplayNameLength,
+            (Some("23505"), Some("profile_unq_1" | "profile_unq_2")) => Self::DuplicateEmail,
 
-            _ => Self::Database(err),
+            _ => Self::Database(error),
         }
     }
 }

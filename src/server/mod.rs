@@ -58,7 +58,7 @@ async fn build_router() -> Router {
     debug!("Session database connection established.");
 
     let session_expiry = Expiry::OnInactivity(cfg().session.lifetime.try_into().unwrap());
-    info!("Using session expiry: {session_expiry:?}");
+    debug!("Using session expiry: {session_expiry:?}");
     let session_store = RedisStore::new(client);
     info!("Session database conection ready.");
 
@@ -96,7 +96,7 @@ async fn build_router() -> Router {
 }
 
 pub fn internal_error(error: impl std::error::Error) -> (StatusCode, &'static str) {
-    error!("{error}");
+    error!("{error:?}");
 
-    (StatusCode::INTERNAL_SERVER_ERROR, "Internal server errror.")
+    (StatusCode::INTERNAL_SERVER_ERROR, "internal server error")
 }

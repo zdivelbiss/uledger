@@ -15,15 +15,15 @@ pub enum Error {
 }
 
 impl From<sqlx::Error> for Error {
-    fn from(err: sqlx::Error) -> Self {
-        let Some(db_err) = err.as_database_error() else {
-            return Self::Database(err);
+    fn from(error: sqlx::Error) -> Self {
+        let Some(db_error) = error.as_database_error() else {
+            return Self::Database(error);
         };
 
-        match (db_err.code().as_deref(), db_err.constraint()) {
+        match (db_error.code().as_deref(), db_error.constraint()) {
             (Some("23505"), Some("email_verification_email_address_key")) => Error::EmailInUse,
 
-            _ => Self::Database(err),
+            _ => Self::Database(error),
         }
     }
 }
