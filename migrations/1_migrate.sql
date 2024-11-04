@@ -11,9 +11,8 @@ CREATE TYPE ACCOUNT_KIND    AS ENUM ('EQUITY', 'ASSET', 'LIABILITY', 'INCOME', '
 CREATE DOMAIN AUTO_ID AS UUID
     DEFAULT GEN_RANDOM_UUID();
 
-CREATE DOMAIN CREATETIMEZ AS TIMESTAMP WITH TIME ZONE
-    DEFAULT NOW()
-    NOT NULL;
+CREATE DOMAIN TIMESTAMPZ AS TIMESTAMP WITH TIME ZONE
+    DEFAULT NOW();
 
 CREATE DOMAIN EMAIL_ADDRESS AS CITEXT
     CONSTRAINT chk_email_address_len
@@ -30,7 +29,7 @@ CREATE DOMAIN BTEXT AS TEXT
 
 CREATE TABLE IF NOT EXISTS _user.profile (
     id       AUTO_ID PRIMARY KEY,
-    created  CREATETIMEZ,
+    created  TIMESTAMPZ NOT NULL,
 
     email_address   EMAIL_ADDRESS   NOT NULL,
     password_salt   TEXT            NOT NULL,
@@ -58,8 +57,8 @@ CREATE INDEX unq_email_address_2 ON _user.profile(GREATEST(email_address, pendin
 ------------
 
 CREATE TABLE IF NOT EXISTS _ledger.account (
-    id              AUTO_ID         PRIMARY KEY,
-    created         CREATETIMEZ,
+    id              AUTO_ID PRIMARY KEY,
+    created         TIMESTAMPZ NOT NULL,
 
     user_id         UUID            NOT NULL,
     kind            ACCOUNT_KIND    NOT NULL,
@@ -74,8 +73,8 @@ CREATE TABLE IF NOT EXISTS _ledger.account (
 );
 
 CREATE TABLE IF NOT EXISTS _ledger.commodity (
-    id           AUTO_ID    PRIMARY KEY,
-    created      CREATETIMEZ,
+    id           AUTO_ID PRIMARY KEY,
+    created      TIMESTAMPZ NOT NULL,
 
     user_id      UUID       NOT NULL,
     name         BTEXT      NOT NULL,
@@ -92,8 +91,8 @@ CREATE TABLE IF NOT EXISTS _ledger.commodity (
 );
 
 CREATE TABLE IF NOT EXISTS _ledger.conversion (
-    id              AUTO_ID     PRIMARY KEY,
-    created         CREATETIMEZ,
+    id              AUTO_ID PRIMARY KEY,
+    created         TIMESTAMPZ NOT NULL,
 
     user_id         UUID        NOT NULL,
     effective       DATE        NOT NULL,
@@ -113,8 +112,8 @@ CREATE TABLE IF NOT EXISTS _ledger.conversion (
 );
 
 CREATE TABLE IF NOT EXISTS _ledger.payee (
-    id          AUTO_ID     PRIMARY KEY,
-    created     CREATETIMEZ,
+    id          AUTO_ID PRIMARY KEY,
+    created     TIMESTAMPZ NOT NULL,
 
     user_id     UUID        NOT NULL,
     name        BTEXT       NOT NULL,
@@ -127,8 +126,8 @@ CREATE TABLE IF NOT EXISTS _ledger.payee (
 );
 
 CREATE TABLE IF NOT EXISTS _ledger.transaction (
-    id              AUTO_ID     PRIMARY KEY,
-    created         CREATETIMEZ,
+    id              AUTO_ID PRIMARY KEY,
+    created         TIMESTAMPZ NOT NULL,
 
     user_id         UUID        NOT NULL,
     occurred_on     DATE        NOT NULL,
