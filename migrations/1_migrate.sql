@@ -1,6 +1,5 @@
-
--- LAYOUT --
-------------
+-- META --
+----------
 
 CREATE EXTENSION IF NOT EXISTS "citext";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -52,6 +51,8 @@ CREATE TABLE IF NOT EXISTS _user.profile (
 CREATE UNIQUE INDEX profile_unq_1 ON _user.profile(LEAST(email_address, pending_email_address));
 CREATE UNIQUE INDEX profile_unq_2 ON _user.profile(GREATEST(email_address, pending_email_address));
 
+
+
 -- LEDGER --
 ------------
 
@@ -70,7 +71,7 @@ CREATE TABLE IF NOT EXISTS _ledger.account (
     CONSTRAINT account_chk_name_len
         CHECK (CHAR_LENGTH(name) <= /* text_len: */ 256),
     CONSTRAINT account_chk_description_len
-        CHECK (CHAR_LENGTH(name) <= /* text_len: */ 256),
+        CHECK (CHAR_LENGTH(description) <= /* text_len: */ 256),
 
     CONSTRAINT account_fk_user_id
         FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE

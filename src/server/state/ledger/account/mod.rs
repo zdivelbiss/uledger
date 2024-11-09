@@ -5,7 +5,6 @@ pub mod update;
 
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
-
 use crate::server::state::App;
 
 #[derive(Debug)]
