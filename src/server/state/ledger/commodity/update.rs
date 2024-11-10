@@ -3,11 +3,17 @@ use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("could not find account")]
+    #[error("could not find commodity")]
     NotFound,
 
-    #[error("account name/kind already used")]
+    #[error("commodity already exists")]
     Duplicate,
+
+    #[error("commodity name is too long")]
+    NameLength,
+
+    #[error("commodity format is too long")]
+    FormatLength,
 
     #[error(transparent)]
     Database(sqlx::Error),
@@ -23,8 +29,10 @@ impl From<sqlx::Error> for Error {
             return Self::Database(error);
         };
 
-        match (db_error.code().as_deref(), db_error.constraint()) {
-            (Some("23505"), Some("accounts_user_id_kind_name_key")) => Error::Duplicate,
+        match db_error.constraint() {
+            Some("commodity_unq") => Error::Duplicate,
+            Some("commodity_chk_name_len") => Error::NameLength,
+            Some("commodity_chk_format_len") => Error::FormatLength,
 
             _ => Self::Database(error),
         }

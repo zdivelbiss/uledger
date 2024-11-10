@@ -3,14 +3,11 @@ use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("commodity already exists")]
+    #[error("could not find account")]
+    NotFound,
+
+    #[error("account name/kind already used")]
     Duplicate,
-
-    #[error("commodity name is too long")]
-    NameLength,
-
-    #[error("commodity format is too long")]
-    FormatLength,
 
     #[error(transparent)]
     Database(sqlx::Error),
@@ -18,14 +15,16 @@ pub enum Error {
 
 impl From<sqlx::Error> for Error {
     fn from(error: sqlx::Error) -> Self {
+        if let sqlx::Error::RowNotFound = error {
+            return Self::NotFound;
+        }
+
         let Some(db_error) = error.as_database_error() else {
             return Self::Database(error);
         };
 
-        match db_error.constraint() {
-            Some("commodity_unq") => Error::Duplicate,
-            Some("commodity_chk_name_len") => Error::NameLength,
-            Some("commodity_chk_format_len") => Error::FormatLength,
+        match (db_error.code().as_deref(), db_error.constraint()) {
+            (Some("23505"), Some("accounts_user_id_kind_name_key")) => Error::Duplicate,
 
             _ => Self::Database(error),
         }
@@ -34,24 +33,30 @@ impl From<sqlx::Error> for Error {
 
 impl CommodityLedger {
     #[instrument]
-    pub async fn create(
+    pub async fn update(
         &self,
         user_id: Uuid,
+        id: Uuid,
         name: &str,
         format: &str,
     ) -> Result<CommodityRecord, Error> {
         let record = query_as!(
             CommodityRecord,
             "
-            INSERT INTO _ledger.commodity
-                    (user_id, name, format)
-                VALUES
-                    ($1, $2, $3)
+            UPDATE _ledger.commodity
+                SET
+                    name = $3,
+                    format = $4
+                WHERE
+                    user_id = $1
+                        AND
+                    id = $2
                 RETURNING
                     id, created, name, format
             ;
             ",
             user_id,
+            id,
             name as _,
             format as _
         )
