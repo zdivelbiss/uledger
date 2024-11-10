@@ -19,14 +19,14 @@ impl From<sqlx::Error> for Error {
     }
 }
 
-impl super::AccountLedger {
+impl PayeeLedger {
     #[instrument]
-    pub async fn read(&self, user_id: Uuid, id: Uuid) -> Result<AccountRecord, Error> {
+    pub async fn read(&self, user_id: Uuid, id: Uuid) -> Result<PayeeRecord, Error> {
         let record = query_as!(
-            AccountRecord,
+            PayeeRecord,
             "
-            SELECT id, created, kind AS \"kind: AccountKind\", name, description
-                FROM _ledger.account
+            SELECT id, created, name, description
+                FROM _ledger.payee
                 WHERE
                     user_id = $1
                         AND

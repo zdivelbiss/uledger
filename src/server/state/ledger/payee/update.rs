@@ -12,8 +12,8 @@ pub enum Error {
     #[error("name too long")]
     NameLength,
 
-    #[error("format is too long")]
-    FormatLength,
+    #[error("description too long")]
+    DescriptionLength,
 
     #[error(transparent)]
     Database(sqlx::Error),
@@ -30,16 +30,16 @@ impl From<sqlx::Error> for Error {
         };
 
         match db_error.constraint() {
-            Some("commodity_unq") => Self::Duplicate,
-            Some("commodity_chk_name_len") => Self::NameLength,
-            Some("commodity_chk_format_len") => Self::FormatLength,
+            Some("payee_unq") => Self::Duplicate,
+            Some("payee_chk_name_len") => Self::NameLength,
+            Some("payee_chk_description_len") => Self::DescriptionLength,
 
             _ => Self::Database(error),
         }
     }
 }
 
-impl CommodityLedger {
+impl PayeeLedger {
     #[instrument]
     pub async fn update(
         &self,
@@ -47,20 +47,20 @@ impl CommodityLedger {
         id: Uuid,
         name: &str,
         format: &str,
-    ) -> Result<CommodityRecord, Error> {
+    ) -> Result<PayeeRecord, Error> {
         let record = query_as!(
-            CommodityRecord,
+            PayeeRecord,
             "
-            UPDATE _ledger.commodity
+            UPDATE _ledger.payee
                 SET
                     name = $3,
-                    format = $4
+                    description = $4
                 WHERE
                     user_id = $1
                         AND
                     id = $2
                 RETURNING
-                    id, created, name, format
+                    id, created, name, description
             ;
             ",
             user_id,

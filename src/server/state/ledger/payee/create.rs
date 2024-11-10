@@ -23,37 +23,35 @@ impl From<sqlx::Error> for Error {
         };
 
         match db_error.constraint() {
-            Some("account_unq") => Self::Duplicate,
-            Some("account_chk_name_len") => Self::NameLength,
-            Some("account_chk_description_len") => Self::DescriptionLength,
+            Some("payee_unq") => Self::Duplicate,
+            Some("payee_chk_name_len") => Self::NameLength,
+            Some("payee_chk_description_len") => Self::DescriptionLength,
 
             _ => Self::Database(error),
         }
     }
 }
 
-impl AccountLedger {
+impl PayeeLedger {
     #[instrument]
     pub async fn create(
         &self,
         user_id: Uuid,
-        kind: AccountKind,
         name: &str,
         description: Option<&str>,
-    ) -> Result<AccountRecord, Error> {
+    ) -> Result<PayeeRecord, Error> {
         let record = query_as!(
-            AccountRecord,
+            PayeeRecord,
             "
-            INSERT INTO _ledger.account
-                    (user_id, kind, name, description)
+            INSERT INTO _ledger.payee
+                    (user_id, name, description)
                 VALUES
-                    ($1, $2, $3, $4)
+                    ($1, $2, $3)
                 RETURNING
-                    id, created, kind AS \"kind: AccountKind\", name, description
+                    id, created, name, description
             ;
             ",
             user_id,
-            kind as _,
             name as _,
             description as _
         )

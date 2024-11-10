@@ -1,8 +1,9 @@
+use super::*;
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("could not find account")]
+    #[error("could not find")]
     NotFound,
 
     #[error(transparent)]
@@ -18,7 +19,7 @@ impl From<sqlx::Error> for Error {
     }
 }
 
-impl super::AccountLedger {
+impl AccountLedger {
     #[instrument]
     pub async fn delete(&self, user_id: Uuid, id: Uuid) -> Result<(), Error> {
         let rows_affected = query!(
@@ -43,7 +44,7 @@ impl super::AccountLedger {
             0 => Err(Error::NotFound),
 
             rows_affected => {
-                unreachable!("unexpectedly deleted multiple accounts: {rows_affected} total")
+                unreachable!("deleted multiple: {rows_affected} total")
             }
         }
     }

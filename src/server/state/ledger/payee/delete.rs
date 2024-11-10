@@ -19,27 +19,33 @@ impl From<sqlx::Error> for Error {
     }
 }
 
-impl super::AccountLedger {
+impl PayeeLedger {
     #[instrument]
-    pub async fn read(&self, user_id: Uuid, id: Uuid) -> Result<AccountRecord, Error> {
-        let record = query_as!(
-            AccountRecord,
+    pub async fn delete(&self, user_id: Uuid, id: Uuid) -> Result<(), Error> {
+        let rows_affected = query!(
             "
-            SELECT id, created, kind AS \"kind: AccountKind\", name, description
-                FROM _ledger.account
+            DELETE FROM _ledger.payee
                 WHERE
-                    user_id = $1
+                    user_id = $2
                         AND
-                    id = $2
-                LIMIT 1
+                    id = $1
             ;
             ",
             user_id,
             id
         )
-        .fetch_one(&self.db)
-        .await?;
+        .execute(&self.db)
+        .await?
+        .rows_affected();
 
-        Ok(record)
+        match rows_affected {
+            1 => Ok(()),
+
+            0 => Err(Error::NotFound),
+
+            rows_affected => {
+                unreachable!("deleted multiple: {rows_affected} total")
+            }
+        }
     }
 }

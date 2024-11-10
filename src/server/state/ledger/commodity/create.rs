@@ -3,13 +3,13 @@ use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("commodity already exists")]
+    #[error("already exists")]
     Duplicate,
 
-    #[error("commodity name is too long")]
+    #[error("name too long")]
     NameLength,
 
-    #[error("commodity format is too long")]
+    #[error("format is too long")]
     FormatLength,
 
     #[error(transparent)]
@@ -23,9 +23,9 @@ impl From<sqlx::Error> for Error {
         };
 
         match db_error.constraint() {
-            Some("commodity_unq") => Error::Duplicate,
-            Some("commodity_chk_name_len") => Error::NameLength,
-            Some("commodity_chk_format_len") => Error::FormatLength,
+            Some("commodity_unq") => Self::Duplicate,
+            Some("commodity_chk_name_len") => Self::NameLength,
+            Some("commodity_chk_format_len") => Self::FormatLength,
 
             _ => Self::Database(error),
         }

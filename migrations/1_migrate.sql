@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS _ledger.payee (
     CONSTRAINT payee_chk_name_len
         CHECK (CHAR_LENGTH(name) <= /* text_len: */ 256),
     CONSTRAINT payee_chk_description_len
-        CHECK (CHAR_LENGTH(description) <= /* text_len: */ 256),
+        CHECK (CHAR_LENGTH(description) <= /* desc_len: */ 1024),
 
     CONSTRAINT payee_fk_user_id
         FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS _ledger.transaction (
     description     TEXT,
 
     CONSTRAINT transaction_chk_description_len
-        CHECK (CHAR_LENGTH(description) <= /* text_len: */ 256),
+        CHECK (CHAR_LENGTH(description) <= /* desc_len: */ 1024),
 
     CONSTRAINT transaction_fk_user_id
         FOREIGN KEY (user_id)         REFERENCES _user.profile(id)      ON DELETE CASCADE,

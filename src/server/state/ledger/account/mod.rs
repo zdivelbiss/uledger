@@ -2,6 +2,7 @@ pub mod create;
 pub mod delete;
 pub mod read;
 pub mod update;
+pub mod read_all;
 
 use chrono::{DateTime, Utc};
 use uuid::Uuid;

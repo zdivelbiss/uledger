@@ -63,7 +63,7 @@ pub fn router() -> axum::Router<App> {
                         }
 
                         Err(Error::DisplayNameLength) => {
-                            (StatusCode::BAD_REQUEST, "display name is too long").into_response()
+                            (StatusCode::BAD_REQUEST, "display name too long").into_response()
                         }
 
                         Err(Error::DuplicateEmail) => {

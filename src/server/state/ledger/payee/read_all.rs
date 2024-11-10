@@ -7,14 +7,14 @@ pub enum Error {
     Database(#[from] sqlx::Error),
 }
 
-impl CommodityLedger {
+impl PayeeLedger {
     #[instrument]
-    pub async fn read_all(&self, user_id: Uuid) -> Result<Box<[CommodityRecord]>, Error> {
+    pub async fn read_all(&self, user_id: Uuid) -> Result<Box<[PayeeRecord]>, Error> {
         let accounts = query_as!(
-            CommodityRecord,
+            PayeeRecord,
             "
-            SELECT id, created, name, format
-                FROM _ledger.commodity
+            SELECT id, created, name, description
+                FROM _ledger.payee
                 WHERE
                     user_id = $1
             ;
