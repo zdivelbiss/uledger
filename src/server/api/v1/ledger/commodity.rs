@@ -2,10 +2,7 @@ use crate::server::{
     api::crud_router,
     htmx::IsHtmx,
     internal_error,
-    state::{
-        ledger::{account::AccountLedger, commodity::CommodityLedger},
-        App,
-    },
+    state::{ledger::commodity::CommodityLedger, App},
     UserSession,
 };
 use axum::{
@@ -32,9 +29,9 @@ struct Info {
 
 async fn _read_all(
     user_session: UserSession,
-    State(account_ledger): State<AccountLedger>,
+    State(ledger): State<CommodityLedger>,
 ) -> impl IntoResponse {
-    match account_ledger.read_all(user_session.id()).await {
+    match ledger.read_all(user_session.id()).await {
         Ok(records) => todo!(),
 
         Err(error) => internal_error(error).into_response(),
@@ -43,7 +40,7 @@ async fn _read_all(
 
 async fn _create(
     user_session: UserSession,
-    State(commodity_ledger): State<CommodityLedger>,
+    State(ledger): State<CommodityLedger>,
     IsHtmx(is_htmx): IsHtmx,
     Form(Info {
         name,
@@ -56,7 +53,7 @@ async fn _create(
 ) -> impl IntoResponse {
     use crate::server::state::ledger::commodity::create::Error;
 
-    match commodity_ledger
+    match ledger
         .create(
             user_session.id(),
             name.as_str(),
@@ -70,7 +67,7 @@ async fn _create(
     {
         Ok(record) => todo!(),
 
-        Err(Error::Duplicate) => (StatusCode::CONFLICT, "account already exists").into_response(),
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "commodity already exists").into_response(),
         Err(Error::NameLength) => (StatusCode::BAD_REQUEST, "name too long").into_response(),
         Err(Error::DescriptionLength) => {
             (StatusCode::BAD_REQUEST, "description too long").into_response()
@@ -88,62 +85,68 @@ async fn _create(
 
 async fn _read(
     user_session: UserSession,
-    State(account_ledger): State<AccountLedger>,
+    State(ledger): State<CommodityLedger>,
     IsHtmx(is_htmx): IsHtmx,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    use crate::server::state::ledger::account::read::Error;
+    use crate::server::state::ledger::commodity::read::Error;
 
-    match account_ledger.read(user_session.id(), id).await {
+    match ledger.read(user_session.id(), id).await {
         Ok(record) => todo!(),
 
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "commodity not found").into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }
 
 async fn _update(
     user_session: UserSession,
-    State(account_ledger): State<AccountLedger>,
+    State(ledger): State<CommodityLedger>,
     IsHtmx(is_htmx): IsHtmx,
     Path(id): Path<Uuid>,
     Form(Info {
-        kind,
         name,
         description,
+        symbol,
+        thousands_separator,
+        decimal_separator,
+        is_prefix,
     }): Form<Info>,
 ) -> impl IntoResponse {
-    use crate::server::state::ledger::account::update::Error;
+    use crate::server::state::ledger::commodity::update::Error;
 
-    match account_ledger
+    match ledger
         .update(
             user_session.id(),
             id,
-            kind,
             name.as_str(),
             description.as_deref(),
+            symbol.as_str(),
+            thousands_separator.as_str(),
+            decimal_separator.as_str(),
+            is_prefix,
         )
         .await
     {
         Ok(record) => todo!(),
 
-        Err(Error::Duplicate) => (StatusCode::CONFLICT, "account already exists").into_response(),
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "commodity already exists").into_response(),
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "commodity not found").into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }
 
 async fn _delete(
     user_session: UserSession,
-    State(account_ledger): State<AccountLedger>,
+    State(ledger): State<CommodityLedger>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    use crate::server::state::ledger::account::delete::Error;
+    use crate::server::state::ledger::commodity::delete::Error;
 
-    match account_ledger.delete(user_session.id(), id).await {
+    match ledger.delete(user_session.id(), id).await {
         Ok(_) => todo!(),
 
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "commodity not found").into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }

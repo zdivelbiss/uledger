@@ -29,9 +29,9 @@ struct Info {
 
 async fn _read_all(
     user_session: UserSession,
-    State(account_ledger): State<AccountLedger>,
+    State(ledger): State<AccountLedger>,
 ) -> impl IntoResponse {
-    match account_ledger.read_all(user_session.id()).await {
+    match ledger.read_all(user_session.id()).await {
         Ok(records) => todo!(),
 
         Err(error) => internal_error(error).into_response(),
@@ -40,7 +40,7 @@ async fn _read_all(
 
 async fn _create(
     user_session: UserSession,
-    State(account_ledger): State<AccountLedger>,
+    State(ledger): State<AccountLedger>,
     IsHtmx(is_htmx): IsHtmx,
     Form(Info {
         kind,
@@ -50,7 +50,7 @@ async fn _create(
 ) -> impl IntoResponse {
     use crate::server::state::ledger::account::create::Error;
 
-    match account_ledger
+    match ledger
         .create(
             user_session.id(),
             kind,
@@ -68,13 +68,13 @@ async fn _create(
 
 async fn _read(
     user_session: UserSession,
-    State(account_ledger): State<AccountLedger>,
+    State(ledger): State<AccountLedger>,
     IsHtmx(is_htmx): IsHtmx,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     use crate::server::state::ledger::account::read::Error;
 
-    match account_ledger.read(user_session.id(), id).await {
+    match ledger.read(user_session.id(), id).await {
         Ok(record) => todo!(),
 
         Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
@@ -84,7 +84,7 @@ async fn _read(
 
 async fn _update(
     user_session: UserSession,
-    State(account_ledger): State<AccountLedger>,
+    State(ledger): State<AccountLedger>,
     IsHtmx(is_htmx): IsHtmx,
     Path(id): Path<Uuid>,
     Form(Info {
@@ -95,7 +95,7 @@ async fn _update(
 ) -> impl IntoResponse {
     use crate::server::state::ledger::account::update::Error;
 
-    match account_ledger
+    match ledger
         .update(
             user_session.id(),
             id,
@@ -115,12 +115,12 @@ async fn _update(
 
 async fn _delete(
     user_session: UserSession,
-    State(account_ledger): State<AccountLedger>,
+    State(ledger): State<AccountLedger>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     use crate::server::state::ledger::account::delete::Error;
 
-    match account_ledger.delete(user_session.id(), id).await {
+    match ledger.delete(user_session.id(), id).await {
         Ok(_) => todo!(),
 
         Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
