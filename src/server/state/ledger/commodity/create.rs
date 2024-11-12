@@ -9,8 +9,17 @@ pub enum Error {
     #[error("name too long")]
     NameLength,
 
-    #[error("format is too long")]
-    FormatLength,
+    #[error("description too long")]
+    DescriptionLength,
+
+    #[error("symbol too long")]
+    SymbolLength,
+
+    #[error("thousands separator too long")]
+    ThousandsSeparatorLength,
+
+    #[error("decimal separator too long")]
+    DecimalSeparatorLength,
 
     #[error(transparent)]
     Database(sqlx::Error),
@@ -25,7 +34,10 @@ impl From<sqlx::Error> for Error {
         match db_error.constraint() {
             Some("commodity_unq") => Self::Duplicate,
             Some("commodity_chk_name_len") => Self::NameLength,
-            Some("commodity_chk_format_len") => Self::FormatLength,
+            Some("chk_commodity_description_len") => Self::DescriptionLength,
+            Some("chk_commodity_symbol_len") => Self::SymbolLength,
+            Some("chk_commodity_thousands_separator_len") => Self::ThousandsSeparatorLength,
+            Some("chk_commodity_decimal_separator_len") => Self::DecimalSeparatorLength,
 
             _ => Self::Database(error),
         }
@@ -38,22 +50,43 @@ impl CommodityLedger {
         &self,
         user_id: Uuid,
         name: &str,
-        format: &str,
+        description: Option<&str>,
+        symbol: &str,
+        thousands_separator: &str,
+        decimal_separator: &str,
+        is_prefix: bool,
     ) -> Result<CommodityRecord, Error> {
         let record = query_as!(
             CommodityRecord,
             "
             INSERT INTO _ledger.commodity
-                    (user_id, name, format)
+                    (user_id,
+                     name,
+                     description,
+                     symbol,
+                     thousands_separator,
+                     decimal_separator,
+                     is_prefix)
                 VALUES
-                    ($1, $2, $3)
+                    ($1, $2, $3,  $4, $5, $6, $7)
                 RETURNING
-                    id, created, name, format
+                    id,
+                    created,
+                    name,
+                    description,
+                    symbol,
+                    thousands_separator,
+                    decimal_separator,
+                    is_prefix
             ;
             ",
             user_id,
             name as _,
-            format as _
+            description as _,
+            symbol as _,
+            thousands_separator as _,
+            decimal_separator as _,
+            is_prefix
         )
         .fetch_one(&self.db)
         .await?;

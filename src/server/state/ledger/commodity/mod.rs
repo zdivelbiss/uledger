@@ -13,7 +13,11 @@ pub struct CommodityRecord {
     pub id: Uuid,
     pub created: DateTime<Utc>,
     pub name: String,
-    pub format: String,
+    pub description: Option<String>,
+    pub symbol: String,
+    pub thousands_separator: String,
+    pub decimal_separator: String,
+    pub is_prefix: bool,
 }
 
 #[derive(Debug)]

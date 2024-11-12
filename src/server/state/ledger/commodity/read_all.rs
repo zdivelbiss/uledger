@@ -13,7 +13,14 @@ impl CommodityLedger {
         let accounts = query_as!(
             CommodityRecord,
             "
-            SELECT id, created, name, format
+            SELECT id,
+                   created,
+                   name,
+                   description,
+                   symbol,
+                   thousands_separator,
+                   decimal_separator,
+                   is_prefix
                 FROM _ledger.commodity
                 WHERE
                     user_id = $1

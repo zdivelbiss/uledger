@@ -81,17 +81,28 @@ CREATE TABLE IF NOT EXISTS _ledger.commodity (
     id           AUTO_ID PRIMARY KEY,
     created      TIMESTAMPZ NOT NULL,
 
-    user_id      UUID   NOT NULL,
-    name         TEXT   NOT NULL,
-    format       TEXT   NOT NULL,
+    user_id      UUID NOT NULL,
+    name         TEXT NOT NULL,
+    description  TEXT,
+    
+    symbol               TEXT NOT NULL,
+    thousands_separator  TEXT NOT NULL,
+    decimal_separator    TEXT NOT NULL,
+    is_prefix            BOOLEAN NOT NULL,
 
     CONSTRAINT commodity_unq
         UNIQUE (user_id, name),
 
     CONSTRAINT chk_commodity_name_len
         CHECK (CHAR_LENGTH(name) <= /* text_len: */ 256),
-    CONSTRAINT chk_commodity_format_len
-        CHECK (CHAR_LENGTH(format) <= 32),
+    CONSTRAINT chk_commodity_description_len
+        CHECK (CHAR_LENGTH(description) <= /* desc_len: */ 1024),
+    CONSTRAINT chk_commodity_symbol_len
+        CHECK (CHAR_LENGTH(symbol) <= 16),
+    CONSTRAINT chk_commodity_thousands_separator_len
+        CHECK (CHAR_LENGTH(thousands_separator) <= 1),
+    CONSTRAINT chk_commodity_decimal_separator_len
+        CHECK (CHAR_LENGTH(decimal_separator) <= 1),
 
     CONSTRAINT commodity_fk_user_id
         FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE

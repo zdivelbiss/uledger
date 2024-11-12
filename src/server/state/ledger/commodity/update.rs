@@ -46,7 +46,11 @@ impl CommodityLedger {
         user_id: Uuid,
         id: Uuid,
         name: &str,
-        format: &str,
+        description: Option<&str>,
+        symbol: &str,
+        thousands_separator: &str,
+        decimal_separator: &str,
+        is_prefix: bool,
     ) -> Result<CommodityRecord, Error> {
         let record = query_as!(
             CommodityRecord,
@@ -54,19 +58,34 @@ impl CommodityLedger {
             UPDATE _ledger.commodity
                 SET
                     name = $3,
-                    format = $4
+                    description = $4,
+                    symbol = $5,
+                    thousands_separator = $6,
+                    decimal_separator = $7,
+                    is_prefix = $8
                 WHERE
                     user_id = $1
                         AND
                     id = $2
                 RETURNING
-                    id, created, name, format
+                    id,
+                    created,
+                    name,
+                    description,
+                    symbol,
+                    thousands_separator,
+                    decimal_separator,
+                    is_prefix
             ;
             ",
             user_id,
             id,
             name as _,
-            format as _
+            description as _,
+            symbol as _,
+            thousands_separator as _,
+            decimal_separator as _,
+            is_prefix
         )
         .fetch_one(&self.db)
         .await?;

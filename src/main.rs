@@ -1,4 +1,4 @@
-#![allow(clippy::unused_unit)]
+#![allow(clippy::unused_unit, clippy::too_many_arguments)]
 #![deny(
     clippy::disallowed_types,
     clippy::disallowed_macros,

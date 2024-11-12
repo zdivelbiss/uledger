@@ -1,195 +1,149 @@
-//! TODO use `rows_affected` to ensure IDs are actually affected
-
 use crate::server::{
-    api::{Commodity, CommodityInfo},
-    internal_error_old,
-    state::App,
+    api::crud_router,
+    htmx::IsHtmx,
+    internal_error,
+    state::{
+        ledger::{account::AccountLedger, commodity::CommodityLedger},
+        App,
+    },
     UserSession,
 };
 use axum::{
-    extract::{Form, Json, Path, State},
+    extract::{Form, Path, State},
     http::StatusCode,
-    routing, Router,
+    response::IntoResponse,
+    Router,
 };
 use uuid::Uuid;
 
 pub fn router() -> Router<App> {
-    Router::new()
-        .route("/", routing::get(get_all))
-        .route("/", routing::post(create))
-        .route("/:id", routing::get(read))
-        .route("/:id", routing::put(update))
-        .route("/:id", routing::delete(delete))
+    crud_router(_read_all, _create, _read, _update, _delete)
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("account already exists")]
-    Duplicate,
-
-    #[error("internal server error")]
-    Database(sqlx::Error),
+#[derive(Debug, Deserialize)]
+struct Info {
+    name: String,
+    description: Option<String>,
+    symbol: String,
+    thousands_separator: String,
+    decimal_separator: String,
+    is_prefix: bool,
 }
 
-impl From<sqlx::Error> for Error {
-    fn from(error: sqlx::Error) -> Self {
-        let Some(db_error) = error.as_database_error() else {
-            return Self::Database(error);
-        };
+async fn _read_all(
+    user_session: UserSession,
+    State(account_ledger): State<AccountLedger>,
+) -> impl IntoResponse {
+    match account_ledger.read_all(user_session.id()).await {
+        Ok(records) => todo!(),
 
-        match (db_error.code().as_deref(), db_error.constraint()) {
-            (Some("23505"), Some("accounts_user_id_kind_name_key")) => Error::Duplicate,
+        Err(error) => internal_error(error).into_response(),
+    }
+}
 
-            _ => Self::Database(error),
+async fn _create(
+    user_session: UserSession,
+    State(commodity_ledger): State<CommodityLedger>,
+    IsHtmx(is_htmx): IsHtmx,
+    Form(Info {
+        name,
+        description,
+        symbol,
+        thousands_separator,
+        decimal_separator,
+        is_prefix,
+    }): Form<Info>,
+) -> impl IntoResponse {
+    use crate::server::state::ledger::commodity::create::Error;
+
+    match commodity_ledger
+        .create(
+            user_session.id(),
+            name.as_str(),
+            description.as_deref(),
+            symbol.as_str(),
+            thousands_separator.as_str(),
+            decimal_separator.as_str(),
+            is_prefix,
+        )
+        .await
+    {
+        Ok(record) => todo!(),
+
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "account already exists").into_response(),
+        Err(Error::NameLength) => (StatusCode::BAD_REQUEST, "name too long").into_response(),
+        Err(Error::DescriptionLength) => {
+            (StatusCode::BAD_REQUEST, "description too long").into_response()
         }
+        Err(Error::SymbolLength) => (StatusCode::BAD_REQUEST, "symbol too long").into_response(),
+        Err(Error::ThousandsSeparatorLength) => {
+            (StatusCode::BAD_REQUEST, "thousands separator too long").into_response()
+        }
+        Err(Error::DecimalSeparatorLength) => {
+            (StatusCode::BAD_REQUEST, "decimal separator too long").into_response()
+        }
+        Err(error) => internal_error(error).into_response(),
     }
 }
 
-impl axum::response::IntoResponse for Error {
-    fn into_response(self) -> axum::response::Response {
-        axum::response::Response::builder()
-            .status(match &self {
-                Self::Duplicate => StatusCode::CONFLICT,
-                Self::Database(error) => internal_error_old(error),
-            })
-            .body(self.to_string().into())
-            .unwrap()
+async fn _read(
+    user_session: UserSession,
+    State(account_ledger): State<AccountLedger>,
+    IsHtmx(is_htmx): IsHtmx,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    use crate::server::state::ledger::account::read::Error;
+
+    match account_ledger.read(user_session.id(), id).await {
+        Ok(record) => todo!(),
+
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(error) => internal_error(error).into_response(),
     }
 }
 
-type Result<T> = std::result::Result<T, Error>;
+async fn _update(
+    user_session: UserSession,
+    State(account_ledger): State<AccountLedger>,
+    IsHtmx(is_htmx): IsHtmx,
+    Path(id): Path<Uuid>,
+    Form(Info {
+        kind,
+        name,
+        description,
+    }): Form<Info>,
+) -> impl IntoResponse {
+    use crate::server::state::ledger::account::update::Error;
 
-async fn get_all(user_session: UserSession, app_state: State<App>) -> Result<Json<Vec<Commodity>>> {
-    let user_id = user_session.get_user_id().await;
+    match account_ledger
+        .update(
+            user_session.id(),
+            id,
+            kind,
+            name.as_str(),
+            description.as_deref(),
+        )
+        .await
+    {
+        Ok(record) => todo!(),
 
-    let commodities = query_as!(
-        Commodity,
-        "
-        SELECT id, created, name, format
-            FROM _ledger..commodity
-            WHERE
-                user_id = $1
-        ;
-        ",
-        user_id
-    )
-    .fetch_all(app_state.db())
-    .await?;
-
-    Ok(Json::from(commodities))
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "account already exists").into_response(),
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(error) => internal_error(error).into_response(),
+    }
 }
 
-async fn create(
+async fn _delete(
     user_session: UserSession,
-    app_state: State<App>,
-    commodity_info: Form<CommodityInfo>,
-) -> Result<()> {
-    let user_id = user_session.get_user_id().await;
-    let commodity_name = commodity_info.name.as_str();
-    let commodity_format = commodity_info.format.as_str();
+    State(account_ledger): State<AccountLedger>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    use crate::server::state::ledger::account::delete::Error;
 
-    query!(
-        "
-        INSERT INTO _ledger..commodity
-                (user_id, name, format)
-            VALUES
-                ($1, $2, $3)
-        ;
-        ",
-        user_id,
-        commodity_name,
-        commodity_format
-    )
-    .execute(app_state.db())
-    .await?;
+    match account_ledger.delete(user_session.id(), id).await {
+        Ok(_) => todo!(),
 
-    Ok(())
-}
-
-async fn read(
-    user_session: UserSession,
-    app_state: State<App>,
-    commodity_id: Path<Uuid>,
-) -> Result<Json<Commodity>> {
-    let user_id = user_session.get_user_id().await;
-    let commodity_id = *commodity_id;
-
-    let commodity = query_as!(
-        Commodity,
-        "
-        SELECT id, created, name, format
-            FROM _ledger..commodity
-            WHERE
-                user_id = $2
-                    AND
-                id = $1
-        ;
-        ",
-        user_id,
-        commodity_id
-    )
-    .fetch_one(app_state.db())
-    .await?;
-
-    Ok(Json::from(commodity))
-}
-
-async fn update(
-    user_session: UserSession,
-    app_state: State<App>,
-    commodity_id: Path<Uuid>,
-    commodity_info: Json<CommodityInfo>,
-) -> Result<()> {
-    let user_id = user_session.get_user_id().await;
-    let commodity_id = *commodity_id;
-    let commodity_name = commodity_info.name.as_str();
-    let commodity_format = commodity_info.format.as_str();
-
-    query!(
-        "
-        UPDATE _ledger..commodity
-            SET
-                name = $3,
-                format = $4
-            WHERE
-                user_id = $2
-                    AND
-                id = $1
-        ;
-        ",
-        user_id,
-        commodity_id,
-        commodity_name,
-        commodity_format
-    )
-    .execute(app_state.db())
-    .await?;
-
-    Ok(())
-}
-
-async fn delete(
-    user_session: UserSession,
-    app_state: State<App>,
-    commodity_id: Path<Uuid>,
-) -> Result<()> {
-    let user_id = user_session.get_user_id().await;
-    let commodity_id = *commodity_id;
-
-    query!(
-        "
-        DELETE FROM _ledger..commodity
-            WHERE
-                user_id = $2
-                    AND
-                id = $1
-        ;
-        ",
-        user_id,
-        commodity_id
-    )
-    .execute(app_state.db())
-    .await?;
-
-    Ok(())
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(error) => internal_error(error).into_response(),
+    }
 }
