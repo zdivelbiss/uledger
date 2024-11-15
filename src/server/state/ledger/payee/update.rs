@@ -46,7 +46,7 @@ impl PayeeLedger {
         user_id: Uuid,
         id: Uuid,
         name: &str,
-        format: &str,
+        description: Option<&str>,
     ) -> Result<PayeeRecord, Error> {
         let record = query_as!(
             PayeeRecord,
@@ -66,7 +66,7 @@ impl PayeeLedger {
             user_id,
             id,
             name as _,
-            format as _
+            description as _
         )
         .fetch_one(&self.db)
         .await?;

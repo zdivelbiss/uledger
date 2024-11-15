@@ -2,10 +2,7 @@ use crate::server::{
     api::crud_router,
     htmx::IsHtmx,
     internal_error,
-    state::{
-        ledger::account::{AccountKind, AccountLedger},
-        App,
-    },
+    state::{ledger::payee::PayeeLedger, App},
     UserSession,
 };
 use axum::{
@@ -22,14 +19,13 @@ pub fn router() -> Router<App> {
 
 #[derive(Debug, Deserialize)]
 struct Info {
-    kind: AccountKind,
     name: String,
     description: Option<String>,
 }
 
 async fn _read_all(
     user_session: UserSession,
-    State(ledger): State<AccountLedger>,
+    State(ledger): State<PayeeLedger>,
 ) -> impl IntoResponse {
     match ledger.read_all(user_session.id()).await {
         Ok(records) => todo!(),
@@ -40,33 +36,22 @@ async fn _read_all(
 
 async fn _create(
     user_session: UserSession,
-    State(ledger): State<AccountLedger>,
+    State(ledger): State<PayeeLedger>,
     IsHtmx(is_htmx): IsHtmx,
-    Form(Info {
-        kind,
-        name,
-        description,
-    }): Form<Info>,
+    Form(Info { name, description }): Form<Info>,
 ) -> impl IntoResponse {
-    use crate::server::state::ledger::account::create::Error;
+    use crate::server::state::ledger::payee::create::Error;
 
     match ledger
-        .create(
-            user_session.id(),
-            kind,
-            name.as_str(),
-            description.as_deref(),
-        )
+        .create(user_session.id(), name.as_str(), description.as_deref())
         .await
     {
         Ok(record) => todo!(),
 
-        Err(Error::Duplicate) => (StatusCode::CONFLICT, "account already exists").into_response(),
-        Err(Error::NameLength) => {
-            (StatusCode::BAD_REQUEST, "account name too long").into_response()
-        }
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "payee already exists").into_response(),
+        Err(Error::NameLength) => (StatusCode::BAD_REQUEST, "payee name too long").into_response(),
         Err(Error::DescriptionLength) => {
-            (StatusCode::BAD_REQUEST, "account description too long").into_response()
+            (StatusCode::BAD_REQUEST, "payee description too long").into_response()
         }
         Err(error) => internal_error(error).into_response(),
     }
@@ -74,52 +59,40 @@ async fn _create(
 
 async fn _read(
     user_session: UserSession,
-    State(ledger): State<AccountLedger>,
+    State(ledger): State<PayeeLedger>,
     IsHtmx(is_htmx): IsHtmx,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    use crate::server::state::ledger::account::read::Error;
+    use crate::server::state::ledger::payee::read::Error;
 
     match ledger.read(user_session.id(), id).await {
         Ok(record) => todo!(),
 
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "payee not found").into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }
 
 async fn _update(
     user_session: UserSession,
-    State(ledger): State<AccountLedger>,
+    State(ledger): State<PayeeLedger>,
     IsHtmx(is_htmx): IsHtmx,
     Path(id): Path<Uuid>,
-    Form(Info {
-        kind,
-        name,
-        description,
-    }): Form<Info>,
+    Form(Info { name, description }): Form<Info>,
 ) -> impl IntoResponse {
-    use crate::server::state::ledger::account::update::Error;
+    use crate::server::state::ledger::payee::update::Error;
 
     match ledger
-        .update(
-            user_session.id(),
-            id,
-            kind,
-            name.as_str(),
-            description.as_deref(),
-        )
+        .update(user_session.id(), id, name.as_str(), description.as_deref())
         .await
     {
         Ok(record) => todo!(),
 
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
-        Err(Error::Duplicate) => (StatusCode::CONFLICT, "account already exists").into_response(),
-        Err(Error::NameLength) => {
-            (StatusCode::BAD_REQUEST, "account name too long").into_response()
-        }
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "payee not found").into_response(),
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "payee already exists").into_response(),
+        Err(Error::NameLength) => (StatusCode::BAD_REQUEST, "payee not found").into_response(),
         Err(Error::DescriptionLength) => {
-            (StatusCode::BAD_REQUEST, "account description too long").into_response()
+            (StatusCode::BAD_REQUEST, "payee not found").into_response()
         }
         Err(error) => internal_error(error).into_response(),
     }
@@ -127,10 +100,10 @@ async fn _update(
 
 async fn _delete(
     user_session: UserSession,
-    State(ledger): State<AccountLedger>,
+    State(ledger): State<PayeeLedger>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    use crate::server::state::ledger::account::delete::Error;
+    use crate::server::state::ledger::payee::delete::Error;
 
     match ledger.delete(user_session.id(), id).await {
         Ok(_) => todo!(),

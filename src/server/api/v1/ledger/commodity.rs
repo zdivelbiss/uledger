@@ -68,17 +68,25 @@ async fn _create(
         Ok(record) => todo!(),
 
         Err(Error::Duplicate) => (StatusCode::CONFLICT, "commodity already exists").into_response(),
-        Err(Error::NameLength) => (StatusCode::BAD_REQUEST, "name too long").into_response(),
+        Err(Error::NameLength) => {
+            (StatusCode::BAD_REQUEST, "commodity name too long").into_response()
+        }
         Err(Error::DescriptionLength) => {
-            (StatusCode::BAD_REQUEST, "description too long").into_response()
+            (StatusCode::BAD_REQUEST, "commodity description too long").into_response()
         }
-        Err(Error::SymbolLength) => (StatusCode::BAD_REQUEST, "symbol too long").into_response(),
-        Err(Error::ThousandsSeparatorLength) => {
-            (StatusCode::BAD_REQUEST, "thousands separator too long").into_response()
+        Err(Error::SymbolLength) => {
+            (StatusCode::BAD_REQUEST, "commodity symbol too long").into_response()
         }
-        Err(Error::DecimalSeparatorLength) => {
-            (StatusCode::BAD_REQUEST, "decimal separator too long").into_response()
-        }
+        Err(Error::ThousandsSeparatorLength) => (
+            StatusCode::BAD_REQUEST,
+            "commodity thousands separator too long",
+        )
+            .into_response(),
+        Err(Error::DecimalSeparatorLength) => (
+            StatusCode::BAD_REQUEST,
+            "commodity decimal separator too long",
+        )
+            .into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }
@@ -131,7 +139,25 @@ async fn _update(
         Ok(record) => todo!(),
 
         Err(Error::Duplicate) => (StatusCode::CONFLICT, "commodity already exists").into_response(),
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "commodity not found").into_response(),
+        Err(Error::NameLength) => {
+            (StatusCode::BAD_REQUEST, "commodity name too long").into_response()
+        }
+        Err(Error::DescriptionLength) => {
+            (StatusCode::BAD_REQUEST, "commodity description too long").into_response()
+        }
+        Err(Error::SymbolLength) => {
+            (StatusCode::BAD_REQUEST, "commodity symbol too long").into_response()
+        }
+        Err(Error::ThousandsSeparatorLength) => (
+            StatusCode::BAD_REQUEST,
+            "commodity thousands separator too long",
+        )
+            .into_response(),
+        Err(Error::DecimalSeparatorLength) => (
+            StatusCode::BAD_REQUEST,
+            "commodity decimal separator too long",
+        )
+            .into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }
