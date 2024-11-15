@@ -1,15 +1,14 @@
 -- META --
 ----------
 
-CREATE EXTENSION IF NOT EXISTS "citext";
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION "citext";
+CREATE EXTENSION "uuid-ossp";
+CREATE EXTENSION "pgcrypto";
 
-CREATE SCHEMA IF NOT EXISTS _user   AUTHORIZATION uledger;
-CREATE SCHEMA IF NOT EXISTS _ledger AUTHORIZATION uledger;
+CREATE SCHEMA _user   AUTHORIZATION uledger;
+CREATE SCHEMA _ledger AUTHORIZATION uledger;
 
 CREATE TYPE USER_ACCESS     AS ENUM ('ADMIN', 'REGULAR');
-CREATE TYPE ACCOUNT_KIND    AS ENUM ('EQUITY', 'ASSET', 'LIABILITY', 'INCOME', 'EXPENSE');
 
 CREATE DOMAIN AUTO_ID AS UUID
     DEFAULT GEN_RANDOM_UUID();
@@ -28,7 +27,7 @@ CREATE DOMAIN EMAIL_ADDRESS AS CITEXT
 -- AUTH --
 ----------
 
-CREATE TABLE IF NOT EXISTS _user.profile (
+CREATE TABLE _user.profile (
     id       AUTO_ID PRIMARY KEY,
     created  TIMESTAMPZ NOT NULL,
 
@@ -56,47 +55,45 @@ CREATE UNIQUE INDEX profile_unq_2 ON _user.profile(GREATEST(email_address, pendi
 -- LEDGER --
 ------------
 
-CREATE TABLE IF NOT EXISTS _ledger.account (
-    id              AUTO_ID PRIMARY KEY,
-    created         TIMESTAMPZ NOT NULL,
+CREATE TABLE _ledger.account (
+    id              AUTO_ID     PRIMARY KEY,
+    created         TIMESTAMPZ  NOT NULL,
+    user_id         UUID        NOT NULL,
 
-    user_id         UUID            NOT NULL,
-    kind            ACCOUNT_KIND    NOT NULL,
-    name            TEXT            NOT NULL,
+    name            TEXT NOT NULL,
     description     TEXT,
 
     CONSTRAINT account_unq
         UNIQUE (user_id, kind, name),
 
     CONSTRAINT account_chk_name_len
-        CHECK (CHAR_LENGTH(name) <= /* text_len: */ 256),
+        CHECK (CHAR_LENGTH(name) <= 128),
     CONSTRAINT account_chk_description_len
-        CHECK (CHAR_LENGTH(description) <= /* desc_len: */ 1024),
+        CHECK (CHAR_LENGTH(description) <= 1024),
 
     CONSTRAINT account_fk_user_id
         FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS _ledger.commodity (
-    id           AUTO_ID PRIMARY KEY,
-    created      TIMESTAMPZ NOT NULL,
+CREATE TABLE _ledger.commodity (
+    id           AUTO_ID     PRIMARY KEY,
+    created      TIMESTAMPZ  NOT NULL,
+    user_id      UUID        NOT NULL,
 
-    user_id      UUID NOT NULL,
-    name         TEXT NOT NULL,
-    description  TEXT,
-    
-    symbol               TEXT NOT NULL,
-    thousands_separator  TEXT NOT NULL,
-    decimal_separator    TEXT NOT NULL,
-    is_prefix            BOOLEAN NOT NULL,
+    name                 TEXT     NOT NULL,
+    description          TEXT,
+    symbol               TEXT     NOT NULL,
+    thousands_separator  TEXT     NOT NULL,
+    decimal_separator    TEXT     NOT NULL,
+    is_prefix            BOOLEAN  NOT NULL,
 
     CONSTRAINT commodity_unq
         UNIQUE (user_id, name),
 
     CONSTRAINT chk_commodity_name_len
-        CHECK (CHAR_LENGTH(name) <= /* text_len: */ 256),
+        CHECK (CHAR_LENGTH(name) <= 128),
     CONSTRAINT chk_commodity_description_len
-        CHECK (CHAR_LENGTH(description) <= /* desc_len: */ 1024),
+        CHECK (CHAR_LENGTH(description) <= 1024),
     CONSTRAINT chk_commodity_symbol_len
         CHECK (CHAR_LENGTH(symbol) <= 16),
     CONSTRAINT chk_commodity_thousands_separator_len
@@ -108,11 +105,11 @@ CREATE TABLE IF NOT EXISTS _ledger.commodity (
         FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS _ledger.conversion (
-    id              AUTO_ID PRIMARY KEY,
-    created         TIMESTAMPZ NOT NULL,
-
+CREATE TABLE _ledger.conversion (
+    id              AUTO_ID     PRIMARY KEY,
+    created         TIMESTAMPZ  NOT NULL,
     user_id         UUID        NOT NULL,
+
     effective       DATE        NOT NULL,
     from_commodity  UUID        NOT NULL,
     to_commodity    UUID        NOT NULL,
@@ -129,31 +126,31 @@ CREATE TABLE IF NOT EXISTS _ledger.conversion (
         FOREIGN KEY (to_commodity)    REFERENCES _ledger.commodity(id)  ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS _ledger.payee (
-    id       AUTO_ID PRIMARY KEY,
-    created  TIMESTAMPZ NOT NULL,
+CREATE TABLE _ledger.payee (
+    id       AUTO_ID     PRIMARY KEY,
+    created  TIMESTAMPZ  NOT NULL,
+    user_id  UUID        NOT NULL,
 
-    user_id      UUID  NOT NULL,
-    name         TEXT  NOT NULL,
+    name         TEXT NOT NULL,
     description  TEXT,
 
     CONSTRAINT payee_unq
         UNIQUE (user_id, name),
 
     CONSTRAINT payee_chk_name_len
-        CHECK (CHAR_LENGTH(name) <= /* text_len: */ 256),
+        CHECK (CHAR_LENGTH(name) <= 128),
     CONSTRAINT payee_chk_description_len
-        CHECK (CHAR_LENGTH(description) <= /* desc_len: */ 1024),
+        CHECK (CHAR_LENGTH(description) <= 1024),
 
     CONSTRAINT payee_fk_user_id
         FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS _ledger.transaction (
-    id              AUTO_ID PRIMARY KEY,
-    created         TIMESTAMPZ NOT NULL,
-
+CREATE TABLE _ledger.transaction (
+    id              AUTO_ID     PRIMARY KEY,
+    created         TIMESTAMPZ  NOT NULL,
     user_id         UUID        NOT NULL,
+
     occurred_on     DATE        NOT NULL,
     posted_on       DATE        NOT NULL,
     from_account    UUID        NOT NULL,
@@ -165,7 +162,7 @@ CREATE TABLE IF NOT EXISTS _ledger.transaction (
     description     TEXT,
 
     CONSTRAINT transaction_chk_description_len
-        CHECK (CHAR_LENGTH(description) <= /* desc_len: */ 1024),
+        CHECK (CHAR_LENGTH(description) <= 1024),
 
     CONSTRAINT transaction_fk_user_id
         FOREIGN KEY (user_id)         REFERENCES _user.profile(id)      ON DELETE CASCADE,
@@ -179,4 +176,37 @@ CREATE TABLE IF NOT EXISTS _ledger.transaction (
         FOREIGN KEY (from_commodity)  REFERENCES _ledger.commodity(id)  ON DELETE CASCADE,
     CONSTRAINT transaction_fk_payee
         FOREIGN KEY (from_commodity)  REFERENCES _ledger.payee(id)      ON DELETE CASCADE
+);
+
+
+
+-- TAGS --
+----------
+
+CREATE TABLE _ledger.account_tag (
+    id          AUTO_ID     PRIMARY KEY,
+    created     TIMESTAMPZ  NOT NULL,
+    user_id     UUID        NOT NULL,
+
+    name  TEXT NOT NULL,
+
+    CONSTRAINT account_tag_unq
+        UNIQUE(user_id, name),
+
+    CONSTRAINT account_tag_chk_name_len
+        CHECK (CHAR_LENGTH(name) <= 32),
+
+    CONSTRAINT account_tag_fk_user_id
+        FOREIGN KEY (user_id) REFERENCES _users.profile(id) ON DELETE CASCADE
+);
+
+CREATE TABLE _ledger.account_tag_map (
+    id          AUTO_ID PRIMARY KEY,
+    account_id  UUID    NOT NULL,
+    tag_id      UUID    NOT NULL,
+
+    CONSTRAINT account_tag_map_fk_account_id
+        FOREIGN KEY (account_id)  REFERENCES _ledger.account(id)      ON DELETE CASCADE,
+    CONSTRAINT account_tag_map_fk_tag_id
+        FOREIGN KEY (tag_id)      REFERENCES _ledger.account_tag(id)  ON DELETE CASCADE
 );
