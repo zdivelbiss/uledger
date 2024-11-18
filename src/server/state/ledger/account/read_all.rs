@@ -13,7 +13,7 @@ impl super::AccountLedger {
         let accounts = query_as!(
             AccountRecord,
             "
-            SELECT id, created, kind AS \"kind: AccountKind\", name, description
+            SELECT id, created, name, description
                 FROM _ledger.account
                 WHERE
                     user_id = $1

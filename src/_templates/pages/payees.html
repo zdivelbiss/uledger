@@ -1,0 +1,33 @@
+{{ extends "pages/_page.html" }}
+
+{{ block TITLE }}
+µLedger: Payees
+{{ endblock }}
+
+{{ block HEADER }}
+<h1>Your Payees</h1>
+{{ endblock }}
+
+{{ block CONTENT }}
+<details>
+    <summary>Add a New Payee</summary>
+
+    <div id="create-form" hx-ext="response-targets">
+        <div id="form-status"></div>
+
+        <form hx-post="/api/v1/ledger/payee" hx-target-error="#form-status">
+            <label for="name">Payee Name</label>
+            <input type="text" name="name" placeholder="payee name..." required />
+
+            <label for="description">Payee Description</label>
+            <textarea name="description" placeholder="payee descrition..."></textarea>
+
+            <input type="submit" value="Create Payee" />
+        </form>
+    </div>
+</details>
+
+<hr />
+
+<section class="list" hx-trigger="load" hx-get="/api/v1/ledger/commodities"></section>
+{{ endblock }}

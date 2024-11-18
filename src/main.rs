@@ -47,6 +47,12 @@ async fn main() {
             .init();
     }
 
+    let currency = Commodity::from(CurrencyKind::JPY);
+    let formatted = currency.parse(123_456_789_0000);
+
+    info!("{formatted}");
+    std::process::exit(0);
+
     server::run().await;
 
     info!("Reached safe shutdown point.");

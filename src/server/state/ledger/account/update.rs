@@ -45,7 +45,6 @@ impl super::AccountLedger {
         &self,
         user_id: Uuid,
         id: Uuid,
-        kind: AccountKind,
         name: &str,
         description: Option<&str>,
     ) -> Result<AccountRecord, Error> {
@@ -54,20 +53,18 @@ impl super::AccountLedger {
             "
             UPDATE _ledger.account
                 SET
-                    kind = $3,
-                    name = $4,
-                    description = $5
+                    name = $3,
+                    description = $4
                 WHERE
                     user_id = $1
                         AND
                     id = $2
                 RETURNING
-                    id, created, kind AS \"kind: AccountKind\", name, description
+                    id, created, name, description
             ;
             ",
             user_id,
             id,
-            kind as _,
             name as _,
             description as _
         )

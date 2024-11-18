@@ -2,10 +2,7 @@ use crate::server::{
     api::crud_router,
     htmx::IsHtmx,
     internal_error,
-    state::{
-        ledger::account::{AccountKind, AccountLedger},
-        App,
-    },
+    state::{ledger::account::AccountLedger, App},
     UserSession,
 };
 use axum::{
@@ -22,7 +19,6 @@ pub fn router() -> Router<App> {
 
 #[derive(Debug, Deserialize)]
 struct Info {
-    kind: AccountKind,
     name: String,
     description: Option<String>,
 }
@@ -42,21 +38,12 @@ async fn _create(
     user_session: UserSession,
     State(ledger): State<AccountLedger>,
     IsHtmx(is_htmx): IsHtmx,
-    Form(Info {
-        kind,
-        name,
-        description,
-    }): Form<Info>,
+    Form(Info { name, description }): Form<Info>,
 ) -> impl IntoResponse {
     use crate::server::state::ledger::account::create::Error;
 
     match ledger
-        .create(
-            user_session.id(),
-            kind,
-            name.as_str(),
-            description.as_deref(),
-        )
+        .create(user_session.id(), name.as_str(), description.as_deref())
         .await
     {
         Ok(record) => todo!(),
@@ -93,22 +80,12 @@ async fn _update(
     State(ledger): State<AccountLedger>,
     IsHtmx(is_htmx): IsHtmx,
     Path(id): Path<Uuid>,
-    Form(Info {
-        kind,
-        name,
-        description,
-    }): Form<Info>,
+    Form(Info { name, description }): Form<Info>,
 ) -> impl IntoResponse {
     use crate::server::state::ledger::account::update::Error;
 
     match ledger
-        .update(
-            user_session.id(),
-            id,
-            kind,
-            name.as_str(),
-            description.as_deref(),
-        )
+        .update(user_session.id(), id, name.as_str(), description.as_deref())
         .await
     {
         Ok(record) => todo!(),

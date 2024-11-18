@@ -37,7 +37,6 @@ impl AccountLedger {
     pub async fn create(
         &self,
         user_id: Uuid,
-        kind: AccountKind,
         name: &str,
         description: Option<&str>,
     ) -> Result<AccountRecord, Error> {
@@ -45,15 +44,14 @@ impl AccountLedger {
             AccountRecord,
             "
             INSERT INTO _ledger.account
-                    (user_id, kind, name, description)
+                    (user_id, name, description)
                 VALUES
-                    ($1, $2, $3, $4)
+                    ($1, $2, $3)
                 RETURNING
-                    id, created, kind AS \"kind: AccountKind\", name, description
+                    id, created, name, description
             ;
             ",
             user_id,
-            kind as _,
             name as _,
             description as _
         )

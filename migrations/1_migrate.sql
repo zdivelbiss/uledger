@@ -52,6 +52,11 @@ CREATE UNIQUE INDEX profile_unq_2 ON _user.profile(GREATEST(email_address, pendi
 
 
 
+-- DATA --
+----------
+
+
+
 -- LEDGER --
 ------------
 
@@ -64,7 +69,7 @@ CREATE TABLE _ledger.account (
     description     TEXT,
 
     CONSTRAINT account_unq
-        UNIQUE (user_id, kind, name),
+        UNIQUE (user_id, name),
 
     CONSTRAINT account_chk_name_len
         CHECK (CHAR_LENGTH(name) <= 128),
@@ -155,10 +160,10 @@ CREATE TABLE _ledger.transaction (
     posted_on       DATE        NOT NULL,
     from_account    UUID        NOT NULL,
     to_account      UUID        NOT NULL,
-    change          FLOAT8      NOT NULL,
     from_commodity  UUID        NOT NULL,
     to_commodity    UUID        NOT NULL,
     payee           UUID        NOT NULL,
+    change          NUMERIC     NOT NULL,
     description     TEXT,
 
     CONSTRAINT transaction_chk_description_len
@@ -197,7 +202,7 @@ CREATE TABLE _ledger.account_tag (
         CHECK (CHAR_LENGTH(name) <= 32),
 
     CONSTRAINT account_tag_fk_user_id
-        FOREIGN KEY (user_id) REFERENCES _users.profile(id) ON DELETE CASCADE
+        FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
 );
 
 CREATE TABLE _ledger.account_tag_map (
