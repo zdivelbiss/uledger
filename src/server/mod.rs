@@ -1,4 +1,5 @@
 use crate::cfg;
+use askama_web::WebTemplate;
 use axum::{
     http::{header, HeaderValue, StatusCode},
     Router,
@@ -87,7 +88,7 @@ async fn build_router() -> Router {
         .nest("/", site::router())
         .nest("/api", api::router())
         .nest("/assets", assets::router())
-        .fallback(|| async { (StatusCode::NOT_FOUND, FallbackTemplate {}) })
+        .fallback(|| async { (StatusCode::NOT_FOUND, WebTemplate(FallbackTemplate {})) })
         .layer(set_server_layer)
         .layer(compression_layer)
         .layer(decompression_layer)

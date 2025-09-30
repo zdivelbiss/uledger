@@ -35,7 +35,6 @@ impl UserSession {
     }
 }
 
-#[axum::async_trait]
 impl<S: Sync + Send> FromRequestParts<S> for UserSession {
     type Rejection = (StatusCode, &'static str);
 

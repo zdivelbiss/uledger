@@ -55,7 +55,6 @@ impl HtmxInfo {
     }
 }
 
-#[axum::async_trait]
 impl<S: Sync + Send> FromRequestParts<S> for HtmxInfo {
     type Rejection = (StatusCode, &'static str);
 

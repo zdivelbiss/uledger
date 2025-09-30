@@ -19,7 +19,6 @@ impl std::ops::Deref for IsHtmx {
     }
 }
 
-#[axum::async_trait]
 impl<S: Sync + Send> FromRequestParts<S> for IsHtmx {
     type Rejection = std::convert::Infallible;
 

@@ -1,4 +1,5 @@
 use crate::server::{state::App, UserSession};
+use askama_web::WebTemplate;
 use axum::{
     extract::Request,
     middleware::Next,
@@ -29,8 +30,14 @@ pub fn router() -> axum::Router<App> {
     axum::Router::new()
         // Authenticated
         .route("/", get(|| async { Redirect::temporary("/accounts") }))
-        .route("/accounts", get(|| async { AccountsTemplate {} }))
-        .route("/commodities", get(|| async { CommoditiesTemplate {} }))
+        .route(
+            "/accounts",
+            get(|| async { WebTemplate(AccountsTemplate {}) }),
+        )
+        .route(
+            "/commodities",
+            get(|| async { WebTemplate(CommoditiesTemplate {}) }),
+        )
         .layer(axum::middleware::from_fn(
             |user_session: Option<UserSession>, request: Request, next: Next| async move {
                 if user_session.is_none() {
@@ -41,6 +48,9 @@ pub fn router() -> axum::Router<App> {
             },
         ))
         // Unauthenticated
-        .route("/register", get(|| async { RegisterTemplate {} }))
-        .route("/login", get(|| async { LoginTemplate {} }))
+        .route(
+            "/register",
+            get(|| async { WebTemplate(RegisterTemplate {}) }),
+        )
+        .route("/login", get(|| async { WebTemplate(LoginTemplate {}) }))
 }

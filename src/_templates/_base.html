@@ -3,7 +3,7 @@
 
 <head>
 
-    <!-- OpenSans Font -->
+    {# OpenSans Font #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet"
@@ -22,12 +22,12 @@
     {{ block HEAD }}
     {{ endblock }}
 
-    <script src="https://unpkg.com/htmx.org@2.0.3"
-        integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous">
-        </script>
-    <script src="https://unpkg.com/htmx-ext-response-targets@2.0.0"
-        integrity="sha384-25EjMH+UroVBJlocVAefkTNIVpGryrC7PN/vwZFZrLDWJ64ZlgE+7tOg1z7pWEfW" crossorigin="anonymous">
-        </script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js"
+        integrity="sha384-ZBXiYtYQ6hJ2Y0ZNoYuI+Nq5MqWBr+chMrS/RkXpNzQCApHEhOt2aY8EJgqwHLkJ"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.2"
+        integrity="sha384-T41oglUPvXLGBVyRdZsVRxNWnOOqCynaPubjUVjxhsjFTKrFJGEMm3/0KGmNQ+Pg"
+        crossorigin="anonymous"></script>
 </head>
 
 <body hx-ext="response-targets">
