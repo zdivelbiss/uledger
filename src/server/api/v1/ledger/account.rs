@@ -1,8 +1,6 @@
 use crate::{
-    api::crud_router,
-    internal_error,
-    state::{App, ledger::account::AccountLedger},
-    user_session::UserSession,
+    server::{UserSession, api::crud_router, internal_error},
+    state::{AppState, ledger::account::AccountLedger},
 };
 use axum::{
     Router,
@@ -12,7 +10,7 @@ use axum::{
 };
 use uuid::Uuid;
 
-pub fn router() -> Router<App> {
+pub fn router() -> Router<AppState> {
     crud_router(_read_all, _create, _read, _update, _delete)
 }
 

@@ -44,7 +44,11 @@ impl super::UserVerification {
 
             0 => Err(Error::NoMatch),
 
-            rows_affected => unreachable!("Unexpected {rows_affected} finishing email validation!"),
+            rows_affected => {
+                error!("Unexpected {rows_affected} finishing email validation!");
+
+                Err(Error::NoMatch)
+            }
         }
     }
 }

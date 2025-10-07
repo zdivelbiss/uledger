@@ -1,4 +1,4 @@
-use crate::state::App;
+use crate::state::AppState;
 use sqlx::{Pool, Postgres};
 
 pub mod login;
@@ -9,8 +9,8 @@ pub struct UserProfile {
     db: Pool<Postgres>,
 }
 
-impl axum::extract::FromRef<App> for UserProfile {
-    fn from_ref(app: &App) -> Self {
+impl axum::extract::FromRef<AppState> for UserProfile {
+    fn from_ref(app: &AppState) -> Self {
         Self { db: app.db.clone() }
     }
 }

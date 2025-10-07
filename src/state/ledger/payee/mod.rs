@@ -4,7 +4,7 @@ pub mod read;
 pub mod read_all;
 pub mod update;
 
-use crate::state::App;
+use crate::state::AppState;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
@@ -21,8 +21,8 @@ pub struct PayeeLedger {
     db: crate::Datastore,
 }
 
-impl axum::extract::FromRef<App> for PayeeLedger {
-    fn from_ref(app: &App) -> Self {
+impl axum::extract::FromRef<AppState> for PayeeLedger {
+    fn from_ref(app: &AppState) -> Self {
         Self { db: app.db.clone() }
     }
 }

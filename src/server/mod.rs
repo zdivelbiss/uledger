@@ -1,4 +1,4 @@
-use crate::{api, cfg, config::CONFIG, state::App};
+use crate::{config::CONFIG, state::AppState};
 use askama_web::WebTemplate;
 use axum::{
     Router,
@@ -16,6 +16,7 @@ use tower_sessions_redis_store::{
     fred::{self, prelude::ClientLike},
 };
 
+mod api;
 mod assets;
 mod htmx;
 mod site;
@@ -38,11 +39,13 @@ pub async fn run() {
         .expect("error binding socket");
 
     info!("Begin listening for requests.");
-    let service = axum::serve(listener, app);
+    axum::serve(listener, app)
+        .await
+        .expect("error serving connections");
 }
 
-async fn build_router() -> Router<App> {
-    let app_state = crate::state::App::create().await;
+async fn build_router() -> Router {
+    let app_state = AppState::create().await;
 
     // Connect to session database ...
     let url = CONFIG.session.url.as_str();
@@ -81,7 +84,7 @@ async fn build_router() -> Router<App> {
     );
 
     Router::new()
-        .nest("/", site::router())
+        .merge(site::router())
         .nest("/api", api::router())
         .nest("/assets", assets::router())
         .fallback(|| async { (StatusCode::NOT_FOUND, WebTemplate(FallbackTemplate {})) })

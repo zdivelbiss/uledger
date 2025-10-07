@@ -6,11 +6,11 @@ pub mod ledger;
 pub mod user;
 
 #[derive(Clone)]
-pub struct App {
+pub struct AppState {
     db: Pool<Postgres>,
 }
 
-impl App {
+impl AppState {
     pub async fn create() -> Self {
         let db_pool = PgPoolOptions::new()
             .max_connections(CONFIG.database.pool.size)

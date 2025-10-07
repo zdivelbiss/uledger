@@ -1,4 +1,4 @@
-use crate::{server::internal_error, state::App};
+use crate::{server::internal_error, state::AppState};
 use axum::{
     Router,
     body::Bytes,
@@ -14,8 +14,8 @@ use std::{
 
 static ASSETS_PATH: LazyLock<PathBuf> = LazyLock::new(|| PathBuf::from("_assets/"));
 
-pub fn router() -> Router<App> {
-    Router::new().route("/*path", get(get_cached))
+pub fn router() -> Router<AppState> {
+    Router::new().route("/{*path}", get(get_cached))
 }
 
 #[derive(Debug, Clone)]

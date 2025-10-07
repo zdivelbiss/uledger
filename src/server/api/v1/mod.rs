@@ -1,9 +1,9 @@
-use crate::state::App;
+use crate::state::AppState;
 
 mod ledger;
 mod user;
 
-pub fn router() -> axum::Router<App> {
+pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
         .nest("/ledger", ledger::router())
         .nest("/user", user::router())

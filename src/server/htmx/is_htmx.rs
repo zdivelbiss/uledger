@@ -7,7 +7,7 @@ pub struct IsHtmx(pub bool);
 
 impl IsHtmx {
     fn new(headers: &HeaderMap) -> Self {
-        Self(headers.get("HX-Request").map_or(false, |_| true))
+        Self(headers.get("HX-Request").is_some_and(|_| true))
     }
 }
 
