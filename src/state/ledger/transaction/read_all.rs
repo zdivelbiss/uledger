@@ -7,14 +7,14 @@ pub enum Error {
     Database(#[from] sqlx::Error),
 }
 
-impl super::AccountLedger {
+impl TransactionLedger {
     #[instrument]
-    pub async fn read_all(&self, user_id: Uuid) -> Result<Box<[AccountRecord]>, Error> {
+    pub async fn read_all(&self, user_id: Uuid) -> Result<Box<[TransactionRecord]>, Error> {
         let records = query_as!(
-            AccountRecord,
+            TransactionRecord,
             "
-            SELECT id, created, name, description
-                FROM _ledger.account
+            SELECT id, created, occurred_on, account, payee, currency, amount, description
+                FROM _ledger.transaction
                 WHERE
                     user_id = $1
             ;

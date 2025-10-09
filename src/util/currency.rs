@@ -1,34 +1,34 @@
 use std::{collections::BTreeMap, sync::LazyLock};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Commodity {
-    currency_code: &'static str,
-    symbol: &'static str,
-    friendly_name: &'static str,
+pub struct Currency {
+    pub iso_code: &'static str,
+    pub symbol: &'static str,
+    pub friendly_name: &'static str,
     thousands_separator: char,
     decimal_separator: Option<char>,
 }
 
-impl Commodity {
+impl Currency {
     const MAX_DECIMAL_PRECISION: u32 = 9;
     const DECIMAL_PART: u128 = 10u128.pow(Self::MAX_DECIMAL_PRECISION);
 
     pub fn get(currency_code: &str) -> Option<&'static Self> {
-        COMMODITIES.get(currency_code).copied()
+        CURRENCIES.get(currency_code).copied()
     }
 
-    pub fn get_all() -> &'static [Commodity] {
-        &COMMODITY_DEFS
+    pub fn get_all() -> &'static [Currency] {
+        &CURRENCY_DEFS
     }
 
     pub fn get_serialized(currency_code: &str) -> Option<&'static str> {
-        INDIVIDUAL_COMMODITIES_SERIALIZED
+        INDIVIDUAL_CURRENCIES_SERIALIZED
             .get(currency_code)
             .map(String::as_str)
     }
 
     pub fn get_all_serialized() -> &'static str {
-        &ALL_COMMODITIES_SERIALIZED
+        &ALL_CURRENCIES_SERIALIZED
     }
 
     pub fn parse(&self, value: u128) -> String {
@@ -96,7 +96,7 @@ impl Commodity {
     }
 }
 
-macro_rules! commodities {
+macro_rules! currencies {
     (
         $(
             $currency_code:ident {
@@ -107,10 +107,10 @@ macro_rules! commodities {
             } $(,)?
         )*
     ) => {
-        static COMMODITY_DEFS: [Commodity; 18] = [
+        static CURRENCY_DEFS: [Currency; 18] = [
             $(
-                Commodity {
-                    currency_code: stringify!($currency_code),
+                Currency {
+                    iso_code: stringify!($currency_code),
                     symbol: $symbol,
                     friendly_name: $friendly_name,
                     thousands_separator: $thousands_separator,
@@ -121,7 +121,7 @@ macro_rules! commodities {
     }
 }
 
-commodities! {
+currencies! {
     USD { "$"   ',' Some('.'), "United states dollar" },
     EUR { "€"   ',' Some('.'), "Euro" },
     JPY { "¥"   ',' None,      "Japanese yen" },
@@ -142,24 +142,24 @@ commodities! {
     ZAR { "R"   ',' None,      "South African rand" },
 }
 
-static COMMODITIES: LazyLock<BTreeMap<&'static str, &'static Commodity>> = LazyLock::new(|| {
+static CURRENCIES: LazyLock<BTreeMap<&'static str, &'static Currency>> = LazyLock::new(|| {
     BTreeMap::from_iter(
-        COMMODITY_DEFS
+        CURRENCY_DEFS
             .iter()
-            .map(|commodity| (commodity.currency_code, commodity)),
+            .map(|currency| (currency.iso_code, currency)),
     )
 });
 
-static ALL_COMMODITIES_SERIALIZED: LazyLock<String> = LazyLock::new(|| {
-    serde_json::to_string(&COMMODITY_DEFS).expect("failed to serialize commodities")
+static ALL_CURRENCIES_SERIALIZED: LazyLock<String> = LazyLock::new(|| {
+    serde_json::to_string(&CURRENCY_DEFS).expect("failed to serialize currencies")
 });
 
-static INDIVIDUAL_COMMODITIES_SERIALIZED: LazyLock<BTreeMap<&'static str, String>> =
+static INDIVIDUAL_CURRENCIES_SERIALIZED: LazyLock<BTreeMap<&'static str, String>> =
     LazyLock::new(|| {
-        BTreeMap::from_iter(COMMODITY_DEFS.iter().map(|commodity| {
+        BTreeMap::from_iter(CURRENCY_DEFS.iter().map(|currency| {
             (
-                commodity.currency_code,
-                serde_json::to_string(commodity).expect("failed to serialize commodity"),
+                currency.iso_code,
+                serde_json::to_string(currency).expect("failed to serialize currency"),
             )
         }))
     });

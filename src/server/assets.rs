@@ -50,8 +50,11 @@ pub enum Error {
     #[error("Asset not found.")]
     NotFound,
 
-    #[error("Asset type not supported.")]
-    UnsupportedAsset,
+    #[error("Asset not supported: {{ Path: {path:?}, Extension: {extension:?} }}")]
+    UnsupportedAsset {
+        path: PathBuf,
+        extension: Option<String>,
+    },
 
     #[error(transparent)]
     Io(tokio::io::Error),
@@ -77,9 +80,10 @@ impl IntoResponse for Error {
         match &self {
             Error::NotFound => (StatusCode::NOT_FOUND, self.to_string()).into_response(),
 
-            Error::UnsupportedAsset => {
-                (StatusCode::UNSUPPORTED_MEDIA_TYPE, self.to_string()).into_response()
-            }
+            Error::UnsupportedAsset {
+                path: _,
+                extension: _,
+            } => (StatusCode::UNSUPPORTED_MEDIA_TYPE, self.to_string()).into_response(),
 
             error => internal_error(error).into_response(),
         }
@@ -126,7 +130,12 @@ async fn get_cached(path: axum::extract::Path<PathBuf>) -> Result<Asset, Error> 
 
             Some("png") => Asset::Png(file.into()),
 
-            _ => return Err(Error::UnsupportedAsset),
+            _ => {
+                return Err(Error::UnsupportedAsset {
+                    path: path.clone(),
+                    extension: extension.map(|s| s.to_owned()),
+                });
+            }
         }
     };
 

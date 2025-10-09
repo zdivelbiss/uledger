@@ -1,8 +1,18 @@
-use crate::{server::UserSession, state::AppState};
+use crate::{
+    server::{UserSession, internal_error},
+    state::{
+        AppState,
+        ledger::{
+            account::{AccountLedger, AccountRecord},
+            payee::{PayeeLedger, PayeeRecord},
+        },
+    },
+    util::Currency,
+};
 use askama_web::WebTemplate;
 use axum::{
     Router,
-    extract::Request,
+    extract::{Request, State},
     middleware::Next,
     response::{IntoResponse, Redirect},
     routing::get,
@@ -24,6 +34,14 @@ struct AccountsTemplate {}
 #[template(path = "pages/payees.html")]
 struct PayeesTemplate {}
 
+#[derive(askama::Template)]
+#[template(path = "pages/transactions.html")]
+struct TransactionsTemplate {
+    accounts: Box<[AccountRecord]>,
+    payees: Box<[PayeeRecord]>,
+    currencies: &'static [Currency],
+}
+
 pub fn router() -> Router<AppState> {
     Router::new()
         // Authenticated
@@ -33,6 +51,30 @@ pub fn router() -> Router<AppState> {
             get(|| async { WebTemplate(AccountsTemplate {}) }),
         )
         .route("/payees", get(|| async { WebTemplate(PayeesTemplate {}) }))
+        .route(
+            "/transactions",
+            get(
+                |user_session: UserSession,
+                 State(account_ledger): State<AccountLedger>,
+                 State(payee_ledger): State<PayeeLedger>| async move {
+                    let accounts = match account_ledger.read_all(user_session.id()).await {
+                        Ok(accounts) => accounts,
+                        Err(error) => return internal_error(error).into_response(),
+                    };
+                    let payees = match payee_ledger.read_all(user_session.id()).await {
+                        Ok(payees) => payees,
+                        Err(error) => return internal_error(error).into_response(),
+                    };
+
+                    WebTemplate(TransactionsTemplate {
+                        accounts,
+                        payees,
+                        currencies: Currency::get_all(),
+                    })
+                    .into_response()
+                },
+            ),
+        )
         .layer(axum::middleware::from_fn(check_user_authenticated))
         // Unauthenticated
         .route(

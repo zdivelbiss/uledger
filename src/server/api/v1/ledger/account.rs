@@ -44,12 +44,12 @@ async fn _create(
     {
         Ok(record) => serialize_json_response(&record).into_response(),
 
-        Err(Error::Duplicate) => (StatusCode::CONFLICT, "account already exists").into_response(),
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "Account already exists.").into_response(),
         Err(Error::NameLength) => {
-            (StatusCode::BAD_REQUEST, "account name too long").into_response()
+            (StatusCode::BAD_REQUEST, "Account name is too long.").into_response()
         }
         Err(Error::DescriptionLength) => {
-            (StatusCode::BAD_REQUEST, "account description too long").into_response()
+            (StatusCode::BAD_REQUEST, "Account description is too long.").into_response()
         }
         Err(error) => internal_error(error).into_response(),
     }
@@ -65,7 +65,7 @@ async fn _read(
     match ledger.read(user_session.id(), id).await {
         Ok(record) => serialize_json_response(&record).into_response(),
 
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Account was not found.").into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }
@@ -84,13 +84,13 @@ async fn _update(
     {
         Ok(record) => serialize_json_response(&record).into_response(),
 
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
-        Err(Error::Duplicate) => (StatusCode::CONFLICT, "account already exists").into_response(),
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Account was not found.").into_response(),
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "Account already exists.").into_response(),
         Err(Error::NameLength) => {
-            (StatusCode::BAD_REQUEST, "account name too long").into_response()
+            (StatusCode::BAD_REQUEST, "Account name is too long.").into_response()
         }
         Err(Error::DescriptionLength) => {
-            (StatusCode::BAD_REQUEST, "account description too long").into_response()
+            (StatusCode::BAD_REQUEST, "Account description is too long.").into_response()
         }
         Err(error) => internal_error(error).into_response(),
     }
@@ -106,7 +106,7 @@ async fn _delete(
     match ledger.delete(user_session.id(), id).await {
         Ok(_) => (StatusCode::OK, "Account has been deleted.").into_response(),
 
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Account was not found.").into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }

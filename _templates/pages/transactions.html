@@ -1,0 +1,60 @@
+{{ extends "pages/_page.html" }}
+
+{{ block TITLE }}
+µLedger: Transactions
+{{ endblock }}
+
+{{ block HEADER }}
+<h1>Your Transactions</h1>
+{{ endblock }}
+
+{{ block CONTENT }}
+<details>
+    <summary>Add a New Transaction</summary>
+
+    <div id="create-form" class="flex-col">
+        <div id="form-status"></div>
+
+        <form hx-post="/api/v1/ledger/transaction" hx-target-error="#form-status">
+            <label for="occurred_on">Date</label>
+            <input type="date" name="occurred_on" required />
+
+            <label for="account">Account</label>
+            <select name="account" required>
+                {{ for account in accounts }}
+                <option value="{: account.id :}">{: account.name :}</option>
+                {{ endfor }}
+            </select>
+
+            <label for="payee">Payee</label>
+            <select name="payee" required>
+                {{ for payee in payees }}
+                <option value="{: payee.id :}">{: payee.name :}</option>
+                {{ endfor }}
+            </select>
+
+            <label for="currency">Currency</label>
+            <select name="currency" required>
+                {{ for currency in currencies }}
+                <option value="{: currency.iso_code :}">
+                    {: currency.symbol :} &#160;{: currency.friendly_name :}
+                </option>
+                {{ endfor }}
+            </select>
+
+            <label for="amount">Amount</label>
+            <input type="number" name="amount" min="0.00" max="999999999999999.99" step="0.01" placeholder="0.00"
+                required />
+
+            <label for="description">Description</label>
+            <textarea name="description" placeholder="(optional)"></textarea>
+
+            <input type="submit" value="Create" />
+        </form>
+    </div>
+</details>
+
+<hr />
+
+<section class="list" hx-trigger="load" hx-get="/api/v1/ledger/transaction"></section>
+{{ endblock }}

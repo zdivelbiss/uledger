@@ -10,17 +10,49 @@ CREATE SCHEMA _ledger AUTHORIZATION uledger_service;
 CREATE TYPE USER_ACCESS     AS ENUM ('ADMIN', 'REGULAR');
 
 CREATE DOMAIN AUTO_ID AS UUID
-    DEFAULT GEN_RANDOM_UUID();
+    DEFAULT GEN_RANDOM_UUID()
+;
 
 CREATE DOMAIN TIMESTAMPZ AS TIMESTAMP WITH TIME ZONE
-    DEFAULT NOW();
+    DEFAULT NOW()
+;
 
 CREATE DOMAIN EMAIL_ADDRESS AS TEXT
     CONSTRAINT chk_email_address_len
         CHECK (CHAR_LENGTH((value)) <= 128)
     CONSTRAINT chk_email_address_format
-        CHECK ((value) ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$');
+        CHECK ((value) ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$')
+;
 
+CREATE DOMAIN CURRENCY_CODE AS TEXT
+    CONSTRAINT chk_currency_code_len
+        CHECK (CHAR_LENGTH((value)) = 3)
+    CONSTRAINT chk_currency_code_is_iso
+        CHECK (
+            (value)
+                IN
+            (
+                'USD',
+                'EUR',
+                'JPY',
+                'GBP',
+                'CNY',
+                'AUD',
+                'CAD',
+                'CHF',
+                'HKD',
+                'SGD',
+                'SEK',
+                'KRW',
+                'NOK',
+                'NZD',
+                'INR',
+                'MXN',
+                'TWD',
+                'ZAR'
+            )
+        )
+;
 
 
 -- AUTH --
@@ -104,25 +136,22 @@ CREATE TABLE _ledger.transaction (
     created         TIMESTAMPZ  NOT NULL,
     user_id         UUID        NOT NULL,
 
-    occurred_on     TIMESTAMPZ  NOT NULL,
-    from_account    UUID        NOT NULL,
-    from_currency   TEXT        NOT NULL,
-    payee           UUID        NOT NULL,
-    change          NUMERIC     NOT NULL,
+    occurred_on     DATE                NOT NULL,
+    account         UUID                NOT NULL,
+    payee           UUID                NOT NULL,
+    currency        CURRENCY_CODE       NOT NULL,
+    amount          DOUBLE PRECISION    NOT NULL,
     description     TEXT,
-
-    CONSTRAINT transaction_chk_from_currency_len
-        check (CHAR_LENGTH(from_currency) == 3),
 
     CONSTRAINT transaction_chk_description_len
         CHECK (CHAR_LENGTH(description) <= 1024),
 
     CONSTRAINT transaction_fk_user_id
-        FOREIGN KEY (user_id)       REFERENCES _user.profile(id)    ON DELETE CASCADE,
-    CONSTRAINT transaction_fk_from_account
-        FOREIGN KEY (from_account)  REFERENCES _ledger.account(id)  ON DELETE CASCADE,
+        FOREIGN KEY (user_id)   REFERENCES _user.profile(id)    ON DELETE CASCADE,
+    CONSTRAINT transaction_fk_account
+        FOREIGN KEY (account)   REFERENCES _ledger.account(id)  ON DELETE CASCADE,
     CONSTRAINT transaction_fk_payee
-        FOREIGN KEY (payee)         REFERENCES _ledger.payee(id)    ON DELETE CASCADE
+        FOREIGN KEY (payee)     REFERENCES _ledger.payee(id)    ON DELETE CASCADE
 );
 
 

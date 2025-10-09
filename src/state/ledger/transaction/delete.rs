@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("payee was not found")]
+    #[error("transaction was not found")]
     NotFound,
 
     #[error(transparent)]
@@ -19,12 +19,12 @@ impl From<sqlx::Error> for Error {
     }
 }
 
-impl PayeeLedger {
+impl TransactionLedger {
     #[instrument]
     pub async fn delete(&self, user_id: Uuid, id: Uuid) -> Result<(), Error> {
         let rows_affected = query!(
             "
-            DELETE FROM _ledger.payee
+            DELETE FROM _ledger.transaction
                 WHERE
                     user_id = $2
                         AND

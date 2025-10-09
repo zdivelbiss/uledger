@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("could not find")]
+    #[error("account was not found")]
     NotFound,
 
     #[error(transparent)]

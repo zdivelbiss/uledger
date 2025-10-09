@@ -10,7 +10,7 @@ pub enum Error {
 impl PayeeLedger {
     #[instrument]
     pub async fn read_all(&self, user_id: Uuid) -> Result<Box<[PayeeRecord]>, Error> {
-        let accounts = query_as!(
+        let records = query_as!(
             PayeeRecord,
             "
             SELECT id, created, name, description
@@ -25,6 +25,6 @@ impl PayeeLedger {
         .await?
         .into_boxed_slice();
 
-        Ok(accounts)
+        Ok(records)
     }
 }
