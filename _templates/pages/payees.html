@@ -22,12 +22,12 @@
             <label for="description">Payee Description</label>
             <textarea name="description" placeholder="payee descrition..."></textarea>
 
-            <input type="submit" value="Create Payee" />
+            <input type="submit" value="Create" />
         </form>
     </div>
 </details>
 
 <hr />
 
-<section class="list" hx-trigger="load" hx-get="/api/v1/ledger/commodities"></section>
+<section class="list" hx-trigger="load" hx-get="/api/v1/ledger/payee"></section>
 {{ endblock }}

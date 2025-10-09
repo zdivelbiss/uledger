@@ -15,19 +15,20 @@
     <div id="create-form">
         <div id="form-status"></div>
 
-        <form hx-post="/api/v1/ledger/accounts" hx-target-error="#form-status">
+        <form hx-post="/api/v1/ledger/account" hx-target-error="#form-status" hx-swap-oob="true"
+            hx-on::after-request="if (event.detail.successful) { this.reset() }">
             <label for="name">Account Name</label>
             <input type="text" name="name" placeholder="account name..." required />
 
             <label for="description">Account Description</label>
-            <textarea name="description" placeholder="account descrition..."></textarea>
+            <textarea name="description" placeholder="(optional)"></textarea>
 
-            <input type="submit" value="Create Account" />
+            <input type="submit" value="Create" />
         </form>
     </div>
 </details>
 
 <hr />
 
-<section class="list" hx-trigger="load" hx-get="/api/v1/ledger/accounts"></section>
+<section class="list" hx-trigger="load" hx-get="/api/v1/ledger/account"></section>
 {{ endblock }}

@@ -10,13 +10,14 @@
         <header>
             Welcome<br />
             <strong hx-get="/api/v1/user/display_name" hx-trigger="load" hx-swap="textContent"></strong><br />
-            <button hx-post="/api/v1/user/logout" hx-trigger="click">Logout</button>
         </header>
 
         <nav class="flex-grow flex-col flex-axis-center">
             <a href="/accounts">Accounts</a>
-            <a href="/commodities">Commodities</a>
+            <a href="/payees">Payees</a>
         </nav>
+
+        <button hx-post="/api/v1/user/logout" hx-trigger="click">Logout</button>
     </div>
 
 
