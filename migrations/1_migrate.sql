@@ -79,57 +79,6 @@ CREATE TABLE _ledger.account (
         FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
 );
 
-CREATE TABLE _ledger.commodity (
-    id           AUTO_ID     PRIMARY KEY,
-    created      TIMESTAMPZ  NOT NULL,
-    user_id      UUID        NOT NULL,
-
-    name                 TEXT     NOT NULL,
-    description          TEXT,
-    symbol               TEXT     NOT NULL,
-    thousands_separator  TEXT     NOT NULL,
-    decimal_separator    TEXT     NOT NULL,
-    is_prefix            BOOLEAN  NOT NULL,
-
-    CONSTRAINT commodity_unq
-        UNIQUE (user_id, name),
-
-    CONSTRAINT chk_commodity_name_len
-        CHECK (CHAR_LENGTH(name) <= 128),
-    CONSTRAINT chk_commodity_description_len
-        CHECK (CHAR_LENGTH(description) <= 1024),
-    CONSTRAINT chk_commodity_symbol_len
-        CHECK (CHAR_LENGTH(symbol) <= 16),
-    CONSTRAINT chk_commodity_thousands_separator_len
-        CHECK (CHAR_LENGTH(thousands_separator) <= 1),
-    CONSTRAINT chk_commodity_decimal_separator_len
-        CHECK (CHAR_LENGTH(decimal_separator) <= 1),
-
-    CONSTRAINT commodity_fk_user_id
-        FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
-);
-
-CREATE TABLE _ledger.conversion (
-    id              AUTO_ID     PRIMARY KEY,
-    created         TIMESTAMPZ  NOT NULL,
-    user_id         UUID        NOT NULL,
-
-    effective       DATE        NOT NULL,
-    from_commodity  UUID        NOT NULL,
-    to_commodity    UUID        NOT NULL,
-    rate            FLOAT8      NOT NULL,
-
-    CONSTRAINT conversion_unq
-        UNIQUE (user_id, effective, from_commodity, to_commodity),
-
-    CONSTRAINT commodity_fk_user_id
-        FOREIGN KEY (user_id)         REFERENCES _user.profile(id)      ON DELETE CASCADE,
-    CONSTRAINT commodity_fk_from_commodity
-        FOREIGN KEY (from_commodity)  REFERENCES _ledger.commodity(id)  ON DELETE CASCADE,
-    CONSTRAINT commodity_fk_to_commodity
-        FOREIGN KEY (to_commodity)    REFERENCES _ledger.commodity(id)  ON DELETE CASCADE
-);
-
 CREATE TABLE _ledger.payee (
     id       AUTO_ID     PRIMARY KEY,
     created  TIMESTAMPZ  NOT NULL,
@@ -155,31 +104,25 @@ CREATE TABLE _ledger.transaction (
     created         TIMESTAMPZ  NOT NULL,
     user_id         UUID        NOT NULL,
 
-    occurred_on     DATE        NOT NULL,
-    posted_on       DATE        NOT NULL,
+    occurred_on     TIMESTAMPZ  NOT NULL,
     from_account    UUID        NOT NULL,
-    to_account      UUID        NOT NULL,
-    from_commodity  UUID        NOT NULL,
-    to_commodity    UUID        NOT NULL,
+    from_currency   TEXT        NOT NULL,
     payee           UUID        NOT NULL,
     change          NUMERIC     NOT NULL,
     description     TEXT,
+
+    CONSTRAINT transaction_chk_from_currency_len
+        check (CHAR_LENGTH(from_currency) == 3),
 
     CONSTRAINT transaction_chk_description_len
         CHECK (CHAR_LENGTH(description) <= 1024),
 
     CONSTRAINT transaction_fk_user_id
-        FOREIGN KEY (user_id)         REFERENCES _user.profile(id)      ON DELETE CASCADE,
+        FOREIGN KEY (user_id)       REFERENCES _user.profile(id)    ON DELETE CASCADE,
     CONSTRAINT transaction_fk_from_account
-        FOREIGN KEY (from_account)    REFERENCES _ledger.account(id)    ON DELETE CASCADE,
-    CONSTRAINT transaction_fk_to_account
-        FOREIGN KEY (to_account)      REFERENCES _ledger.account(id)    ON DELETE CASCADE,
-    CONSTRAINT transaction_fk_from_commodity
-        FOREIGN KEY (from_commodity)  REFERENCES _ledger.commodity(id)  ON DELETE CASCADE,
-    CONSTRAINT transaction_fk_to_commodity
-        FOREIGN KEY (from_commodity)  REFERENCES _ledger.commodity(id)  ON DELETE CASCADE,
+        FOREIGN KEY (from_account)  REFERENCES _ledger.account(id)  ON DELETE CASCADE,
     CONSTRAINT transaction_fk_payee
-        FOREIGN KEY (from_commodity)  REFERENCES _ledger.payee(id)      ON DELETE CASCADE
+        FOREIGN KEY (payee)         REFERENCES _ledger.payee(id)    ON DELETE CASCADE
 );
 
 
