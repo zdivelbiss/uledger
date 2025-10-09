@@ -3,6 +3,7 @@ use sqlx::{Pool, Postgres};
 
 pub mod login;
 pub mod register;
+pub mod info;
 
 #[derive(Clone)]
 pub struct UserProfile {

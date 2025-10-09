@@ -1,15 +1,11 @@
-use crate::{
-    server::{UserSession, htmx::IsHtmx},
-    state::AppState,
-};
+use crate::{server::UserSession, state::AppState};
 use askama_web::WebTemplate;
 use axum::{
     Router,
     extract::Request,
-    http::StatusCode,
     middleware::Next,
     response::{IntoResponse, Redirect},
-    routing::{get, post},
+    routing::get,
 };
 
 #[derive(askama::Template)]
@@ -25,8 +21,8 @@ pub struct LoginTemplate {}
 struct AccountsTemplate {}
 
 #[derive(askama::Template)]
-#[template(path = "pages/commodities.html")]
-struct CommoditiesTemplate {}
+#[template(path = "pages/payees.html")]
+struct PayeesTemplate {}
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -36,10 +32,7 @@ pub fn router() -> Router<AppState> {
             "/accounts",
             get(|| async { WebTemplate(AccountsTemplate {}) }),
         )
-        .route(
-            "/commodities",
-            get(|| async { WebTemplate(CommoditiesTemplate {}) }),
-        )
+        .route("/payees", get(|| async { WebTemplate(PayeesTemplate {}) }))
         .layer(axum::middleware::from_fn(check_user_authenticated))
         // Unauthenticated
         .route(

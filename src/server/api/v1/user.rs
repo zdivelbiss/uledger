@@ -14,21 +14,32 @@ use axum::{
     extract::{Form, State},
     http::StatusCode,
     response::IntoResponse,
-    routing::post,
+    routing,
 };
 
 pub fn router() -> axum::Router<AppState> {
     axum::Router::new()
-        .route("/register", post(_register))
-        .route("/login", post(_login))
-        .route("/logout", post(_logout))
-        .route("/verify", post(_verify).delete(_delete))
-    // TODO .route("/display_name", get(display_name))
+        .route("/register", routing::post(_register))
+        .route("/login", routing::post(_login))
+        .route("/logout", routing::post(_logout))
+        .route("/verify", routing::post(_verify).delete(_delete))
+        .route("/display_name", routing::get(_display_name))
+}
+
+#[derive(Debug, Deserialize)]
+struct RegisterInfo {
+    display_name: String,
+    email_address: String,
+    password: String,
 }
 
 async fn _register(
     State(user_profile): State<UserProfile>,
-    Form((display_name, email_address, password)): Form<(String, String, String)>,
+    Form(RegisterInfo {
+        display_name,
+        email_address,
+        password,
+    }): Form<RegisterInfo>,
 ) -> impl IntoResponse {
     use crate::state::user::profile::register::Error;
 
@@ -62,12 +73,21 @@ async fn _register(
     }
 }
 
+#[derive(Debug, Deserialize)]
+struct LoginInfo {
+    email_address: String,
+    password: String,
+}
+
 #[allow(clippy::disallowed_types)]
 async fn _login(
     session: tower_sessions::Session,
     IsHtmx(is_htmx): IsHtmx,
     State(user_profile): State<UserProfile>,
-    Form((email_address, password)): Form<(String, String)>,
+    Form(LoginInfo {
+        email_address,
+        password,
+    }): Form<LoginInfo>,
 ) -> impl IntoResponse {
     use crate::state::user::profile::login::Error;
 
@@ -112,10 +132,15 @@ async fn _logout(session: tower_sessions::Session, IsHtmx(is_htmx): IsHtmx) -> i
     }
 }
 
+#[derive(Debug, Deserialize)]
+struct VerifyInfo {
+    verification_token: String,
+}
+
 async fn _verify(
     user_session: UserSession,
     State(user_verification): State<UserVerification>,
-    Form(verification_token): Form<String>,
+    Form(VerifyInfo { verification_token }): Form<VerifyInfo>,
 ) -> impl IntoResponse {
     use crate::state::user::verification::confirm::Error;
 
@@ -153,6 +178,16 @@ async fn _delete(
             (StatusCode::CONFLICT, "Email already being used.").into_response()
         }
 
+        Err(error) => internal_error(error).into_response(),
+    }
+}
+
+async fn _display_name(
+    user_session: UserSession,
+    State(user_profile): State<UserProfile>,
+) -> impl IntoResponse {
+    match user_profile.get_display_name(&user_session).await {
+        Ok(display_name) => (StatusCode::OK, display_name).into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }

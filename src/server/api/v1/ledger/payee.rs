@@ -1,5 +1,5 @@
 use crate::{
-    server::{UserSession, api::crud_router, internal_error},
+    server::{UserSession, api::crud_router, internal_error, serialize_json_response},
     state::{AppState, ledger::payee::PayeeLedger},
 };
 use axum::{
@@ -25,8 +25,7 @@ async fn _read_all(
     State(ledger): State<PayeeLedger>,
 ) -> impl IntoResponse {
     match ledger.read_all(user_session.id()).await {
-        Ok(records) => todo!(),
-
+        Ok(records) => serialize_json_response(&records).into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }
@@ -42,12 +41,12 @@ async fn _create(
         .create(user_session.id(), name.as_str(), description.as_deref())
         .await
     {
-        Ok(record) => todo!(),
+        Ok(record) => serialize_json_response(&record).into_response(),
 
-        Err(Error::Duplicate) => (StatusCode::CONFLICT, "payee already exists").into_response(),
-        Err(Error::NameLength) => (StatusCode::BAD_REQUEST, "payee name too long").into_response(),
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "Payee already exists.").into_response(),
+        Err(Error::NameLength) => (StatusCode::BAD_REQUEST, "Payee name too long.").into_response(),
         Err(Error::DescriptionLength) => {
-            (StatusCode::BAD_REQUEST, "payee description too long").into_response()
+            (StatusCode::BAD_REQUEST, "Payee description too long.").into_response()
         }
         Err(error) => internal_error(error).into_response(),
     }
@@ -61,9 +60,9 @@ async fn _read(
     use crate::state::ledger::payee::read::Error;
 
     match ledger.read(user_session.id(), id).await {
-        Ok(record) => todo!(),
+        Ok(record) => serialize_json_response(&record).into_response(),
 
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "payee not found").into_response(),
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Payee not found.").into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }
@@ -80,14 +79,14 @@ async fn _update(
         .update(user_session.id(), id, name.as_str(), description.as_deref())
         .await
     {
-        Ok(record) => todo!(),
+        Ok(record) => serialize_json_response(&record).into_response(),
 
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "payee not found").into_response(),
-        Err(Error::Duplicate) => (StatusCode::CONFLICT, "payee already exists").into_response(),
-        Err(Error::NameLength) => (StatusCode::BAD_REQUEST, "payee not found").into_response(),
-        Err(Error::DescriptionLength) => {
-            (StatusCode::BAD_REQUEST, "payee not found").into_response()
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Payee not found.").into_response(),
+        Err(Error::Duplicate) => (StatusCode::CONFLICT, "Payee already exists.").into_response(),
+        Err(Error::NameLength | Error::DescriptionLength) => {
+            (StatusCode::BAD_REQUEST, "Payee not found.").into_response()
         }
+
         Err(error) => internal_error(error).into_response(),
     }
 }
@@ -100,9 +99,9 @@ async fn _delete(
     use crate::state::ledger::payee::delete::Error;
 
     match ledger.delete(user_session.id(), id).await {
-        Ok(_) => todo!(),
+        Ok(_) => (StatusCode::OK, "Payee has been deleted.").into_response(),
 
-        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "account not found").into_response(),
+        Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Payee not found.").into_response(),
         Err(error) => internal_error(error).into_response(),
     }
 }

@@ -3,6 +3,7 @@ use askama_web::WebTemplate;
 use axum::{
     Router,
     http::{HeaderValue, StatusCode, header},
+    response::IntoResponse,
 };
 use std::time::Duration;
 use tokio::{net::TcpListener, time::timeout};
@@ -93,6 +94,13 @@ async fn build_router() -> Router {
         .layer(decompression_layer)
         .layer(session_layer)
         .with_state(app_state)
+}
+
+pub fn serialize_json_response<T: ?Sized + serde::Serialize>(value: &T) -> impl IntoResponse {
+    match serde_json::to_string(value) {
+        Ok(serialized) => (StatusCode::OK, serialized).into_response(),
+        Err(error) => internal_error(error).into_response(),
+    }
 }
 
 pub fn internal_error(error: impl std::error::Error) -> (StatusCode, &'static str) {

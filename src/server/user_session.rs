@@ -19,7 +19,6 @@ enum Error {
 
 #[derive(Debug)]
 pub struct UserSession {
-    session: Session,
     id: Uuid,
 }
 
@@ -27,17 +26,11 @@ impl UserSession {
     async fn read(session: Session) -> Result<Self, Error> {
         let id = session.get("id").await?.ok_or(Error::MissingData)?;
 
-        Ok(Self { session, id })
+        Ok(Self { id })
     }
 
     pub const fn id(&self) -> Uuid {
         self.id
-    }
-
-    pub async fn logout(self) {
-        if let Err(error) = self.session.delete().await {
-            warn!("Failed to delete session: {error:?}");
-        }
     }
 }
 
