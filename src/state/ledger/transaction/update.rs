@@ -48,14 +48,14 @@ impl TransactionLedger {
         occurred_on: NaiveDate,
         account: Uuid,
         payee: Uuid,
-        currency: &str,
+        currency: CurrencyCode,
         amount: f64,
         description: Option<&str>,
     ) -> Result<TransactionRecord, Error> {
         let record = query_as!(
             TransactionRecord,
             "
-            UPDATE _ledger.TRANSACTION
+            UPDATE _ledger.transaction
                 SET
                     occurred_on = $3,
                     account = $4,
@@ -68,7 +68,7 @@ impl TransactionLedger {
                         AND
                     id = $2
                 RETURNING
-                    id, created, occurred_on, account, payee, currency, amount, description
+                    id, created, occurred_on, account, payee, currency AS \"currency: CurrencyCode\", amount, description
             ;
             ",
             user_id,

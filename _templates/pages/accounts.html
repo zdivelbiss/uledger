@@ -20,6 +20,27 @@
             <label for="name">Account Name</label>
             <input type="text" name="name" placeholder="account name..." required />
 
+            <label for="kind">Account Kind</label>
+            <select name="kind" required>
+                <optgroup label="Asset: Cash">
+                    <option value="AC_CHECKING">Checking</option>
+                    <option value="AC_SAVING">Saving</option>
+                    <option value="AC_PREPAID">Prepaid</option>
+                    <option value="AC_MOBILE_PAYMENTS">Mobile Payments</option>
+                    <option value="AC_CASH_MANAGEMENT">Cash Management</option>
+                </optgroup>
+                <optgroup label="Asset: Invesetment">
+                    <option value="AI_BROKERAGE">Brokerage</option>
+                    <option value="AI_ROTH_IRA">Roth IRA</option>
+                    <option value="AI_TRADITIONAL_IRA">Traditional IRA</option>
+                    <option value="AI_SEP_IRA">SEP IRA</option>
+                    <option value="AI_TRADITIONAL_401k">Traditional 401k</option>
+                    <option value="AI_ROTH_401k">Roth 401k</option>
+                    <option value="AI_529_PLAN">529 Plan</option>
+                </optgroup>
+                <option value="A_OTHER">Other Asset</option>
+            </select>
+
             <label for="description">Account Description</label>
             <textarea name="description" placeholder="(optional)"></textarea>
 

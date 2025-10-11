@@ -38,21 +38,23 @@ impl AccountLedger {
         &self,
         user_id: Uuid,
         name: &str,
+        kind: AccountKind,
         description: Option<&str>,
     ) -> Result<AccountRecord, Error> {
         let record = query_as!(
             AccountRecord,
             "
             INSERT INTO _ledger.account
-                    (user_id, name, description)
+                    (user_id, name, kind, description)
                 VALUES
-                    ($1, $2, $3)
+                    ($1, $2, $3, $4)
                 RETURNING
-                    id, created, name, description
+                    id, created, name, kind AS \"kind: AccountKind\", description
             ;
             ",
             user_id,
             name as _,
+            kind as _,
             description as _
         )
         .fetch_one(&self.db)

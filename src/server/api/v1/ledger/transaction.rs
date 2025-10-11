@@ -1,6 +1,6 @@
 use crate::{
     server::{UserSession, api::crud_router, internal_error, serialize_json_response},
-    state::{AppState, ledger::transaction::TransactionLedger},
+    state::{AppState, ledger::transaction::TransactionLedger}, util::CurrencyCode,
 };
 use axum::{
     Router,
@@ -20,7 +20,7 @@ struct Info {
     occurred_on: NaiveDate,
     account: Uuid,
     payee: Uuid,
-    currency: String,
+    currency: CurrencyCode,
     amount: f64,
     description: Option<String>,
 }
@@ -56,7 +56,7 @@ async fn _create(
             occurred_on,
             account,
             payee,
-            currency.as_str(),
+            currency,
             amount,
             description.as_deref(),
         )
@@ -119,7 +119,7 @@ async fn _update(
             occurred_on,
             account,
             payee,
-            currency.as_str(),
+            currency,
             amount,
             description.as_deref(),
         )

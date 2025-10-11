@@ -1,4 +1,5 @@
 use super::*;
+use crate::util::CurrencyCode;
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -40,7 +41,7 @@ impl TransactionLedger {
         occurred_on: NaiveDate,
         account: Uuid,
         payee: Uuid,
-        currency: &str,
+        currency: CurrencyCode,
         amount: f64,
         description: Option<&str>,
     ) -> Result<TransactionRecord, Error> {
@@ -52,7 +53,7 @@ impl TransactionLedger {
                 VALUES
                     ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING
-                    id, created, occurred_on, account, payee, currency, amount, description
+                    id, created, occurred_on, account, payee, currency AS \"currency: CurrencyCode\", amount, description
             ;
             ",
             user_id,

@@ -1,6 +1,9 @@
 use crate::{
     server::{UserSession, api::crud_router, internal_error, serialize_json_response},
-    state::{AppState, ledger::account::AccountLedger},
+    state::{
+        AppState,
+        ledger::account::{AccountKind, AccountLedger},
+    },
 };
 use axum::{
     Router,
@@ -17,6 +20,7 @@ pub fn router() -> Router<AppState> {
 #[derive(Debug, Deserialize)]
 struct Info {
     name: String,
+    kind: AccountKind,
     description: Option<String>,
 }
 
@@ -34,12 +38,21 @@ async fn _read_all(
 async fn _create(
     user_session: UserSession,
     State(ledger): State<AccountLedger>,
-    Form(Info { name, description }): Form<Info>,
+    Form(Info {
+        name,
+        kind,
+        description,
+    }): Form<Info>,
 ) -> impl IntoResponse {
     use crate::state::ledger::account::create::Error;
 
     match ledger
-        .create(user_session.id(), name.as_str(), description.as_deref())
+        .create(
+            user_session.id(),
+            name.as_str(),
+            kind,
+            description.as_deref(),
+        )
         .await
     {
         Ok(record) => serialize_json_response(&record).into_response(),
@@ -74,12 +87,22 @@ async fn _update(
     user_session: UserSession,
     State(ledger): State<AccountLedger>,
     Path(id): Path<Uuid>,
-    Form(Info { name, description }): Form<Info>,
+    Form(Info {
+        name,
+        kind,
+        description,
+    }): Form<Info>,
 ) -> impl IntoResponse {
     use crate::state::ledger::account::update::Error;
 
     match ledger
-        .update(user_session.id(), id, name.as_str(), description.as_deref())
+        .update(
+            user_session.id(),
+            id,
+            name.as_str(),
+            kind,
+            description.as_deref(),
+        )
         .await
     {
         Ok(record) => serialize_json_response(&record).into_response(),

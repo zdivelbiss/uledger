@@ -46,6 +46,7 @@ impl super::AccountLedger {
         user_id: Uuid,
         id: Uuid,
         name: &str,
+        kind: AccountKind,
         description: Option<&str>,
     ) -> Result<AccountRecord, Error> {
         let record = query_as!(
@@ -54,18 +55,20 @@ impl super::AccountLedger {
             UPDATE _ledger.account
                 SET
                     name = $3,
-                    description = $4
+                    kind = $4,
+                    description = $5
                 WHERE
                     user_id = $1
                         AND
                     id = $2
                 RETURNING
-                    id, created, name, description
+                    id, created, name, kind AS \"kind: AccountKind\", description
             ;
             ",
             user_id,
             id,
             name as _,
+            kind as _,
             description as _
         )
         .fetch_one(&self.db)

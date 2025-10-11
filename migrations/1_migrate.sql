@@ -7,7 +7,45 @@ CREATE EXTENSION "pgcrypto";
 CREATE SCHEMA _user   AUTHORIZATION uledger_service;
 CREATE SCHEMA _ledger AUTHORIZATION uledger_service;
 
-CREATE TYPE USER_ACCESS     AS ENUM ('ADMIN', 'REGULAR');
+CREATE TYPE USER_ACCESS AS ENUM ('ADMIN', 'REGULAR');
+CREATE TYPE CURRENCY_CODE AS ENUM (
+    'USD',
+    'EUR',
+    'JPY',
+    'GBP',
+    'CNY',
+    'AUD',
+    'CAD',
+    'CHF',
+    'HKD',
+    'SGD',
+    'SEK',
+    'KRW',
+    'NOK',
+    'NZD',
+    'INR',
+    'MXN',
+    'TWD',
+    'ZAR'
+);
+CREATE TYPE ACCOUNT_KIND AS ENUM (
+    'AC_CHECKING',
+    'AC_SAVING',
+    'AC_PREPAID',
+    'AC_MOBILE_PAYMENTS',
+    'AC_CASH_MANAGEMENT',
+    
+    'AI_BROKERAGE',
+    'AI_ROTH_IRA',
+    'AI_TRADITIONAL_IRA',
+    'AI_SEP_IRA',
+    'AI_TRADITIONAL_401k',
+    'AI_ROTH_401k',
+    'AI_529_PLAN',
+
+    'A_OTHER'
+);
+
 
 CREATE DOMAIN AUTO_ID AS UUID
     DEFAULT GEN_RANDOM_UUID()
@@ -22,36 +60,6 @@ CREATE DOMAIN EMAIL_ADDRESS AS TEXT
         CHECK (CHAR_LENGTH((value)) <= 128)
     CONSTRAINT chk_email_address_format
         CHECK ((value) ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$')
-;
-
-CREATE DOMAIN CURRENCY_CODE AS TEXT
-    CONSTRAINT chk_currency_code_len
-        CHECK (CHAR_LENGTH((value)) = 3)
-    CONSTRAINT chk_currency_code_is_iso
-        CHECK (
-            (value)
-                IN
-            (
-                'USD',
-                'EUR',
-                'JPY',
-                'GBP',
-                'CNY',
-                'AUD',
-                'CAD',
-                'CHF',
-                'HKD',
-                'SGD',
-                'SEK',
-                'KRW',
-                'NOK',
-                'NZD',
-                'INR',
-                'MXN',
-                'TWD',
-                'ZAR'
-            )
-        )
 ;
 
 
@@ -75,7 +83,7 @@ CREATE TABLE _user.profile (
     CONSTRAINT profile_chk_pending_email_address_token_len
         CHECK (LENGTH(pending_email_address_token) = 3),
     CONSTRAINT profile_chk_display_name_len
-        CHECK (CHAR_LENGTH(display_name)  <= 32)
+        CHECK (CHAR_LENGTH(display_name) <= 32)
 );
 
 CREATE UNIQUE INDEX profile_unq_1 ON _user.profile(LEAST(email_address, pending_email_address));
@@ -96,7 +104,8 @@ CREATE TABLE _ledger.account (
     created         TIMESTAMPZ  NOT NULL,
     user_id         UUID        NOT NULL,
 
-    name            TEXT NOT NULL,
+    name            TEXT          NOT NULL,
+    kind            ACCOUNT_KIND  NOT NULL,
     description     TEXT,
 
     CONSTRAINT account_unq

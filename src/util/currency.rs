@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, sync::LazyLock};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Currency {
-    pub iso_code: &'static str,
+    pub iso_code: CurrencyCode,
     pub symbol: &'static str,
     pub friendly_name: &'static str,
     thousands_separator: char,
@@ -13,17 +13,17 @@ impl Currency {
     const MAX_DECIMAL_PRECISION: u32 = 9;
     const DECIMAL_PART: u128 = 10u128.pow(Self::MAX_DECIMAL_PRECISION);
 
-    pub fn get(currency_code: &str) -> Option<&'static Self> {
-        CURRENCIES.get(currency_code).copied()
+    pub fn get(currency_code: CurrencyCode) -> Option<&'static Self> {
+        CURRENCIES.get(&currency_code).copied()
     }
 
     pub fn get_all() -> &'static [Currency] {
         &CURRENCY_DEFS
     }
 
-    pub fn get_serialized(currency_code: &str) -> Option<&'static str> {
+    pub fn get_serialized(currency_code: CurrencyCode) -> Option<&'static str> {
         INDIVIDUAL_CURRENCIES_SERIALIZED
-            .get(currency_code)
+            .get(&currency_code)
             .map(String::as_str)
     }
 
@@ -107,10 +107,27 @@ macro_rules! currencies {
             } $(,)?
         )*
     ) => {
+        #[allow(non_camel_case_types)]
+        #[derive(
+            Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type,
+        )]
+        #[sqlx(type_name = "CURRENCY_CODE")]
+        pub enum CurrencyCode {
+            $( $currency_code, )*
+        }
+
+        impl std::fmt::Display for CurrencyCode {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    $( Self::$currency_code => f.write_str(stringify!($currency_code)), )*
+                }
+            }
+        }
+
         static CURRENCY_DEFS: [Currency; 18] = [
             $(
                 Currency {
-                    iso_code: stringify!($currency_code),
+                    iso_code: CurrencyCode::$currency_code,
                     symbol: $symbol,
                     friendly_name: $friendly_name,
                     thousands_separator: $thousands_separator,
@@ -142,7 +159,7 @@ currencies! {
     ZAR { "R"   ',' None,      "South African rand" },
 }
 
-static CURRENCIES: LazyLock<BTreeMap<&'static str, &'static Currency>> = LazyLock::new(|| {
+static CURRENCIES: LazyLock<BTreeMap<CurrencyCode, &'static Currency>> = LazyLock::new(|| {
     BTreeMap::from_iter(
         CURRENCY_DEFS
             .iter()
@@ -154,7 +171,7 @@ static ALL_CURRENCIES_SERIALIZED: LazyLock<String> = LazyLock::new(|| {
     serde_json::to_string(&CURRENCY_DEFS).expect("failed to serialize currencies")
 });
 
-static INDIVIDUAL_CURRENCIES_SERIALIZED: LazyLock<BTreeMap<&'static str, String>> =
+static INDIVIDUAL_CURRENCIES_SERIALIZED: LazyLock<BTreeMap<CurrencyCode, String>> =
     LazyLock::new(|| {
         BTreeMap::from_iter(CURRENCY_DEFS.iter().map(|currency| {
             (
