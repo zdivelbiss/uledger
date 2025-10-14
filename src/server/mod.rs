@@ -9,7 +9,7 @@ use std::time::Duration;
 use tokio::{net::TcpListener, time::timeout};
 use tower_http::{
     compression::CompressionLayer, decompression::DecompressionLayer,
-    set_header::SetResponseHeaderLayer,
+    set_header::SetResponseHeaderLayer, trace::TraceLayer,
 };
 use tower_sessions::{Expiry, SessionManagerLayer};
 use tower_sessions_redis_store::{
@@ -93,6 +93,7 @@ async fn build_router() -> Router {
         .layer(compression_layer)
         .layer(decompression_layer)
         .layer(session_layer)
+        .layer(TraceLayer::new_for_http())
         .with_state(app_state)
 }
 

@@ -1,8 +1,13 @@
 use crate::{
-    server::{UserSession, api::crud_router, internal_error, serialize_json_response},
+    server::{
+        UserSession,
+        api::crud_router,
+        htmx::{IsHtmx, hx_trigger},
+        internal_error, serialize_json_response,
+    },
     state::{
         AppState,
-        ledger::account::{AccountKind, AccountLedger},
+        ledger::account::{AccountKind, AccountLedger, AccountRecord},
     },
 };
 use axum::{
@@ -35,9 +40,29 @@ async fn _read_all(
     }
 }
 
+fn record_response(is_htmx: bool, record: AccountRecord) -> impl IntoResponse {
+    match serde_json::to_string(&record) {
+        Ok(serialized) => {
+            if is_htmx {
+                (
+                    StatusCode::OK,
+                    [hx_trigger("eventAccountsChanged")],
+                    serialized,
+                )
+                    .into_response()
+            } else {
+                (StatusCode::OK, serialized).into_response()
+            }
+        }
+
+        Err(error) => internal_error(error).into_response(),
+    }
+}
+
 async fn _create(
     user_session: UserSession,
     State(ledger): State<AccountLedger>,
+    IsHtmx(is_htmx): IsHtmx,
     Form(Info {
         name,
         kind,
@@ -55,7 +80,7 @@ async fn _create(
         )
         .await
     {
-        Ok(record) => serialize_json_response(&record).into_response(),
+        Ok(record) => record_response(is_htmx, record).into_response(),
 
         Err(Error::Duplicate) => (StatusCode::CONFLICT, "Account already exists.").into_response(),
         Err(Error::NameLength) => {
@@ -71,12 +96,13 @@ async fn _create(
 async fn _read(
     user_session: UserSession,
     State(ledger): State<AccountLedger>,
+    IsHtmx(is_htmx): IsHtmx,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     use crate::state::ledger::account::read::Error;
 
     match ledger.read(user_session.id(), id).await {
-        Ok(record) => serialize_json_response(&record).into_response(),
+        Ok(record) => record_response(is_htmx, record).into_response(),
 
         Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Account was not found.").into_response(),
         Err(error) => internal_error(error).into_response(),
@@ -86,6 +112,7 @@ async fn _read(
 async fn _update(
     user_session: UserSession,
     State(ledger): State<AccountLedger>,
+    IsHtmx(is_htmx): IsHtmx,
     Path(id): Path<Uuid>,
     Form(Info {
         name,
@@ -105,7 +132,7 @@ async fn _update(
         )
         .await
     {
-        Ok(record) => serialize_json_response(&record).into_response(),
+        Ok(record) => record_response(is_htmx, record).into_response(),
 
         Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Account was not found.").into_response(),
         Err(Error::Duplicate) => (StatusCode::CONFLICT, "Account already exists.").into_response(),

@@ -21,4 +21,8 @@ impl AppState {
 
         Self { db: db_pool }
     }
+
+    pub fn db_pool(&self) -> &Pool<Postgres> {
+        &self.db
+    }
 }

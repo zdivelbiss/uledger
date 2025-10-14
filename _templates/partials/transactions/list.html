@@ -1,0 +1,23 @@
+<table>
+    <tr>
+        <th>Date</th>
+        <th>Account</th>
+        <th>Payee</th>
+        <th>Amount</th>
+        <th>Description</th>
+    </tr>
+
+    {{- for transaction_list_item in transaction_list_items -}}
+    <tr>
+        <td>{: transaction_list_item.occurred_on :}</td>
+        <td>{: transaction_list_item.account_name :}</td>
+        <td>{: transaction_list_item.payee_name :}</td>
+        <td>{: transaction_list_item.amount :}</td>
+        {{ if let Some(description) = transaction_list_item.description }}
+        <td>{: description :}</td>
+        {{ else }}
+        <td></td>
+        {{ endif }}
+    </tr>
+    {{- endfor -}}
+</table>

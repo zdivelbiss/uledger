@@ -4,7 +4,7 @@ pub mod read;
 pub mod read_all;
 pub mod update;
 
-use crate::{state::AppState, util::CurrencyCode};
+use crate::{state::AppState, util::{CurrencyAmount, CurrencyCode}};
 use chrono::{DateTime, NaiveDate, Utc};
 use uuid::Uuid;
 
@@ -27,6 +27,6 @@ pub struct TransactionRecord {
     pub account: Uuid,
     pub payee: Uuid,
     pub currency: CurrencyCode,
-    pub amount: f64,
+    pub amount: CurrencyAmount,
     pub description: Option<String>,
 }

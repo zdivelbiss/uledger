@@ -15,7 +15,8 @@
     <div id="create-form" class="flex-col">
         <div id="form-status"></div>
 
-        <form hx-post="/api/v1/ledger/transaction" hx-target-error="#form-status">
+        <form hx-post="/api/v1/ledger/transaction" hx-target-error="#form-status" hx-swap="none"
+            hx-on::after-request="if (event.detail.successful) { this.reset() }">
             <label for="occurred_on">Date</label>
             <input type="date" name="occurred_on" required />
 
@@ -56,5 +57,6 @@
 
 <hr />
 
-<section class="list" hx-trigger="load" hx-get="/api/v1/ledger/transaction"></section>
+<section id="transactionsList" class="list" hx-trigger="load, every 30s, eventTransactionsChanged from:body"
+    hx-get="/transactions/list"></section>
 {{ endblock }}

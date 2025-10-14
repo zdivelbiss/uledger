@@ -51,6 +51,26 @@ pub enum AccountKind {
     A_OTHER,
 }
 
+impl AccountKind {
+    pub const fn friendly_name(self) -> &'static str {
+        match self {
+            AccountKind::AC_CHECKING => "Checking",
+            AccountKind::AC_SAVING => "Saving",
+            AccountKind::AC_PREPAID => "Prepaid",
+            AccountKind::AC_MOBILE_PAYMENTS => "Mobile Payments",
+            AccountKind::AC_CASH_MANAGEMENT => "Cash Management",
+            AccountKind::AI_BROKERAGE => "Brokerage",
+            AccountKind::AI_ROTH_IRA => "Roth IRA",
+            AccountKind::AI_TRADITIONAL_IRA => "Traditional IRA",
+            AccountKind::AI_SEP_IRA => "SEP IRA",
+            AccountKind::AI_TRADITIONAL_401k => "Traditional 401k",
+            AccountKind::AI_ROTH_401k => "Roth 401k",
+            AccountKind::AI_529_PLAN => "529 Plan",
+            AccountKind::A_OTHER => "Other Asset",
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AccountRecord {
     pub id: Uuid,

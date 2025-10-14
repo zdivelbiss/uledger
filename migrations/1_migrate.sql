@@ -62,6 +62,10 @@ CREATE DOMAIN EMAIL_ADDRESS AS TEXT
         CHECK ((value) ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$')
 ;
 
+CREATE DOMAIN CURRENCY_AMOUNT AS BIGINT
+    CONSTRAINT chk_amount_positive
+        CHECK ((value) >= 0)
+;
 
 -- AUTH --
 ----------
@@ -149,7 +153,7 @@ CREATE TABLE _ledger.transaction (
     account         UUID                NOT NULL,
     payee           UUID                NOT NULL,
     currency        CURRENCY_CODE       NOT NULL,
-    amount          DOUBLE PRECISION    NOT NULL,
+    amount          CURRENCY_AMOUNT     NOT NULL,
     description     TEXT,
 
     CONSTRAINT transaction_chk_description_len
@@ -163,35 +167,3 @@ CREATE TABLE _ledger.transaction (
         FOREIGN KEY (payee)     REFERENCES _ledger.payee(id)    ON DELETE CASCADE
 );
 
-
-
--- TAGS --
-----------
-
-CREATE TABLE _ledger.account_tag (
-    id          AUTO_ID     PRIMARY KEY,
-    created     TIMESTAMPZ  NOT NULL,
-    user_id     UUID        NOT NULL,
-
-    name  TEXT NOT NULL,
-
-    CONSTRAINT account_tag_unq
-        UNIQUE(user_id, name),
-
-    CONSTRAINT account_tag_chk_name_len
-        CHECK (CHAR_LENGTH(name) <= 32),
-
-    CONSTRAINT account_tag_fk_user_id
-        FOREIGN KEY (user_id) REFERENCES _user.profile(id) ON DELETE CASCADE
-);
-
-CREATE TABLE _ledger.account_tag_map (
-    id          AUTO_ID PRIMARY KEY,
-    account_id  UUID    NOT NULL,
-    tag_id      UUID    NOT NULL,
-
-    CONSTRAINT account_tag_map_fk_account_id
-        FOREIGN KEY (account_id)  REFERENCES _ledger.account(id)      ON DELETE CASCADE,
-    CONSTRAINT account_tag_map_fk_tag_id
-        FOREIGN KEY (tag_id)      REFERENCES _ledger.account_tag(id)  ON DELETE CASCADE
-);

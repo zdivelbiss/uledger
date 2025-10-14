@@ -1,0 +1,14 @@
+<ul>
+    {{- for account_list_item in account_list_items -}}
+    <li>
+        <h3>{: account_list_item.name :}</h3>
+        <h4>{: account_list_item.kind :}</h4>
+
+        {{- if let Some(description) = account_list_item.description -}}
+        <p>
+            {: description :}
+        </p>
+        {{- endif -}}
+    </li>
+    {{- endfor -}}
+</ul>

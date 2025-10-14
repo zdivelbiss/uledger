@@ -1,5 +1,5 @@
 use super::*;
-use crate::util::CurrencyCode;
+use crate::util::{CurrencyAmount, CurrencyCode};
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -42,7 +42,7 @@ impl TransactionLedger {
         account: Uuid,
         payee: Uuid,
         currency: CurrencyCode,
-        amount: f64,
+        amount: CurrencyAmount,
         description: Option<&str>,
     ) -> Result<TransactionRecord, Error> {
         let record = query_as!(
@@ -53,7 +53,7 @@ impl TransactionLedger {
                 VALUES
                     ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING
-                    id, created, occurred_on, account, payee, currency AS \"currency: CurrencyCode\", amount, description
+                    id, created, occurred_on, account, payee, currency AS \"currency: CurrencyCode\", amount AS \"amount: CurrencyAmount\", description
             ;
             ",
             user_id,
@@ -61,7 +61,7 @@ impl TransactionLedger {
             account,
             payee,
             currency as _,
-            amount,
+            amount as _,
             description as _
         )
         .fetch_one(&self.db)

@@ -1,6 +1,14 @@
 use crate::{
-    server::{UserSession, api::crud_router, internal_error, serialize_json_response},
-    state::{AppState, ledger::payee::PayeeLedger},
+    server::{
+        UserSession,
+        api::crud_router,
+        htmx::{IsHtmx, hx_trigger},
+        internal_error, serialize_json_response,
+    },
+    state::{
+        AppState,
+        ledger::payee::{PayeeLedger, PayeeRecord},
+    },
 };
 use axum::{
     Router,
@@ -30,9 +38,29 @@ async fn _read_all(
     }
 }
 
+fn record_response(is_htmx: bool, record: PayeeRecord) -> impl IntoResponse {
+    match serde_json::to_string(&record) {
+        Ok(serialized) => {
+            if is_htmx {
+                (
+                    StatusCode::OK,
+                    [hx_trigger("eventPayeesChanged")],
+                    serialized,
+                )
+                    .into_response()
+            } else {
+                (StatusCode::OK, serialized).into_response()
+            }
+        }
+
+        Err(error) => internal_error(error).into_response(),
+    }
+}
+
 async fn _create(
     user_session: UserSession,
     State(ledger): State<PayeeLedger>,
+    IsHtmx(is_htmx): IsHtmx,
     Form(Info { name, description }): Form<Info>,
 ) -> impl IntoResponse {
     use crate::state::ledger::payee::create::Error;
@@ -41,7 +69,7 @@ async fn _create(
         .create(user_session.id(), name.as_str(), description.as_deref())
         .await
     {
-        Ok(record) => serialize_json_response(&record).into_response(),
+        Ok(record) => record_response(is_htmx, record).into_response(),
 
         Err(Error::Duplicate) => (StatusCode::CONFLICT, "Payee already exists.").into_response(),
         Err(Error::NameLength) => (StatusCode::BAD_REQUEST, "Payee name too long.").into_response(),
@@ -55,12 +83,13 @@ async fn _create(
 async fn _read(
     user_session: UserSession,
     State(ledger): State<PayeeLedger>,
+    IsHtmx(is_htmx): IsHtmx,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     use crate::state::ledger::payee::read::Error;
 
     match ledger.read(user_session.id(), id).await {
-        Ok(record) => serialize_json_response(&record).into_response(),
+        Ok(record) => record_response(is_htmx, record).into_response(),
 
         Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Payee not found.").into_response(),
         Err(error) => internal_error(error).into_response(),
@@ -70,6 +99,7 @@ async fn _read(
 async fn _update(
     user_session: UserSession,
     State(ledger): State<PayeeLedger>,
+    IsHtmx(is_htmx): IsHtmx,
     Path(id): Path<Uuid>,
     Form(Info { name, description }): Form<Info>,
 ) -> impl IntoResponse {
@@ -79,7 +109,7 @@ async fn _update(
         .update(user_session.id(), id, name.as_str(), description.as_deref())
         .await
     {
-        Ok(record) => serialize_json_response(&record).into_response(),
+        Ok(record) => record_response(is_htmx, record).into_response(),
 
         Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Payee not found.").into_response(),
         Err(Error::Duplicate) => (StatusCode::CONFLICT, "Payee already exists.").into_response(),

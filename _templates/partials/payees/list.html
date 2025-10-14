@@ -1,0 +1,13 @@
+<ul>
+    {{- for payee in payees -}}
+    <li>
+        <h3>{: payee.name :}</h3>
+
+        {{- if let Some(description) = payee.description -}}
+        <p>
+            {: description :}
+        </p>
+        {{- endif -}}
+    </li>
+    {{- endfor -}}
+</ul>

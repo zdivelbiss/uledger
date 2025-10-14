@@ -14,7 +14,7 @@ impl TransactionLedger {
         let records = query_as!(
             TransactionRecord,
             "
-            SELECT id, created, occurred_on, account, payee, currency AS \"currency: CurrencyCode\", amount, description
+            SELECT id, created, occurred_on, account, payee, currency AS \"currency: CurrencyCode\", amount AS \"amount: CurrencyAmount\", description
                 FROM _ledger.transaction
                 WHERE
                     user_id = $1
