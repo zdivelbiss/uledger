@@ -51,7 +51,6 @@
 
 <hr />
 
-<section id="accountsList" class="list" hx-trigger="load, every 30s, eventAccountsChanged from:body"
-    hx-get="/accounts/list">
+<section class="list" hx-trigger="load, every 60s, eventAccountsChanged from:body" hx-get="/accounts/list">
 </section>
 {{ endblock }}

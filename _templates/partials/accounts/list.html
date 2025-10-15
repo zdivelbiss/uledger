@@ -1,14 +1,23 @@
-<ul>
-    {{- for account_list_item in account_list_items -}}
-    <li>
-        <h3>{: account_list_item.name :}</h3>
-        <h4>{: account_list_item.kind :}</h4>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Description</th>
+    </tr>
 
-        {{- if let Some(description) = account_list_item.description -}}
-        <p>
+    {{- for account_list_item in account_list_items -}}
+    <tr>
+        <td><strong>{: account_list_item.name :}</strong></td>
+        <td><i>{: account_list_item.kind :}</i></td>
+        <td>
+            {{- if let Some(description) = account_list_item.description -}}
             {: description :}
-        </p>
-        {{- endif -}}
-    </li>
+            {{- endif -}}
+        </td>
+        <td>
+            <input type="button" value="Delete" hx-delete="/api/v1/ledger/account/{: account_list_item.id :}"
+                hx-swap="none" />
+        </td>
+    </tr>
     {{- endfor -}}
-</ul>
+</table>

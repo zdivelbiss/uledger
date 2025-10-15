@@ -4,7 +4,7 @@ use crate::{
 };
 use askama_web::WebTemplate;
 use axum::{Router, extract::State, response::IntoResponse, routing};
-use chrono::{DateTime, Utc};
+use chrono::NaiveDate;
 use uuid::Uuid;
 
 #[derive(askama::Template)]
@@ -13,7 +13,7 @@ struct AccountsTemplate {}
 
 struct AccountListItem {
     pub id: Uuid,
-    pub created: DateTime<Utc>,
+    pub created: NaiveDate,
     pub name: String,
     pub kind: &'static str,
     pub description: Option<String>,
@@ -44,7 +44,7 @@ async fn _list_all(
                 .into_iter()
                 .map(|record| AccountListItem {
                     id: record.id,
-                    created: record.created,
+                    created: record.created.date_naive(),
                     name: record.name,
                     kind: record.kind.friendly_name(),
                     description: record.description,
