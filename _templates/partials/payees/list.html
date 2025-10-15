@@ -1,13 +1,21 @@
-<ul>
-    {{- for payee in payees -}}
-    <li>
-        <h3>{: payee.name :}</h3>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Description</th>
+    </tr>
+    {{- for payee_list_item in payee_list_items -}}
+    <tr>
+        <td>{: payee_list_item.name :}</td>
 
-        {{- if let Some(description) = payee.description -}}
-        <p>
+        <td>
+            {{- if let Some(description) = payee_list_item.description -}}
             {: description :}
-        </p>
-        {{- endif -}}
-    </li>
+            {{- endif -}}
+        </td>
+        <td>
+            <input type="button" value="Delete" hx-delete="/api/v1/ledger/payee/{: payee_list_item.id :}"
+                hx-swap="none" />
+        </td>
+    </tr>
     {{- endfor -}}
-</ul>
+</table>

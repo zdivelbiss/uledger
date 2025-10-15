@@ -30,8 +30,7 @@
 
 <hr />
 
-{#
-<section id="payeesList" class="list" hx-trigger="load, every 30s, eventPayeesChanged from:body" hx-get="/payees/list">
+
+<section class="list" hx-trigger="load, every 60s, eventPayeesChanged from:body" hx-get="/payees/list">
 </section>
-#}
 {{ endblock }}
