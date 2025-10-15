@@ -26,9 +26,9 @@ impl AccountLedger {
             "
             DELETE FROM _ledger.account
                 WHERE
-                    user_id = $2
+                    user_id = $1
                         AND
-                    id = $1
+                    id = $2
             ;
             ",
             user_id,

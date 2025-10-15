@@ -26,9 +26,9 @@ impl TransactionLedger {
             "
             DELETE FROM _ledger.transaction
                 WHERE
-                    user_id = $2
+                    user_id = $1
                         AND
-                    id = $1
+                    id = $2
             ;
             ",
             user_id,

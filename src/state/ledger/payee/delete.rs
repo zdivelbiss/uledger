@@ -26,9 +26,9 @@ impl PayeeLedger {
             "
             DELETE FROM _ledger.payee
                 WHERE
-                    user_id = $2
+                    user_id = $1
                         AND
-                    id = $1
+                    id = $2
             ;
             ",
             user_id,
