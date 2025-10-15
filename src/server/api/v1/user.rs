@@ -1,9 +1,5 @@
 use crate::{
-    server::{
-        UserSession,
-        htmx::{IsHtmx, hx_redirect},
-        internal_error,
-    },
+    server::{UserSession, htmx::hx_redirect, internal_error},
     state::{
         AppState,
         user::{profile::UserProfile, verification::UserVerification},
@@ -82,7 +78,6 @@ struct LoginInfo {
 #[allow(clippy::disallowed_types)]
 async fn _login(
     session: tower_sessions::Session,
-    IsHtmx(is_htmx): IsHtmx,
     State(user_profile): State<UserProfile>,
     Form(LoginInfo {
         email_address,
@@ -99,11 +94,12 @@ async fn _login(
         Ok(user_id) => {
             session.insert("id", user_id).await.unwrap();
 
-            if is_htmx {
-                (StatusCode::OK, [hx_redirect("/")]).into_response()
-            } else {
-                (StatusCode::OK, "You have been logged in.").into_response()
-            }
+            (
+                StatusCode::OK,
+                [hx_redirect("/")],
+                "You have been logged in.",
+            )
+                .into_response()
         }
 
         Err(Error::InvalidCredentials) => {
@@ -115,18 +111,19 @@ async fn _login(
 }
 
 #[allow(clippy::disallowed_types)]
-async fn _logout(session: tower_sessions::Session, IsHtmx(is_htmx): IsHtmx) -> impl IntoResponse {
+async fn _logout(session: tower_sessions::Session) -> impl IntoResponse {
     if session.is_empty().await {
         (StatusCode::UNAUTHORIZED, "You are not logged in.").into_response()
     } else {
         session.flush().await.map_or_else(
             |error| internal_error(error).into_response(),
             |_| {
-                if is_htmx {
-                    (StatusCode::OK, [hx_redirect("/login")]).into_response()
-                } else {
-                    (StatusCode::OK, "You have been logged out.").into_response()
-                }
+                (
+                    StatusCode::OK,
+                    [hx_redirect("/login")],
+                    "You have been logged out.",
+                )
+                    .into_response()
             },
         )
     }

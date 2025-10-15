@@ -1,9 +1,6 @@
 use crate::{
     server::{
-        UserSession,
-        api::crud_router,
-        htmx::{IsHtmx, hx_trigger},
-        internal_error, serialize_json_response,
+        UserSession, api::crud_router, htmx::hx_trigger, internal_error, serialize_json_response,
     },
     state::{
         AppState,
@@ -17,6 +14,8 @@ use axum::{
     response::IntoResponse,
 };
 use uuid::Uuid;
+
+const HTMX_PAYEES_CHANGED: &str = "eventPayeesChanged";
 
 pub fn router() -> Router<AppState> {
     crud_router(_read_all, _create, _read, _update, _delete)
@@ -38,20 +37,14 @@ async fn _read_all(
     }
 }
 
-fn record_response(is_htmx: bool, record: PayeeRecord) -> impl IntoResponse {
+fn record_response(record: PayeeRecord) -> impl IntoResponse {
     match serde_json::to_string(&record) {
-        Ok(serialized) => {
-            if is_htmx {
-                (
-                    StatusCode::OK,
-                    [hx_trigger("eventPayeesChanged")],
-                    serialized,
-                )
-                    .into_response()
-            } else {
-                (StatusCode::OK, serialized).into_response()
-            }
-        }
+        Ok(serialized) => (
+            StatusCode::OK,
+            [hx_trigger(HTMX_PAYEES_CHANGED)],
+            serialized,
+        )
+            .into_response(),
 
         Err(error) => internal_error(error).into_response(),
     }
@@ -60,7 +53,7 @@ fn record_response(is_htmx: bool, record: PayeeRecord) -> impl IntoResponse {
 async fn _create(
     user_session: UserSession,
     State(ledger): State<PayeeLedger>,
-    IsHtmx(is_htmx): IsHtmx,
+
     Form(Info { name, description }): Form<Info>,
 ) -> impl IntoResponse {
     use crate::state::ledger::payee::create::Error;
@@ -69,7 +62,7 @@ async fn _create(
         .create(user_session.id(), name.as_str(), description.as_deref())
         .await
     {
-        Ok(record) => record_response(is_htmx, record).into_response(),
+        Ok(record) => record_response(record).into_response(),
 
         Err(Error::Duplicate) => (StatusCode::CONFLICT, "Payee already exists.").into_response(),
         Err(Error::NameLength) => (StatusCode::BAD_REQUEST, "Payee name too long.").into_response(),
@@ -83,13 +76,13 @@ async fn _create(
 async fn _read(
     user_session: UserSession,
     State(ledger): State<PayeeLedger>,
-    IsHtmx(is_htmx): IsHtmx,
+
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     use crate::state::ledger::payee::read::Error;
 
     match ledger.read(user_session.id(), id).await {
-        Ok(record) => record_response(is_htmx, record).into_response(),
+        Ok(record) => record_response(record).into_response(),
 
         Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Payee not found.").into_response(),
         Err(error) => internal_error(error).into_response(),
@@ -99,7 +92,7 @@ async fn _read(
 async fn _update(
     user_session: UserSession,
     State(ledger): State<PayeeLedger>,
-    IsHtmx(is_htmx): IsHtmx,
+
     Path(id): Path<Uuid>,
     Form(Info { name, description }): Form<Info>,
 ) -> impl IntoResponse {
@@ -109,7 +102,7 @@ async fn _update(
         .update(user_session.id(), id, name.as_str(), description.as_deref())
         .await
     {
-        Ok(record) => record_response(is_htmx, record).into_response(),
+        Ok(record) => record_response(record).into_response(),
 
         Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Payee not found.").into_response(),
         Err(Error::Duplicate) => (StatusCode::CONFLICT, "Payee already exists.").into_response(),
@@ -129,7 +122,12 @@ async fn _delete(
     use crate::state::ledger::payee::delete::Error;
 
     match ledger.delete(user_session.id(), id).await {
-        Ok(_) => (StatusCode::OK, "Payee has been deleted.").into_response(),
+        Ok(_) => (
+            StatusCode::OK,
+            [hx_trigger(HTMX_PAYEES_CHANGED)],
+            "Payee has been deleted.",
+        )
+            .into_response(),
 
         Err(Error::NotFound) => (StatusCode::NOT_FOUND, "Payee not found.").into_response(),
         Err(error) => internal_error(error).into_response(),
