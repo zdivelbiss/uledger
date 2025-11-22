@@ -1,15 +1,5 @@
 use std::{collections::BTreeMap, sync::LazyLock};
 
-struct CurrencyAmountVisitor;
-
-impl<'de> serde::de::Visitor<'de> for CurrencyAmountVisitor {
-    type Value = CurrencyAmount;
-
-    fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.write_str("a valid currency amount")
-    }
-}
-
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type)]
 #[sqlx(type_name = "CURRENCY_AMOUNT")]

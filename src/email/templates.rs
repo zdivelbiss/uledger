@@ -17,7 +17,7 @@ pub struct VerificationEmailTemplate {
 
 impl EmailTemplate for VerificationEmailTemplate {
     fn subject(&self) -> String {
-        format!("Verify Your Account: {}", self.proof_token)
+        format!("Your Verification Code: {}", self.proof_token)
     }
 
     fn body(&self) -> String {

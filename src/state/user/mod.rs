@@ -7,7 +7,6 @@ pub mod verification;
     Copy,
     PartialEq,
     Eq,
-    strum::Display,
     serde::Serialize,
     serde::Deserialize,
     sqlx::Type,
